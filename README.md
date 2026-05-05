@@ -1,64 +1,106 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/life-buoy.svg" alt="NovaDesk Logo" width="80" height="80" />
-  <h1 align="center">NovaDesk: IT Ticket Logging System</h1>
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="80" height="80" rx="16" fill="url(#gradient)"/>
+    <circle cx="40" cy="32" r="16" stroke="white" stroke-width="4" fill="none"/>
+    <path d="M40 48 L40 56" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <path d="M32 56 L48 56" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="40" cy="32" r="6" fill="white"/>
+    <defs>
+      <linearGradient id="gradient" x1="0" y1="0" x2="80" y2="80">
+        <stop offset="0%" stop-color="#3B82F6"/>
+        <stop offset="100%" stop-color="#8B5CF6"/>
+      </linearGradient>
+    </defs>
+  </svg>
+  <h1 align="center">NovaDesk: IT Ticket Management System</h1>
   <p align="center">
-    A modern, high-performance, and visually stunning IT Helpdesk Dashboard built with Next.js, React, and Tailwind CSS.
+    A modern, high-performance IT Helpdesk Dashboard with role-based authentication, ticket management, and automated reporting built with Next.js, React, and Tailwind CSS.
   </p>
   <p align="center">
     <img src="https://img.shields.io/badge/Next.js-16.2.4-black?style=for-the-badge&logo=next.js" alt="Next.js" />
     <img src="https://img.shields.io/badge/React-19.2.4-blue?style=for-the-badge&logo=react" alt="React" />
     <img src="https://img.shields.io/badge/Tailwind-v4-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/Zustand-State-yellow?style=for-the-badge" alt="Zustand" />
+    <img src="https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
   </p>
 </div>
 
 ---
 
-## 🌟 Overview
+## 🎯 About NovaDesk
 
-**NovaDesk** is a state-of-the-art IT ticket management system designed for both End Users and IT Support Agents. It features a stunning glassmorphic UI, real-time ticket tracking, automated role-based views, and powerful background task scheduling for generating comprehensive CSV reports.
+**NovaDesk** is a comprehensive IT ticket management system designed for organizations of all sizes. It provides separate interfaces and capabilities for **End Users** (employees submitting tickets), **Support Agents** (IT staff managing tickets), and **Administrators** (system managers with full access).
 
-Whether you're managing hardware requests, network drops, or software access, NovaDesk provides an elegant and seamless user experience.
+Whether you're handling hardware requests, network issues, software access, or general IT support, NovaDesk delivers an elegant, efficient, and secure experience.
+
+---
 
 ## ✨ Key Features
 
-- 🌗 **Premium UI/UX:** A stunning dark-mode dashboard featuring glassmorphism, dynamic gradients, and smooth micro-animations.
-- 👥 **Role-Based Access:** Instantly toggle between **End User** and **Agent** views, revealing contextual tools like scorecards and activity feeds.
-- 🎫 **Ticket Management:** Fully functional CRUD operations mapped to a local file-based persistence layer.
-- 📊 **Detailed Metadata Tracking:** Automatically logs hardware details (`hostname`, `laptopSerial`), organizational data (`department`), and identity (`username`).
-- 📥 **Export to CSV:** Built-in utility to export your ticket queues instantly to a `.csv` format.
-- ⏰ **Automated SMTP Reporting:** A standalone Node-Cron worker that generates Daily and Monthly CSV reports and emails them directly to stakeholders.
+### 🔐 Role-Based Authentication
+
+- **End Users**: Submit tickets, track their own tickets, receive updates
+- **Agents**: Manage ticket queue, update ticket status, view analytics, access activity feeds
+- **Administrators**: Full system access, delete tickets, manage settings, view all tickets
+
+### 🎫 Ticket Management
+
+- Create, view, update, and close support tickets
+- Priority levels: Low, Medium, High, Urgent
+- Categories: Hardware, Software, Network, Access
+- Detailed metadata tracking (hostname, laptop serial, department)
+- Auto-calculated due dates based on priority
+
+### 📊 Analytics Dashboard
+
+- Real-time scorecards showing ticket statistics
+- Visual charts for ticket distribution and trends
+- Activity feed tracking all system events
+
+### 📥 Export & Reporting
+
+- Export tickets to CSV format instantly
+- Automated Daily (11:59 PM) and Monthly CSV email reports
+- Configurable SMTP settings for email delivery
+
+### 🎨 Premium UI/UX
+
+- Stunning dark-mode glassmorphic design
+- Smooth micro-animations and transitions
+- Fully responsive layout
+- Role-specific UI elements and navigation
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Category | Technology |
-|---|---|
-| **Core** | Next.js 16, React 19, TypeScript |
-| **Styling** | Tailwind CSS v4, Lucide React (Icons), clsx, tailwind-merge |
-| **State** | Zustand (with persistence) |
-| **Backend** | Next.js API Routes (Serverless Functions) |
-| **Automation** | Node-Cron, Nodemailer |
-| **Data Storage** | Local JSON File System (`src/data/tickets.json`) |
+| Category           | Technology                                                  |
+| ------------------ | ----------------------------------------------------------- |
+| **Core**           | Next.js 16, React 19, TypeScript                            |
+| **Styling**        | Tailwind CSS v4, Lucide React (Icons), clsx, tailwind-merge |
+| **State**          | Zustand (with persistence)                                  |
+| **Backend**        | Next.js API Routes (Serverless Functions)                   |
+| **Authentication** | Custom session-based auth with Bearer tokens                |
+| **Automation**     | Node-Cron, Nodemailer                                       |
+| **Data Storage**   | Local JSON File System                                      |
 
 ---
 
 ## 🚀 Getting Started
 
-Follow these steps to get your local environment up and running!
-
 ### Prerequisites
-Make sure you have [Node.js](https://nodejs.org/) (v18 or higher) and `npm` installed on your machine.
 
-### 1. Clone the repository
+- [Node.js](https://nodejs.org/) v18 or higher
+- npm or yarn package manager
+
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/it-ticket-system.git
-cd it-ticket-system
+git clone https://github.com/rahulmasal/novadesk.git
+cd novadesk
 ```
 
-### 2. Install dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
@@ -66,7 +108,7 @@ npm install
 
 ### 3. Environment Configuration
 
-Create a `.env` (or `.env.local`) file in the root directory and add the following variables. This is required for the automated SMTP mail trigger to function properly:
+Create a `.env.local` file in the root directory:
 
 ```env
 # SMTP Configuration for Email Reports
@@ -79,56 +121,104 @@ SMTP_PASS=your_app_specific_password
 REPORT_RECIPIENT=manager@yourcompany.com
 
 # Security Secret for Cron API
-CRON_SECRET=secret123
+CRON_SECRET=your_secret_key
 ```
-> **Note:** If using Gmail, you will need to generate an [App Password](https://support.google.com/accounts/answer/185833?hl=en) if 2-Step Verification is enabled.
+
+> **Note:** If using Gmail, generate an [App Password](https://support.google.com/accounts/answer/185833?hl=en) if 2-Step Verification is enabled.
 
 ### 4. Run the Development Server
-
-Start the Next.js frontend and API:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. Start the Automated Scheduler (Background Worker)
+### 5. Start the Automated Scheduler (Optional)
 
-To enable the automated Daily (11:59 PM) and Monthly (Last day of the month) email reports, open a **separate terminal window** and run the scheduler script:
+For automated Daily and Monthly email reports:
 
 ```bash
 npm run schedule
 ```
-*The terminal will confirm that the scheduler is running and actively listening for its designated execution times.*
+
+---
+
+## 🔑 Demo Accounts
+
+| Role              | Email              | Password |
+| ----------------- | ------------------ | -------- |
+| **Administrator** | admin@novadesk.com | admin123 |
+| **Agent**         | sarah@novadesk.com | agent123 |
+| **End User**      | mike@example.com   | user123  |
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-📦 it-ticket-system
- ┣ 📂 src
- ┃ ┣ 📂 app
- ┃ ┃ ┣ 📂 api               # Next.js API Routes (CRUD & Cron trigger)
- ┃ ┃ ┣ 📜 layout.tsx        # Global app layout
- ┃ ┃ ┗ 📜 page.tsx          # Main Dashboard View
- ┃ ┣ 📂 components          # Reusable UI components (Sidebar, TicketTable, Forms)
- ┃ ┣ 📂 data                # Local storage (tickets.json)
- ┃ ┗ 📂 lib                 # Utilities (Zustand store, CSV exporter, Email service)
- ┣ 📜 scheduler.mjs         # Standalone Cron Job Worker
- ┣ 📜 next.config.ts        # Next.js Configuration
- ┣ 📜 tailwind.config.mjs   # Tailwind Configuration
- ┗ 📜 package.json          # Dependencies & NPM Scripts
+novadesk/
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── auth/login/route.ts    # Authentication API
+│   │   │   ├── cron/route.ts           # Report generation API
+│   │   │   └── tickets/route.ts       # Ticket CRUD API
+│   │   ├── layout.tsx                  # App layout
+│   │   └── page.tsx                   # Main dashboard
+│   ├── components/
+│   │   ├── ActivityFeed.tsx           # Activity timeline
+│   │   ├── Charts.tsx                 # Analytics charts
+│   │   ├── Login.tsx                  # Login form
+│   │   ├── Scorecards.tsx             # KPI cards
+│   │   ├── Sidebar.tsx                # Navigation
+│   │   ├── TicketDetail.tsx           # Ticket details
+│   │   ├── TicketForm.tsx             # Create ticket
+│   │   └── TicketTable.tsx            # Ticket list
+│   ├── data/
+│   │   ├── sessions.json               # Active sessions
+│   │   ├── tickets.json               # Ticket database
+│   │   └── users.json                # User database
+│   └── lib/
+│       ├── csv.ts                      # CSV export utility
+│       ├── email.ts                    # SMTP service
+│       ├── store.ts                    # Zustand store
+│       └── utils.ts                    # Utilities
+├── public/                             # Static assets
+├── scheduler.mjs                       # Cron job worker
+├── next.config.ts                     # Next.js config
+├── package.json                        # Dependencies
+└── README.md                          # This file
 ```
+
+---
+
+## 🔒 API Permissions
+
+| Endpoint          | Method | End User         | Agent       | Admin       |
+| ----------------- | ------ | ---------------- | ----------- | ----------- |
+| `/api/tickets`    | GET    | Own tickets only | All tickets | All tickets |
+| `/api/tickets`    | POST   | ✅ Create        | ✅ Create   | ✅ Create   |
+| `/api/tickets`    | PATCH  | ❌               | ✅ Update   | ✅ Update   |
+| `/api/tickets`    | DELETE | ❌               | ❌          | ✅ Delete   |
+| `/api/auth/login` | POST   | ✅               | ✅          | ✅          |
+| `/api/auth/login` | DELETE | ✅               | ✅          | ✅          |
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!
-Feel free to check out the [issues page](../../issues).
+Feel free to check the [issues page](https://github.com/rahulmasal/novadesk/issues).
 
-## 📝 License
+---
 
-This project is licensed under the [MIT License](LICENSE).
+<p align="center">
+  Built with ❤️ by NovaDesk Team
+</p>

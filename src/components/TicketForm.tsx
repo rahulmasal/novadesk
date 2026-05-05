@@ -28,8 +28,13 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
       description,
       priority,
       category,
-      createdBy: currentUserRole === "Agent" ? "agent1" : "user1",
+      createdBy: "user@company.com",
       dueDate: new Date(Date.now() + hours * 3600000).toISOString(),
+      username: "current.user",
+      hostname:
+        "HOST-" + Math.random().toString(36).substring(2, 6).toUpperCase(),
+      laptopSerial: "SN-" + Date.now(),
+      department: "General",
     });
 
     onClose();
@@ -39,15 +44,22 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
-          <h2 className="text-xl font-semibold text-white">Create New Ticket</h2>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-neutral-400 hover:text-white">
+          <h2 className="text-xl font-semibold text-white">
+            Create New Ticket
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors text-neutral-400 hover:text-white"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1.5">Subject</label>
+            <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+              Subject
+            </label>
             <input
               type="text"
               required
@@ -60,7 +72,9 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1.5">Category</label>
+              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                Category
+              </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as Category)}
@@ -73,7 +87,9 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1.5">Priority</label>
+              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                Priority
+              </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Priority)}
@@ -88,7 +104,9 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1.5">Description</label>
+            <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+              Description
+            </label>
             <textarea
               required
               value={description}

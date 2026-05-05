@@ -1,0 +1,47 @@
+[
+  {
+    "id": "usr_001",
+    "email": "admin@novadesk.com",
+    "password": "admin123",
+    "name": "System Administrator",
+    "role": "Administrator",
+    "department": "IT Operations",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "usr_002",
+    "email": "sarah@novadesk.com",
+    "password": "agent123",
+    "name": "Sarah Mitchell",
+    "role": "Agent",
+    "department": "Support Team",
+    "createdAt": "2024-01-15T00:00:00.000Z"
+  },
+  {
+    "id": "usr_003",
+    "email": "john@novadesk.com",
+    "password": "agent123",
+    "name": "John Davis",
+    "role": "Agent",
+    "department": "Network Team",
+    "createdAt": "2024-02-01T00:00:00.000Z"
+  },
+  {
+    "id": "usr_004",
+    "email": "mike@example.com",
+    "password": "user123",
+    "name": "Mike Thompson",
+    "role": "End User",
+    "department": "Marketing",
+    "createdAt": "2024-03-01T00:00:00.000Z"
+  },
+  {
+    "id": "usr_005",
+    "email": "emma@example.com",
+    "password": "user123",
+    "name": "Emma Wilson",
+    "role": "End User",
+    "department": "Sales",
+    "createdAt": "2024-03-15T00:00:00.000Z"
+  }
+]
