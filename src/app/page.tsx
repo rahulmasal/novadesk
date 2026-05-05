@@ -140,15 +140,13 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center gap-3">
-                {currentUserRole !== "End User" && (
-                  <button
-                    onClick={() => setIsFormOpen(true)}
-                    className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95"
-                  >
-                    <Plus className="w-5 h-5" />
-                    New Ticket
-                  </button>
-                )}
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95"
+                >
+                  <Plus className="w-5 h-5" />
+                  New Ticket
+                </button>
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"

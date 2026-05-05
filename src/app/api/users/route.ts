@@ -116,9 +116,9 @@ function getAuthUser(
 export async function GET(req: NextRequest) {
   const auth = getAuthUser(req);
 
-  // Only Administrators can list users
-  if (!auth || auth.role !== "Administrator") {
-    return new NextResponse("Forbidden - Admin only", { status: 403 });
+  // Only Administrators and Agents can list users
+  if (!auth || (auth.role !== "Administrator" && auth.role !== "Agent")) {
+    return new NextResponse("Forbidden - Admin or Agent only", { status: 403 });
   }
 
   const users = getUsers();

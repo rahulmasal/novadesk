@@ -34,13 +34,15 @@ export function UserManagement() {
   const [csvData, setCsvData] = useState("");
   const [importResult, setImportResult] = useState<any>(null);
 
-  const isAdmin = currentUserRole === "Administrator";
+  // Allow both Administrators and Agents to access user management
+  const canAccess =
+    currentUserRole === "Administrator" || currentUserRole === "Agent";
 
   useEffect(() => {
-    if (isAdmin) {
+    if (canAccess) {
       fetchUsers();
     }
-  }, [isAdmin]);
+  }, [canAccess]);
 
   const fetchUsers = async () => {
     try {
@@ -167,12 +169,12 @@ export function UserManagement() {
     }
   };
 
-  if (!isAdmin) {
+  if (!canAccess) {
     return (
       <div className="p-8 max-w-7xl mx-auto">
         <div className="glass-dark p-6 rounded-2xl text-center">
           <p className="text-red-400">
-            Access denied. Administrator privileges required.
+            Access denied. Administrator or Agent privileges required.
           </p>
         </div>
       </div>
@@ -184,6 +186,9 @@ john.doe@company.com,pass123,John Doe,Agent,IT Support
 jane.smith@company.com,pass123,Jane Smith,End User,Marketing
 bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team`;
 
+  // Only Administrators can create/edit/delete users
+  const canModify = currentUserRole === "Administrator";
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
@@ -192,25 +197,29 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team`;
             User Management
           </h2>
           <p className="text-neutral-400 mt-1">
-            Manage users, roles, and permissions
+            {canModify
+              ? "Manage users, roles, and permissions"
+              : "View all users in the system"}
           </p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg transition-colors"
-          >
-            <Upload className="w-4 h-4" />
-            Bulk Import
-          </button>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            Add User
-          </button>
-        </div>
+        {canModify && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Bulk Import
+            </button>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Add User
+            </button>
+          </div>
+        )}
       </div>
 
       {/* User List */}
@@ -295,42 +304,44 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team`;
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        {editingUser?.id === user.id ? (
-                          <>
+                      {canModify && (
+                        <div className="flex items-center gap-2">
+                          {editingUser?.id === user.id ? (
+                            <>
+                              <button
+                                onClick={() =>
+                                  handleUpdateRole(
+                                    editingUser.id,
+                                    editingUser.role,
+                                  )
+                                }
+                                className="p-1.5 hover:bg-green-500/20 rounded text-green-400"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setEditingUser(null)}
+                                className="p-1.5 hover:bg-neutral-500/20 rounded text-neutral-400"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
                             <button
-                              onClick={() =>
-                                handleUpdateRole(
-                                  editingUser.id,
-                                  editingUser.role,
-                                )
-                              }
-                              className="p-1.5 hover:bg-green-500/20 rounded text-green-400"
+                              onClick={() => setEditingUser(user)}
+                              className="p-1.5 hover:bg-white/10 rounded text-neutral-400 hover:text-white"
                             >
-                              <Check className="w-4 h-4" />
+                              <Edit2 className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() => setEditingUser(null)}
-                              className="p-1.5 hover:bg-neutral-500/20 rounded text-neutral-400"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </>
-                        ) : (
+                          )}
                           <button
-                            onClick={() => setEditingUser(user)}
-                            className="p-1.5 hover:bg-white/10 rounded text-neutral-400 hover:text-white"
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="p-1.5 hover:bg-red-500/20 rounded text-red-400"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="p-1.5 hover:bg-red-500/20 rounded text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
