@@ -9,6 +9,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { TicketForm } from "@/components/TicketForm";
 import { Login } from "@/components/Login";
 import { UserManagement } from "@/components/UserManagement";
+import { Reports } from "@/components/Reports";
 import { useTicketStore } from "@/lib/store";
 import { Plus, LogOut } from "lucide-react";
 
@@ -51,6 +52,8 @@ export default function Dashboard() {
     switch (currentView) {
       case "Customers":
         return <UserManagement />;
+      case "Reports":
+        return <Reports />;
       case "Settings":
         return (
           <div className="p-8 max-w-7xl mx-auto">

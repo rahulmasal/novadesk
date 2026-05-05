@@ -11,6 +11,7 @@ import {
   LifeBuoy,
   Shield,
   Headset,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,12 @@ export function Sidebar() {
       label: "Customers",
       id: "Customers" as const,
       agentOnly: true,
+    },
+    {
+      icon: FileText,
+      label: "Reports",
+      id: "Reports" as const,
+      adminOnly: true,
     },
     {
       icon: Settings,

@@ -69,7 +69,12 @@ export type Role = "End User" | "Agent" | "Administrator";
  * View types for navigation
  * Determines which page/section is currently shown
  */
-export type View = "Dashboard" | "Tickets" | "Customers" | "Settings";
+export type View =
+  | "Dashboard"
+  | "Tickets"
+  | "Customers"
+  | "Reports"
+  | "Settings";
 
 /**
  * User object represents a logged-in user
