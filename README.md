@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/ticket.svg" alt="NovaDesk Logo" width="80" height="80" />
+  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/life-buoy.svg" alt="NovaDesk Logo" width="80" height="80" />
   <h1 align="center">NovaDesk: IT Ticket Logging System</h1>
   <p align="center">
     A modern, high-performance, and visually stunning IT Helpdesk Dashboard built with Next.js, React, and Tailwind CSS.

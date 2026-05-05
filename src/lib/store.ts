@@ -40,6 +40,7 @@ interface TicketStore {
   updateTicketStatus: (id: string, status: Status) => void;
   toggleRole: () => void;
   setTickets: (tickets: Ticket[]) => void;
+  addActivity: (ticketId: string, message: string) => void;
 }
 
 export const useTicketStore = create<TicketStore>()(
@@ -142,6 +143,19 @@ export const useTicketStore = create<TicketStore>()(
           currentUserRole: state.currentUserRole === "Agent" ? "End User" : "Agent",
         })),
       setTickets: (tickets) => set(() => ({ tickets })),
+      addActivity: (ticketId, message) => {
+        set((state) => ({
+          activities: [
+            {
+              id: Math.random().toString(36).substring(2, 9),
+              ticketId,
+              message,
+              timestamp: new Date().toISOString(),
+            },
+            ...state.activities,
+          ],
+        }));
+      },
     }),
     {
       name: "ticket-storage",

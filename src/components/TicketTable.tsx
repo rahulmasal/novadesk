@@ -4,13 +4,15 @@ import { useState } from "react";
 // wait, oops
 import { useTicketStore, Ticket } from "@/lib/store";
 import { Search, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
-import { format, formatDistanceToNow, parseISO } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { TicketDetail } from "./TicketDetail";
 
 export function TicketTable() {
   const { tickets, currentUserRole } = useTicketStore();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const itemsPerPage = 5;
 
   const filtered = tickets.filter(
@@ -23,6 +25,7 @@ export function TicketTable() {
   const paginated = filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   return (
+    <>
     <div className="glass-dark rounded-2xl overflow-hidden mt-4 flex flex-col">
       <div className="p-4 border-b border-white/5 flex items-center justify-between gap-4">
         <h3 className="text-lg font-semibold text-white">Active Tickets</h3>
@@ -51,7 +54,7 @@ export function TicketTable() {
           </thead>
           <tbody>
             {paginated.map((ticket) => (
-              <TicketRow key={ticket.id} ticket={ticket} />
+              <TicketRow key={ticket.id} ticket={ticket} onClick={() => setSelectedTicketId(ticket.id)} />
             ))}
             {paginated.length === 0 && (
               <tr>
@@ -85,10 +88,15 @@ export function TicketTable() {
         </div>
       </div>
     </div>
+      
+      {selectedTicketId && (
+        <TicketDetail ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} />
+      )}
+    </>
   );
 }
 
-function TicketRow({ ticket }: { ticket: Ticket }) {
+function TicketRow({ ticket, onClick }: { ticket: Ticket, onClick: () => void }) {
   const isUrgent = ticket.priority === "Urgent";
   
   const createdTime = new Date(ticket.createdAt).getTime();
@@ -113,8 +121,10 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
   };
 
   return (
-    <tr className={cn(
-      "border-b border-white/5 hover:bg-white/[0.02] transition-colors group",
+    <tr 
+      onClick={onClick}
+      className={cn(
+      "border-b border-white/5 hover:bg-white/[0.05] transition-colors group cursor-pointer",
       isUrgent ? "bg-red-500/5 hover:bg-red-500/10" : ""
     )}>
       <td className="p-4">
