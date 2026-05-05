@@ -7,6 +7,7 @@ import { Paperclip, Send, X } from "lucide-react";
 export function TicketForm({ onClose }: { onClose: () => void }) {
   const addTicket = useTicketStore((state) => state.addTicket);
   const currentUserRole = useTicketStore((state) => state.currentUserRole);
+  const currentUser = useTicketStore((state) => state.currentUser);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -23,18 +24,23 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
     else if (priority === "High") hours = 8;
     else if (priority === "Low") hours = 72;
 
+    // Use actual user info if logged in
+    const userEmail = currentUser?.email || "guest@company.com";
+    const userName = currentUser?.name || "Guest User";
+    const userDepartment = currentUser?.department || "General";
+
     addTicket({
       title,
       description,
       priority,
       category,
-      createdBy: "user@company.com",
+      createdBy: userEmail,
       dueDate: new Date(Date.now() + hours * 3600000).toISOString(),
-      username: "current.user",
+      username: userName.toLowerCase().replace(/\s+/g, "."),
       hostname:
         "HOST-" + Math.random().toString(36).substring(2, 6).toUpperCase(),
       laptopSerial: "SN-" + Date.now(),
-      department: "General",
+      department: userDepartment,
     });
 
     onClose();

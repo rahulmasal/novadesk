@@ -8,6 +8,7 @@ import { TicketTable } from "@/components/TicketTable";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { TicketForm } from "@/components/TicketForm";
 import { Login } from "@/components/Login";
+import { UserManagement } from "@/components/UserManagement";
 import { useTicketStore } from "@/lib/store";
 import { Plus, LogOut } from "lucide-react";
 
@@ -49,41 +50,7 @@ export default function Dashboard() {
   const renderContent = () => {
     switch (currentView) {
       case "Customers":
-        return (
-          <div className="p-8 max-w-7xl mx-auto">
-            <h2 className="text-3xl font-bold text-white tracking-tight mb-8">
-              Customer Management
-            </h2>
-            <div className="glass-dark p-6 rounded-2xl">
-              <p className="text-neutral-400">
-                Customer directory and relationship management.
-              </p>
-              <div className="mt-8 space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
-                        C{i}
-                      </div>
-                      <div>
-                        <p className="text-white font-medium">Customer {i}</p>
-                        <p className="text-xs text-neutral-500">
-                          customer{i}@example.com
-                        </p>
-                      </div>
-                    </div>
-                    <button className="text-sm text-blue-400 hover:underline">
-                      View Details
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
+        return <UserManagement />;
       case "Settings":
         return (
           <div className="p-8 max-w-7xl mx-auto">
