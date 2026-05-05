@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   --background: #ffffff;
@@ -20,16 +18,26 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-@layer utilities {
-  .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
-  }
-  
-  .glass-dark {
-    @apply bg-black/40 backdrop-blur-xl border border-white/5;
-  }
-  
-  .glow-urgent {
-    @apply shadow-[0_0_15px_rgba(239,68,68,0.5)] border-red-500/50;
-  }
+@theme {
+  --color-white-5: rgba(255, 255, 255, 0.05);
+  --color-white-10: rgba(255, 255, 255, 0.1);
+  --color-black-40: rgba(0, 0, 0, 0.4);
 }
+
+@utility glass {
+  background-color: var(--color-white-5);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-white-10);
+}
+
+@utility glass-dark {
+  background-color: var(--color-black-40);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--color-white-5);
+}
+
+@utility glow-urgent {
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+

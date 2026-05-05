@@ -5,7 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 export type Priority = "Low" | "Medium" | "High" | "Urgent";
 export type Category = "Hardware" | "Software" | "Network" | "Access";
 export type Status = "New" | "In Progress" | "Pending Vendor" | "Resolved" | "Closed";
-export type Role = "End User" | "Agent";
+export type Role = "End User" | "Agent" | "Administrator";
+export type View = "Dashboard" | "Tickets" | "Customers" | "Settings";
 
 export interface Ticket {
   id: string;
@@ -36,10 +37,13 @@ interface TicketStore {
   tickets: Ticket[];
   activities: Activity[];
   currentUserRole: Role;
+  currentView: View;
   addTicket: (ticket: Omit<Ticket, "id" | "createdAt" | "updatedAt" | "status">) => void;
   updateTicketStatus: (id: string, status: Status) => void;
   toggleRole: () => void;
+  setRole: (role: Role) => void;
   setTickets: (tickets: Ticket[]) => void;
+  setView: (view: View) => void;
   addActivity: (ticketId: string, message: string) => void;
 }
 
@@ -47,6 +51,7 @@ export const useTicketStore = create<TicketStore>()(
   persist(
     (set, get) => ({
       currentUserRole: "Agent",
+      currentView: "Dashboard",
       tickets: [
         {
           id: "1",
@@ -140,9 +145,13 @@ export const useTicketStore = create<TicketStore>()(
       },
       toggleRole: () =>
         set((state) => ({
-          currentUserRole: state.currentUserRole === "Agent" ? "End User" : "Agent",
+          currentUserRole: 
+            state.currentUserRole === "Agent" ? "End User" : 
+            state.currentUserRole === "End User" ? "Administrator" : "Agent",
         })),
+      setRole: (role) => set(() => ({ currentUserRole: role })),
       setTickets: (tickets) => set(() => ({ tickets })),
+      setView: (view) => set(() => ({ currentView: view })),
       addActivity: (ticketId, message) => {
         set((state) => ({
           activities: [

@@ -5,13 +5,13 @@ import { LayoutDashboard, Ticket, Users, Settings, LogOut, HelpCircle, UserCircl
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
-  const { currentUserRole, toggleRole } = useTicketStore();
+  const { currentUserRole, toggleRole, currentView, setView } = useTicketStore();
 
   const links = [
-    { icon: LayoutDashboard, label: "Dashboard", active: true },
-    { icon: Ticket, label: "All Tickets", active: false },
-    { icon: Users, label: "Customers", active: false, agentOnly: true },
-    { icon: Settings, label: "Settings", active: false },
+    { icon: LayoutDashboard, label: "Dashboard", id: "Dashboard" as const },
+    { icon: Ticket, label: "All Tickets", id: "Tickets" as const },
+    { icon: Users, label: "Customers", id: "Customers" as const, agentOnly: true },
+    { icon: Settings, label: "Settings", id: "Settings" as const },
   ];
 
   return (
@@ -35,12 +35,13 @@ export function Sidebar() {
         </div>
 
         <nav className="space-y-1">
-          {links.filter(l => !l.agentOnly || currentUserRole === "Agent").map((link) => (
+          {links.filter(l => !l.agentOnly || currentUserRole === "Agent" || currentUserRole === "Administrator").map((link) => (
             <button
-              key={link.label}
+              key={link.id}
+              onClick={() => setView(link.id)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                link.active 
+                currentView === link.id 
                   ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
                   : "text-neutral-400 hover:text-white hover:bg-white/5"
               )}
@@ -58,7 +59,7 @@ export function Sidebar() {
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-amber-400 hover:bg-amber-400/10 transition-all duration-200 border border-transparent hover:border-amber-400/20"
         >
           <HelpCircle className="w-5 h-5" />
-          Switch to {currentUserRole === "Agent" ? "End User" : "Agent"}
+          Switch to {currentUserRole === "Agent" ? "End User" : currentUserRole === "End User" ? "Administrator" : "Agent"}
         </button>
         <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200">
           <LogOut className="w-5 h-5" />
