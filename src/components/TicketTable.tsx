@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // wait, oops
 import { useTicketStore, Ticket } from "@/lib/store";
 import { Search, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
@@ -101,7 +101,12 @@ function TicketRow({ ticket, onClick }: { ticket: Ticket, onClick: () => void })
   
   const createdTime = new Date(ticket.createdAt).getTime();
   const dueTime = new Date(ticket.dueDate).getTime();
-  const now = Date.now();
+  const [now, setNow] = useState(Date.now());
+  
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
   
   const totalDuration = dueTime - createdTime;
   const elapsed = now - createdTime;

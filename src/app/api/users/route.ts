@@ -3,274 +3,168 @@
  * USERS API ROUTE - User Management for Administrators
  * ============================================================================
  *
- * This file handles all user-related HTTP requests (Admin only):
- * - GET    : List all users (Admin only)
- * - POST   : Create a new user (Admin only)
- * - PATCH  : Update user role/department (Admin only)
- * - DELETE : Remove a user (Admin only)
- *
- * IMPORTANT: All endpoints require Administrator role!
- *
  * @module /api/users/route
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import fs from "fs";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcryptjs";
+import prisma from "@/lib/prisma";
+import { createUserSchema, updateUserSchema } from "@/lib/schemas";
 
-// Path to users data file
-const usersPath = path.join(process.cwd(), "src/data/users.json");
-const sessionsPath = path.join(process.cwd(), "src/data/sessions.json");
+const BCRYPT_SALT_ROUNDS = 12;
 
-/**
- * User interface representing a user account
- */
-interface User {
-  id: string;
-  email: string;
-  password: string;
-  name: string;
-  role: "Administrator" | "Agent" | "End User";
-  department: string;
-  createdAt: string;
-}
-
-/**
- * Session interface for authentication
- */
-interface Session {
-  userId: string;
-  email: string;
-  name: string;
-  role: string;
-  department: string;
-  token: string;
-  expiresAt: string;
-}
-
-/**
- * Reads all users from users.json
- */
-function getUsers(): User[] {
-  try {
-    const data = fs.readFileSync(usersPath, "utf8");
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
-  }
-}
-
-/**
- * Saves users array to users.json
- */
-function saveUsers(users: User[]): void {
-  fs.writeFileSync(usersPath, JSON.stringify(users, null, 2), "utf8");
-}
-
-/**
- * Reads sessions from sessions.json
- */
-function getSessions(): Record<string, Session> {
-  try {
-    const data = fs.readFileSync(sessionsPath, "utf8");
-    return JSON.parse(data);
-  } catch (error) {
-    return {};
-  }
-}
-
-/**
- * Authenticates request and verifies Admin role
- *
- * @returns User info if authenticated as Admin, null otherwise
- */
-function getAuthUser(
-  req: NextRequest,
-): { role: string; userId: string; email: string } | null {
+async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
 
   if (!token) return null;
 
-  const sessions = getSessions();
-  const session = sessions[token];
+  try {
+    const session = await prisma.session.findUnique({
+      where: { token },
+      include: { user: true },
+    });
 
-  if (!session || new Date(session.expiresAt) < new Date()) {
+    if (!session || session.expiresAt < new Date()) {
+      return null;
+    }
+
+    return { role: session.user.role, userId: session.userId, email: session.user.email };
+  } catch {
     return null;
   }
-
-  return {
-    role: session.role,
-    userId: session.userId,
-    email: session.email,
-  };
 }
 
-/**
- * GET /api/users - List all users (Admin only)
- *
- * Returns all users with passwords removed for security
- */
 export async function GET(req: NextRequest) {
-  const auth = getAuthUser(req);
+  const auth = await getAuthUser(req);
 
-  // Only Administrators and Agents can list users
-  if (!auth || (auth.role !== "Administrator" && auth.role !== "Agent")) {
-    return new NextResponse("Forbidden - Admin or Agent only", { status: 403 });
+  if (!auth || (auth.role !== "ADMINISTRATOR" && auth.role !== "AGENT")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const users = getUsers();
-
-  // Remove passwords before sending response
-  const safeUsers = users.map(({ password, ...user }) => user);
-
-  return NextResponse.json(safeUsers);
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, name: true, role: true, department: true, createdAt: true, updatedAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
+  }
 }
 
-/**
- * POST /api/users - Create a new user (Admin only)
- *
- * Body: { email, password, name, role, department }
- */
 export async function POST(req: NextRequest) {
-  const auth = getAuthUser(req);
+  const auth = await getAuthUser(req);
 
-  // Only Administrators can create users
-  if (!auth || auth.role !== "Administrator") {
-    return new NextResponse("Forbidden - Admin only", { status: 403 });
+  if (!auth || auth.role !== "ADMINISTRATOR") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const data = await req.json();
+  try {
+    const body = await req.json();
+    const validationResult = createUserSchema.safeParse(body);
 
-  // Validate required fields
-  const required = ["email", "password", "name", "role", "department"];
-  for (const field of required) {
-    if (!data[field]) {
-      return new NextResponse(`Missing field: ${field}`, { status: 400 });
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0]?.message || "Validation failed";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
+
+    const data = validationResult.data;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email.toLowerCase() },
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ error: "Email already exists" }, { status: 409 });
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, BCRYPT_SALT_ROUNDS);
+
+    const user = await prisma.user.create({
+      data: {
+        email: data.email.toLowerCase(),
+        password: hashedPassword,
+        name: data.name,
+        role: data.role,
+        department: data.department,
+      },
+      select: { id: true, email: true, name: true, role: true, department: true, createdAt: true },
+    });
+
+    return NextResponse.json(user, { status: 201 });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
   }
-
-  // Validate role
-  const validRoles = ["Administrator", "Agent", "End User"];
-  if (!validRoles.includes(data.role)) {
-    return new NextResponse(
-      `Invalid role. Must be one of: ${validRoles.join(", ")}`,
-      { status: 400 },
-    );
-  }
-
-  const users = getUsers();
-
-  // Check if email already exists
-  if (users.find((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
-    return new NextResponse("Email already exists", { status: 409 });
-  }
-
-  // Create new user
-  const newUser: User = {
-    id: `usr_${uuidv4().substring(0, 8)}`,
-    email: data.email,
-    password: data.password, // In production, hash this!
-    name: data.name,
-    role: data.role,
-    department: data.department,
-    createdAt: new Date().toISOString(),
-  };
-
-  users.push(newUser);
-  saveUsers(users);
-
-  // Return user without password
-  const { password: _, ...safeUser } = newUser;
-  return NextResponse.json(safeUser, { status: 201 });
 }
 
-/**
- * PATCH /api/users - Update user role or department (Admin only)
- *
- * Body: { id, role?, department? }
- */
 export async function PATCH(req: NextRequest) {
-  const auth = getAuthUser(req);
+  const auth = await getAuthUser(req);
 
-  // Only Administrators can update users
-  if (!auth || auth.role !== "Administrator") {
-    return new NextResponse("Forbidden - Admin only", { status: 403 });
+  if (!auth || auth.role !== "ADMINISTRATOR") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id, role, department } = await req.json();
+  try {
+    const body = await req.json();
+    const validationResult = updateUserSchema.safeParse(body);
 
-  if (!id) {
-    return new NextResponse("User ID is required", { status: 400 });
-  }
-
-  const users = getUsers();
-  const index = users.findIndex((u) => u.id === id);
-
-  if (index === -1) {
-    return new NextResponse("User not found", { status: 404 });
-  }
-
-  // Prevent admin from demoting themselves
-  if (users[index].email === auth.email && role && role !== "Administrator") {
-    return new NextResponse("Cannot demote yourself", { status: 400 });
-  }
-
-  // Update user
-  if (role) {
-    const validRoles = ["Administrator", "Agent", "End User"];
-    if (!validRoles.includes(role)) {
-      return new NextResponse("Invalid role", { status: 400 });
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0]?.message || "Validation failed";
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
-    users[index].role = role;
-  }
-  if (department) {
-    users[index].department = department;
-  }
 
-  saveUsers(users);
+    const { id, ...updates } = validationResult.data;
 
-  // Return user without password
-  const { password: _, ...safeUser } = users[index];
-  return NextResponse.json(safeUser);
+    if (id === auth.userId && updates.role && updates.role !== "ADMINISTRATOR") {
+      return NextResponse.json({ error: "Cannot demote yourself" }, { status: 400 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (updates.name) updateData.name = updates.name;
+    if (updates.role) updateData.role = updates.role;
+    if (updates.department) updateData.department = updates.department;
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: { id: true, email: true, name: true, role: true, department: true, createdAt: true },
+    });
+
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
+  }
 }
 
-/**
- * DELETE /api/users - Remove a user (Admin only)
- *
- * Body: { id }
- */
 export async function DELETE(req: NextRequest) {
-  const auth = getAuthUser(req);
+  const auth = await getAuthUser(req);
 
-  // Only Administrators can delete users
-  if (!auth || auth.role !== "Administrator") {
-    return new NextResponse("Forbidden - Admin only", { status: 403 });
+  if (!auth || auth.role !== "ADMINISTRATOR") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = await req.json();
+  try {
+    const body = await req.json();
+    const { id } = body;
 
-  if (!id) {
-    return new NextResponse("User ID is required", { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    }
+
+    if (id === auth.userId) {
+      return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
+    }
+
+    await prisma.user.delete({ where: { id } });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }
-
-  const users = getUsers();
-  const user = users.find((u) => u.id === id);
-
-  if (!user) {
-    return new NextResponse("User not found", { status: 404 });
-  }
-
-  // Prevent admin from deleting themselves
-  if (user.email === auth.email) {
-    return new NextResponse("Cannot delete yourself", { status: 400 });
-  }
-
-  // Remove user
-  const filteredUsers = users.filter((u) => u.id !== id);
-  saveUsers(filteredUsers);
-
-  return new NextResponse("User deleted", { status: 204 });
 }

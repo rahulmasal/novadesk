@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTicketStore, Role } from "@/lib/store";
 import { User, UserPlus, Upload, Trash2, Edit2, X, Check } from "lucide-react";
 
@@ -32,17 +32,10 @@ export function UserManagement() {
 
   // Import state
   const [csvData, setCsvData] = useState("");
-  const [importResult, setImportResult] = useState<any>(null);
+  const [importResult, setImportResult] = useState<{ total: number; imported: number; skipped: number; errors?: string[] } | null>(null);
 
   // Allow both Administrators and Agents to access user management
-  const canAccess =
-    currentUserRole === "Administrator" || currentUserRole === "Agent";
-
-  useEffect(() => {
-    if (canAccess) {
-      fetchUsers();
-    }
-  }, [canAccess]);
+  const canAccess = currentUserRole === "Administrator" || currentUserRole === "Agent";
 
   const fetchUsers = async () => {
     try {
@@ -61,6 +54,12 @@ export function UserManagement() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (canAccess) {
+      fetchUsers();
+    }
+  }, [canAccess]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -503,23 +502,21 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team`;
 
               {importResult && (
                 <div
-                  className={`p-4 rounded-lg ${importResult.success ? "bg-green-500/20" : "bg-red-500/20"}`}
+                  className={`p-4 rounded-lg ${importResult.imported > 0 ? "bg-green-500/20" : "bg-red-500/20"}`}
                 >
                   <p
-                    className={`font-medium ${importResult.success ? "text-green-400" : "text-red-400"}`}
+                    className={`font-medium ${importResult.imported > 0 ? "text-green-400" : "text-red-400"}`}
                   >
-                    {importResult.success
+                    {importResult.imported > 0
                       ? "Import Complete!"
                       : "Import Failed"}
                   </p>
-                  {importResult.summary && (
-                    <div className="mt-2 text-sm text-neutral-400">
-                      <p>Total rows: {importResult.summary.total}</p>
-                      <p>Imported: {importResult.summary.imported}</p>
-                      <p>Skipped: {importResult.summary.skipped}</p>
-                    </div>
-                  )}
-                  {importResult.errors && (
+                  <div className="mt-2 text-sm text-neutral-400">
+                    <p>Total rows: {importResult.total}</p>
+                    <p>Imported: {importResult.imported}</p>
+                    <p>Skipped: {importResult.skipped}</p>
+                  </div>
+                  {importResult.errors && importResult.errors.length > 0 && (
                     <div className="mt-2 text-sm text-red-400 max-h-32 overflow-y-auto">
                       {importResult.errors.map((err: string, i: number) => (
                         <p key={i}>{err}</p>
