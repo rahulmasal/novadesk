@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Scorecards } from "@/components/Scorecards";
 import { Charts } from "@/components/Charts";
@@ -10,11 +10,17 @@ import { TicketForm } from "@/components/TicketForm";
 import { Login } from "@/components/Login";
 import { UserManagement } from "@/components/UserManagement";
 import { Reports } from "@/components/Reports";
+import { KnowledgeBase } from "@/components/KnowledgeBase";
+import { DashboardBuilder } from "@/components/DashboardBuilder";
 import { useTicketStore } from "@/lib/store";
-import { Plus, LogOut } from "lucide-react";
+import { useRealtimeTickets } from "@/hooks/useRealtime";
+import { Plus, LogOut, Book, Layout, RefreshCw } from "lucide-react";
 
 export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
+  const [isDashboardBuilderOpen, setIsDashboardBuilderOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const {
     currentUserRole,
     currentView,
@@ -25,24 +31,40 @@ export default function Dashboard() {
     logout,
   } = useTicketStore();
 
+  const fetchTickets = useCallback(async () => {
+    try {
+      const res = await fetch("/api/tickets");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setTickets(data);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load tickets:", e);
+    }
+  }, [setTickets]);
+
+  // Enable real-time updates
+  useRealtimeTickets();
+
   // Check authentication on mount
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   // Load tickets from API when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      fetch("/api/tickets")
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setTickets(data);
-          }
-        })
-        .catch((e) => console.error("Failed to load tickets:", e));
+      fetchTickets();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchTickets]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchTickets();
+    setIsRefreshing(false);
+  };
 
   const handleLogout = () => {
     logout();
@@ -90,6 +112,21 @@ export default function Dashboard() {
               </div>
               <div className="glass-dark p-6 rounded-2xl">
                 <h3 className="text-lg font-semibold text-white mb-4">
+                  Dashboard Customization
+                </h3>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Customize your dashboard layout by dragging and dropping widgets.
+                </p>
+                <button
+                  onClick={() => setIsDashboardBuilderOpen(true)}
+                  className="flex items-center gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-blue-500/30"
+                >
+                  <Layout className="w-4 h-4" />
+                  Customize Dashboard
+                </button>
+              </div>
+              <div className="glass-dark p-6 rounded-2xl">
+                <h3 className="text-lg font-semibold text-white mb-4">
                   Role Management
                 </h3>
                 <p className="text-sm text-neutral-400 mb-4">
@@ -117,6 +154,21 @@ export default function Dashboard() {
                   handle the ticket queue.
                 </p>
               </div>
+              <div className="glass-dark p-6 rounded-2xl">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  Knowledge Base
+                </h3>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Browse self-service articles to find quick answers.
+                </p>
+                <button
+                  onClick={() => setIsKnowledgeOpen(true)}
+                  className="flex items-center gap-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-emerald-500/30"
+                >
+                  <Book className="w-4 h-4" />
+                  Open Knowledge Base
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -143,6 +195,20 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsKnowledgeOpen(true)}
+                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"
+                >
+                  <Book className="w-4 h-4" />
+                  <span className="hidden sm:inline">Knowledge Base</span>
+                </button>
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                </button>
                 <button
                   onClick={() => setIsFormOpen(true)}
                   className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95"
@@ -213,6 +279,12 @@ export default function Dashboard() {
       </main>
 
       {isFormOpen && <TicketForm onClose={() => setIsFormOpen(false)} />}
+      {isKnowledgeOpen && (
+        <KnowledgeBase onClose={() => setIsKnowledgeOpen(false)} />
+      )}
+      {isDashboardBuilderOpen && (
+        <DashboardBuilder onClose={() => setIsDashboardBuilderOpen(false)} />
+      )}
     </div>
   );
 }

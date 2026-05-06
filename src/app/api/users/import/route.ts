@@ -239,10 +239,11 @@ export async function POST(req: NextRequest) {
       },
       errors: results.errors.length > 0 ? results.errors : undefined,
     });
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Import error:", error);
     return NextResponse.json(
-      { error: "Failed to parse CSV: " + error.message },
+      { error: "Failed to parse CSV: " + errorMessage },
       { status: 400 },
     );
   }

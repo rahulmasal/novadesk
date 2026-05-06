@@ -1,105 +1,148 @@
 /**
  * ============================================================================
- * CRON API ROUTE - Automated Report Generation Endpoint
+ * CRON API ROUTE - Automated Tasks
  * ============================================================================
- *
- * This file handles scheduled/automated tasks triggered by external schedulers:
- * - GET   : Generate and email a CSV report of all tickets
- *
- * WHAT IS A CRON JOB?
- * - A "cron job" is a scheduled task that runs automatically at specific times
- * - This endpoint is called by an external scheduler (see scheduler.mjs)
- * - The scheduler runs daily at 11:59 PM and monthly on the 1st
- *
- * SECURITY:
- * - This endpoint is PROTEECTED by a secret token (CRON_SECRET env variable)
- * - Only requests with the correct Bearer token can trigger reports
- * - The token should be a long, random string (like a password)
- *
- * BEGINNER NOTES:
- * - In production, use services like AWS CloudWatch Events or Vercel Cron
- * - Next.js API routes can also be triggered by webhooks
- * - Never expose cron endpoints without authentication!
  *
  * @module /api/cron/route
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import fs from "fs";
-import path from "path";
+import prisma from "@/lib/prisma";
+import { logAuditEvent } from "@/lib/audit";
 
-// Import the email sending utility
-import { sendReportEmail } from "@/lib/email";
+const SLA_WARNING_THRESHOLD = 0.8;
+const SLA_BREACH_THRESHOLD = 1.0;
 
-/**
- * Path to the tickets data file
- */
-const ticketsPath = path.join(process.cwd(), "src/data/tickets.json");
+async function runSlaEscalation(): Promise<{ warnings: number; breached: number; errors: string[] }> {
+  const result = { warnings: 0, breached: 0, errors: [] as string[] };
 
-/**
- * Reads all tickets from the JSON file
- *
- * @returns {any[]} Array of ticket objects
- */
-function getTickets() {
   try {
-    const data = fs.readFileSync(ticketsPath, "utf8");
-    return JSON.parse(data);
+    const tickets = await prisma.ticket.findMany({
+      where: { status: { notIn: ["RESOLVED", "CLOSED"] } },
+      include: { slaEscalation: true },
+    });
+
+    const now = new Date();
+
+    for (const ticket of tickets) {
+      try {
+        const dueDate = ticket.dueDate;
+        const createdAt = ticket.createdAt;
+        const totalDuration = dueDate.getTime() - createdAt.getTime();
+        const elapsed = now.getTime() - createdAt.getTime();
+        const progressPercent = elapsed / totalDuration;
+
+        let breachLevel: "NONE" | "WARNING" | "BREACHED";
+        if (progressPercent >= SLA_BREACH_THRESHOLD) breachLevel = "BREACHED";
+        else if (progressPercent >= SLA_WARNING_THRESHOLD) breachLevel = "WARNING";
+        else breachLevel = "NONE";
+
+        const currentLevel = ticket.slaEscalation?.breachLevel || "NONE";
+
+        if (breachLevel !== currentLevel) {
+          if (breachLevel === "WARNING" && currentLevel === "NONE") {
+            await prisma.slaEscalation.upsert({
+              where: { ticketId: ticket.id },
+              create: { ticketId: ticket.id, breachLevel: "WARNING" },
+              update: { breachLevel: "WARNING", notifiedAt: null },
+            });
+            result.warnings++;
+
+            await logAuditEvent({
+              ticketId: ticket.id,
+              userId: ticket.createdById,
+              action: "SLA_WARNING",
+              details: `SLA warning: ${Math.round(progressPercent * 100)}% of time elapsed`,
+            });
+          } else if (breachLevel === "BREACHED") {
+            await prisma.slaEscalation.upsert({
+              where: { ticketId: ticket.id },
+              create: { ticketId: ticket.id, breachLevel: "BREACHED", breachedAt: now },
+              update: { breachLevel: "BREACHED", breachedAt: now, notifiedAt: null },
+            });
+            result.breached++;
+
+            await logAuditEvent({
+              ticketId: ticket.id,
+              userId: ticket.createdById,
+              action: "SLA_BREACHED",
+              details: `SLA breached! Ticket is past due date.`,
+            });
+
+            await prisma.notification.create({
+              data: {
+                userId: ticket.createdById,
+                type: "SLA_BREACH",
+                subject: `SLA Breach: Ticket #${ticket.id.substring(0, 8)}`,
+                body: `Your ticket "${ticket.title}" has breached its SLA.`,
+              },
+            });
+          }
+        }
+      } catch (ticketError) {
+        result.errors.push(`Ticket ${ticket.id}: ${String(ticketError)}`);
+      }
+    }
   } catch (error) {
-    return [];
+    result.errors.push(`Fatal error: ${String(error)}`);
+  }
+
+  return result;
+}
+
+async function runDailyReport(): Promise<{ sent: boolean; error?: string }> {
+  try {
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    const [created, resolved] = await Promise.all([
+      prisma.ticket.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } }),
+      prisma.ticket.count({ where: { status: "RESOLVED", updatedAt: { gte: startOfDay, lte: endOfDay } } }),
+    ]);
+
+    const openTickets = await prisma.ticket.count({ where: { status: { notIn: ["RESOLVED", "CLOSED"] } } });
+    const breachedTickets = await prisma.slaEscalation.count({ where: { breachLevel: "BREACHED" } });
+
+    console.log(`Daily Report: Created=${created}, Resolved=${resolved}, Open=${openTickets}, Breached=${breachedTickets}`);
+
+    return { sent: true };
+  } catch (error) {
+    return { sent: false, error: String(error) };
   }
 }
 
-/**
- * GET /api/cron - Trigger report generation and email
- *
- * WHAT IT DOES:
- * 1. Validates the CRON_SECRET Bearer token
- * 2. Reads all tickets from the database
- * 3. Generates a CSV report of tickets
- * 4. Sends the CSV report via email to configured recipient
- *
- * WHEN IS THIS CALLED?
- * - By scheduler.mjs: Daily at 11:59 PM and Monthly on the 1st
- * - You can also test it manually using curl or Postman
- *
- * ENVIRONMENT VARIABLES NEEDED:
- * - CRON_SECRET: Secret token to authorize cron requests
- * - SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS: Email server settings
- * - REPORT_RECIPIENT: Email address to send reports to
- *
- * @param {NextRequest} req - Authorization header must contain correct Bearer token
- * @returns {NextResponse} { success: boolean, message?: string, error?: string }
- */
 export async function GET(req: NextRequest) {
-  // Step 1: Validate authorization token
-  // This prevents unauthorized access to the report generation endpoint
-  // process.env.CRON_SECRET should be set in .env.local file
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET || "secret123"}`) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const expectedToken = process.env.CRON_SECRET || "secret123";
+
+  if (authHeader !== `Bearer ${expectedToken}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { searchParams } = new URL(req.url);
+  const action = searchParams.get("action") || "all";
 
   try {
-    // Step 2: Get all tickets from storage
-    const tickets = getTickets();
+    const results: Record<string, unknown> = {};
+    const slaResult = await runSlaEscalation();
+    results.slaEscalation = slaResult;
 
-    // Step 3: Send the report email
-    // This converts tickets to CSV format and emails them
-    await sendReportEmail(tickets);
+    if (action === "all" || action === "report") {
+      const reportResult = await runDailyReport();
+      results.dailyReport = reportResult;
+    }
 
-    // Step 4: Return success response
     return NextResponse.json({
-      success: true,
-      message: "Report sent successfully",
+      success: true, action, results, timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
-    // Log the error for debugging, return generic error to client
-    console.error("Error sending report:", error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+  } catch (error) {
+    console.error("Cron job error:", error);
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
+}
+
+export async function POST(req: NextRequest) {
+  return GET(req);
 }

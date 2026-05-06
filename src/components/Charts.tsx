@@ -8,7 +8,7 @@ export function Charts() {
   const tickets = useTicketStore((state) => state.tickets);
 
   // Group tickets by creation date for line chart
-  const volumeData = tickets.reduce((acc: any[], t) => {
+  const volumeData = tickets.reduce<{ date: string; tickets: number }[]>((acc, t) => {
     const date = format(parseISO(t.createdAt), "MMM dd");
     const existing = acc.find((d) => d.date === date);
     if (existing) {
@@ -20,7 +20,7 @@ export function Charts() {
   }, []).reverse();
 
   // Group by category for doughnut chart
-  const categoryData = tickets.reduce((acc: any[], t) => {
+  const categoryData = tickets.reduce<{ name: string; value: number }[]>((acc, t) => {
     const existing = acc.find((d) => d.name === t.category);
     if (existing) {
       existing.value += 1;
