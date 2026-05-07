@@ -12,6 +12,7 @@ import {
   Shield,
   Headset,
   FileText,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,12 @@ export function Sidebar() {
       icon: FileText,
       label: "Reports",
       id: "Reports" as const,
+      adminOnly: true,
+    },
+    {
+      icon: Database,
+      label: "Backup",
+      id: "Backup" as const,
       adminOnly: true,
     },
     {

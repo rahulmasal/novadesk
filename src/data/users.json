@@ -33,6 +33,9 @@
     "name": "Mike Thompson",
     "role": "End User",
     "department": "Marketing",
+    "hostname": "MKTLAP-0042",
+    "laptopSerial": "SN-2024-88421",
+    "mustChangePassword": true,
     "createdAt": "2024-03-01T00:00:00.000Z"
   },
   {
@@ -42,6 +45,9 @@
     "name": "Emma Wilson",
     "role": "End User",
     "department": "Sales",
+    "hostname": "EMMLAP-0018",
+    "laptopSerial": "SN-2024-99234",
+    "mustChangePassword": true,
     "createdAt": "2024-03-15T00:00:00.000Z"
   }
 ]
