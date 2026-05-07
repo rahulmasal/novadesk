@@ -114,8 +114,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 }
 
-export async function PATCH(req: NextRequest) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getAuthUser(req);
+  const { id: ticketId } = await params;
 
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -136,6 +137,10 @@ export async function PATCH(req: NextRequest) {
 
     if (!comment) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    }
+
+    if (comment.ticketId !== ticketId) {
+      return NextResponse.json({ error: "Comment does not belong to this ticket" }, { status: 403 });
     }
 
     if (comment.authorId !== auth.userId && auth.role !== "ADMINISTRATOR") {
@@ -163,8 +168,9 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getAuthUser(req);
+  const { id: ticketId } = await params;
 
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -182,6 +188,10 @@ export async function DELETE(req: NextRequest) {
 
     if (!comment) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    }
+
+    if (comment.ticketId !== ticketId) {
+      return NextResponse.json({ error: "Comment does not belong to this ticket" }, { status: 403 });
     }
 
     if (comment.authorId !== auth.userId && auth.role !== "ADMINISTRATOR") {

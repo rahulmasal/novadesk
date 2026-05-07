@@ -26,6 +26,7 @@ model User {
   comments       Comment[]
   auditLogs      AuditLog[]
   dashboardLayout DashboardLayout?
+  sessions       Session[]
 
   @@map("users")
 }
@@ -194,6 +195,9 @@ model Session {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([userId])

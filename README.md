@@ -91,13 +91,7 @@ npm install
 
 ### 2. Configure Environment
 
-Copy the example environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-Edit `.env.local` with your database connection string:
+Create a `.env` file with your database connection string:
 
 ```env
 # For Supabase Cloud
@@ -106,7 +100,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://[project-ref].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # For Local PostgreSQL
-# DATABASE_URL=postgresql://postgres:postgres@localhost:5432/novadesk
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/novadesk
+
+# Cron Job Security (required for automated tasks)
+CRON_SECRET=your-secure-random-string-here
 ```
 
 ### 3. Initialize Database
@@ -122,7 +119,7 @@ npx prisma db push
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser. The Setup Wizard will guide you through initial configuration.
 
 ---
 
@@ -133,10 +130,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 Docker Compose includes PostgreSQL for a complete, self-contained setup.
 
 ```bash
-# Create environment file
+# Create environment file with secure password
 cp .env.example .env
 
-# Edit .env with your settings (especially POSTGRES_PASSWORD)
+# Edit .env with your settings (especially POSTGRES_PASSWORD and CRON_SECRET)
 nano .env
 
 # Build and start all services
@@ -159,10 +156,7 @@ docker run -d \
   --name novadesk \
   -p 3000:3000 \
   -e DATABASE_URL="postgresql://user:pass@host:5432/db" \
-  -e SMTP_HOST="smtp.example.com" \
-  -e SMTP_PORT="587" \
-  -e SMTP_USER="user@example.com" \
-  -e SMTP_PASS="password" \
+  -e CRON_SECRET="your-secure-secret" \
   novadesk:latest
 ```
 
@@ -206,7 +200,7 @@ psql -U postgres
 CREATE DATABASE novadesk;
 ```
 
-Then update `DATABASE_URL` in `.env.local` and run migrations.
+Then update `DATABASE_URL` in `.env` and run migrations.
 
 ### Option 3: Docker with External Database
 
@@ -217,20 +211,21 @@ docker run -d \
   --name novadesk \
   -p 3000:3000 \
   -e DATABASE_URL="postgresql://user:pass@external-host:5432/db" \
+  -e CRON_SECRET="your-secure-secret" \
   novadesk:latest
 ```
 
 ---
 
-## 🔑 Demo Accounts
+## 🔑 Initial Setup & Demo Accounts
 
-After seeding with `npx prisma db seed`, login with:
+On first run, the **Setup Wizard** will guide you through creating the first admin user. After setup:
 
 | Role | Email | Password | Access |
 |------|-------|----------|--------|
-| **Administrator** | admin@novadesk.com | Admin123! | Full access, user management, delete |
-| **Agent** | sarah@novadesk.com | Sarah123! | All tickets, no delete |
-| **End User** | mike@example.com | Mike123! | Own tickets only |
+| **Administrator** | admin@novadesk.com | (your choice) | Full access, user management, delete |
+| **Agent** | (create during setup) | | All tickets, no delete |
+| **End User** | (self-register) | | Own tickets only |
 
 > **Password Requirements:** 8+ characters with uppercase, lowercase, and number
 
@@ -241,7 +236,7 @@ After seeding with `npx prisma db seed`, login with:
 | Category | Technology |
 |----------|------------|
 | **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
-| **Database** | Prisma ORM 7.8.0, PostgreSQL 15+ |
+| **Database** | Prisma ORM 5.22.0, PostgreSQL 15+ |
 | **State** | Zustand 5 with localStorage persistence |
 | **UI** | Lucide Icons, Framer Motion, Recharts, @dnd-kit |
 | **Backend** | Next.js API Routes, Node-cron, Nodemailer |

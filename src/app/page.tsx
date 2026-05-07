@@ -10,13 +10,13 @@ import { TicketForm } from "@/components/TicketForm";
 import { Login } from "@/components/Login";
 import { UserManagement } from "@/components/UserManagement";
 import { Reports } from "@/components/Reports";
-import { BackupRestore } from "@/components/BackupRestore";
-import { PasswordChange } from "@/components/PasswordChange";
+import { SetupWizard } from "@/components/SetupWizard";
 import { useTicketStore } from "@/lib/store";
 import { Plus, LogOut } from "lucide-react";
 
 export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
   const {
     currentUserRole,
     currentView,
@@ -27,12 +27,23 @@ export default function Dashboard() {
     logout,
   } = useTicketStore();
 
-  // Check authentication on mount
   useEffect(() => {
-    checkAuth();
+    const checkSetupStatus = async () => {
+      try {
+        const res = await fetch("/api/setup/status");
+        const data = await res.json();
+        setNeedsSetup(data.needsSetup);
+      } catch {
+        setNeedsSetup(false);
+      }
+    };
+    checkSetupStatus();
   }, []);
 
-  // Load tickets from API when authenticated
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   useEffect(() => {
     if (isAuthenticated) {
       fetch("/api/tickets")
@@ -44,7 +55,7 @@ export default function Dashboard() {
         })
         .catch((e) => console.error("Failed to load tickets:", e));
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, setTickets]);
 
   const handleLogout = () => {
     logout();
@@ -54,12 +65,10 @@ export default function Dashboard() {
     switch (currentView) {
       case "Customers":
         return <UserManagement />;
-      case "Reports":
-        return <Reports />;
-      case "Backup":
-        return <BackupRestore />;
-      case "Settings":
-        return (
+        case "Reports":
+          return <Reports />;
+        case "Settings":
+          return (
           <div className="p-8 max-w-7xl mx-auto">
             <h2 className="text-3xl font-bold text-white tracking-tight mb-8">
               System Settings
@@ -199,14 +208,16 @@ export default function Dashboard() {
     }
   };
 
-  // Show login if not authenticated
-  if (!isAuthenticated) {
-    return <Login onLogin={() => {}} />;
+  if (needsSetup === null) {
+    return null;
   }
 
-  // Show password change if user must change password
-  if (currentUser?.mustChangePassword) {
-    return <PasswordChange />;
+  if (needsSetup) {
+    return <SetupWizard />;
+  }
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => {}} />;
   }
 
   return (

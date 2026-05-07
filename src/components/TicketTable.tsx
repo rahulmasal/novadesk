@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// wait, oops
 import { useTicketStore, Ticket } from "@/lib/store";
 import { Search, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";

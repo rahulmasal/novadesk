@@ -20,7 +20,10 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
   try {
     const tickets = await prisma.ticket.findMany({
       where: { status: { notIn: ["RESOLVED", "CLOSED"] } },
-      include: { slaEscalation: true },
+      include: {
+        slaEscalation: true,
+        createdBy: true,
+      },
     });
 
     const now = new Date();
@@ -58,8 +61,8 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
           } else if (breachLevel === "BREACHED") {
             await prisma.slaEscalation.upsert({
               where: { ticketId: ticket.id },
-              create: { ticketId: ticket.id, breachLevel: "BREACHED", breachedAt: now },
-              update: { breachLevel: "BREACHED", breachedAt: now, notifiedAt: null },
+              create: { ticketId: ticket.id, breachLevel: "BREACHED", escalatedAt: now },
+              update: { breachLevel: "BREACHED", escalatedAt: now, notifiedAt: null },
             });
             result.breached++;
 
@@ -70,12 +73,13 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
               details: `SLA breached! Ticket is past due date.`,
             });
 
+            const notifyUserId = ticket.assignedTo || ticket.createdById;
             await prisma.notification.create({
               data: {
-                userId: ticket.createdById,
+                userId: notifyUserId,
                 type: "SLA_BREACH",
                 subject: `SLA Breach: Ticket #${ticket.id.substring(0, 8)}`,
-                body: `Your ticket "${ticket.title}" has breached its SLA.`,
+                body: `Ticket "${ticket.title}" has breached its SLA. Created by: ${ticket.createdBy.name}`,
               },
             });
           }
@@ -115,7 +119,11 @@ async function runDailyReport(): Promise<{ sent: boolean; error?: string }> {
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  const expectedToken = process.env.CRON_SECRET || "secret123";
+  const expectedToken = process.env.CRON_SECRET;
+
+  if (!expectedToken) {
+    return NextResponse.json({ error: "Cron secret not configured" }, { status: 500 });
+  }
 
   if (authHeader !== `Bearer ${expectedToken}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

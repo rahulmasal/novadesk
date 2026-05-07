@@ -2,52 +2,84 @@
 
 import { useState } from "react";
 import { useTicketStore, Priority, Category } from "@/lib/store";
-import { Paperclip, Send, X } from "lucide-react";
+import { Paperclip, Send, X, Loader2 } from "lucide-react";
 
 export function TicketForm({ onClose }: { onClose: () => void }) {
   const addTicket = useTicketStore((state) => state.addTicket);
-  const currentUserRole = useTicketStore((state) => state.currentUserRole);
+  const authToken = useTicketStore((state) => state.authToken);
   const currentUser = useTicketStore((state) => state.currentUser);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("Medium");
   const [category, setCategory] = useState<Category>("Software");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description) return;
 
-    // Calculate a dummy due date based on priority
-    let hours = 24;
-    if (priority === "Urgent") hours = 2;
-    else if (priority === "High") hours = 8;
-    else if (priority === "Low") hours = 72;
+    setIsSubmitting(true);
 
-    // Use actual user info if logged in
     const userEmail = currentUser?.email || "guest@company.com";
     const userName = currentUser?.name || "Guest User";
     const userDepartment = currentUser?.department || "General";
-    // Use user's saved hostname and laptop serial, or generate defaults
     const userHostname =
       currentUser?.hostname ||
       "HOST-" + Math.random().toString(36).substring(2, 6).toUpperCase();
     const userLaptopSerial = currentUser?.laptopSerial || "SN-" + Date.now();
 
-    addTicket({
+    const ticketData = {
       title,
       description,
-      priority,
-      category,
-      createdBy: userEmail,
-      dueDate: new Date(Date.now() + hours * 3600000).toISOString(),
+      priority: priority.toUpperCase(),
+      category: category.toUpperCase(),
       username: userName.toLowerCase().replace(/\s+/g, "."),
       hostname: userHostname,
       laptopSerial: userLaptopSerial,
       department: userDepartment,
-    });
+    };
 
-    onClose();
+    try {
+      if (authToken) {
+        const res = await fetch("/api/tickets", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(ticketData),
+        });
+
+        if (res.ok) {
+          const ticket = await res.json();
+          addTicket(ticket);
+        } else {
+          console.error("Failed to create ticket via API");
+          addTicket({
+            ...ticketData,
+            createdBy: userEmail,
+            dueDate: new Date(Date.now() + (priority === "Urgent" ? 2 : priority === "High" ? 8 : priority === "Low" ? 72 : 24) * 3600000).toISOString(),
+          } as never);
+        }
+      } else {
+        addTicket({
+          ...ticketData,
+          createdBy: userEmail,
+          dueDate: new Date(Date.now() + (priority === "Urgent" ? 2 : priority === "High" ? 8 : priority === "Low" ? 72 : 24) * 3600000).toISOString(),
+        } as never);
+      }
+    } catch (error) {
+      console.error("Error creating ticket:", error);
+      addTicket({
+        ...ticketData,
+        createdBy: userEmail,
+        dueDate: new Date(Date.now() + (priority === "Urgent" ? 2 : priority === "High" ? 8 : priority === "Low" ? 72 : 24) * 3600000).toISOString(),
+      } as never);
+    } finally {
+      setIsSubmitting(false);
+      onClose();
+    }
   };
 
   return (
