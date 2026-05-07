@@ -1,0 +1,159 @@
+/**
+ * ============================================================================
+ * SETUP COMPLETE API ROUTE
+ * ============================================================================
+ *
+ * This endpoint completes the initial setup wizard:
+ * 1. Creates the administrator user
+ * 2. Sets the organization name
+ * 3. Marks setup as complete in SystemConfig
+ *
+ * @module /api/setup/complete/route
+ */
+
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import prisma from "@/lib/prisma";
+import { setupWizardSchema } from "@/lib/schemas";
+
+// bcrypt salt rounds (higher = more secure but slower)
+const BCRYPT_SALT_ROUNDS = 12;
+
+// Setup lock expiry - prevents race conditions
+const SETUP_LOCK_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const validationResult = setupWizardSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0]?.message || "Validation failed";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+
+    const { organizationName, adminEmail, adminPassword, adminName } = validationResult.data;
+
+    // Check if DATABASE_URL is set
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: "Database not configured. Please set DATABASE_URL environment variable." },
+        { status: 400 }
+      );
+    }
+
+    // Check if setup is already complete (idempotent check)
+    const existingSetup = await prisma.systemConfig.findUnique({
+      where: { key: "setup_completed" },
+    });
+
+    if (existingSetup?.value === "true") {
+      return NextResponse.json(
+        { error: "Setup has already been completed" },
+        { status: 409 }
+      );
+    }
+
+    // Check for existing admin user (another form of idempotency)
+    const existingAdmin = await prisma.user.findFirst({
+      where: { role: "ADMINISTRATOR" },
+    });
+
+    if (existingAdmin) {
+      return NextResponse.json(
+        { error: "An administrator already exists. Setup cannot be repeated." },
+        { status: 409 }
+      );
+    }
+
+    // Create a lock to prevent race conditions
+    const lockKey = "setup_in_progress";
+    const existingLock = await prisma.systemConfig.findUnique({
+      where: { key: lockKey },
+    });
+
+    if (existingLock) {
+      const lockTime = new Date(existingLock.value);
+      const now = new Date();
+      
+      // If lock is older than 5 minutes, it's stale - we can proceed
+      if (now.getTime() - lockTime.getTime() < SETUP_LOCK_EXPIRY_MS) {
+        return NextResponse.json(
+          { error: "Setup is already in progress. Please wait a few moments." },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Set up the lock
+    await prisma.systemConfig.upsert({
+      where: { key: lockKey },
+      update: { value: new Date().toISOString() },
+      create: { key: lockKey, value: new Date().toISOString() },
+    });
+
+    try {
+      // Hash the admin password
+      const hashedPassword = await bcrypt.hash(adminPassword, BCRYPT_SALT_ROUNDS);
+
+      // Create the administrator user
+      const adminUser = await prisma.user.create({
+        data: {
+          email: adminEmail.toLowerCase(),
+          password: hashedPassword,
+          name: adminName,
+          role: "ADMINISTRATOR",
+          department: "IT",
+        },
+      });
+
+      // Store organization name in system config
+      await prisma.systemConfig.upsert({
+        where: { key: "organization_name" },
+        update: { value: organizationName },
+        create: { key: "organization_name", value: organizationName },
+      });
+
+      // Mark setup as complete
+      await prisma.systemConfig.upsert({
+        where: { key: "setup_completed" },
+        update: { value: "true" },
+        create: { key: "setup_completed", value: "true" },
+      });
+
+      // Remove the lock
+      await prisma.systemConfig.delete({
+        where: { key: lockKey },
+      }).catch(() => {}); // Ignore if lock already deleted
+
+      return NextResponse.json({
+        success: true,
+        message: "Setup completed successfully",
+        user: {
+          id: adminUser.id,
+          email: adminUser.email,
+          name: adminUser.name,
+          role: adminUser.role,
+        },
+      });
+    } catch (innerError) {
+      // Remove lock on failure
+      await prisma.systemConfig.delete({
+        where: { key: lockKey },
+      }).catch(() => {});
+      
+      throw innerError;
+    }
+  } catch (error) {
+    console.error("Setup complete error:", error);
+    
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : "Failed to complete setup";
+    
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
+  }
+}

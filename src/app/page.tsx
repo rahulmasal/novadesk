@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { Scorecards } from "@/components/Scorecards";
 import { Charts } from "@/components/Charts";
@@ -12,15 +13,18 @@ import { UserManagement } from "@/components/UserManagement";
 import { Reports } from "@/components/Reports";
 import { KnowledgeBase } from "@/components/KnowledgeBase";
 import { DashboardBuilder } from "@/components/DashboardBuilder";
+import { SetupWizard } from "@/components/SetupWizard";
 import { useTicketStore } from "@/lib/store";
 import { useRealtimeTickets } from "@/hooks/useRealtime";
 import { Plus, LogOut, Book, Layout, RefreshCw } from "lucide-react";
 
 export default function Dashboard() {
+  const router = useRouter();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
   const [isDashboardBuilderOpen, setIsDashboardBuilderOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
   const {
     currentUserRole,
     currentView,
@@ -30,6 +34,21 @@ export default function Dashboard() {
     checkAuth,
     logout,
   } = useTicketStore();
+
+  // Check if setup is needed on mount
+  useEffect(() => {
+    const checkSetupStatus = async () => {
+      try {
+        const res = await fetch("/api/setup/status");
+        const data = await res.json();
+        setNeedsSetup(data.needsSetup);
+      } catch {
+        // If we can't check setup status, don't block the app
+        setNeedsSetup(false);
+      }
+    };
+    checkSetupStatus();
+  }, []);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -262,6 +281,14 @@ export default function Dashboard() {
   };
 
   // Show login if not authenticated
+  if (needsSetup === null) {
+    return null; // Loading state while checking setup status
+  }
+
+  if (needsSetup) {
+    return <SetupWizard />;
+  }
+
   if (!isAuthenticated) {
     return <Login onLogin={() => {}} />;
   }

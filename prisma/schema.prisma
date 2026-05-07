@@ -222,3 +222,14 @@ enum NotificationType {
   SLA_BREACH
   COMMENT_ADDED
 }
+
+// SystemConfig model - stores system configuration and setup state
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_config")
+}
