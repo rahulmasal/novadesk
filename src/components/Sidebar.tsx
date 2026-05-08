@@ -12,6 +12,7 @@ import {
    Headset,
    FileText,
    Database,
+   LogOut,
  } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ import { cn } from "@/lib/utils";
  * Sidebar - Navigation sidebar with role-based menu items (Dashboard, Tickets, Customers, Reports, etc.)
  */
 export function Sidebar() {
-   const { currentUserRole, currentView, setView, currentUser } =
+   const { currentUserRole, currentView, setView, currentUser, logout } =
      useTicketStore();
 
   const links = [
@@ -121,7 +122,8 @@ export function Sidebar() {
         </nav>
       </div>
 
-<div className="mt-auto p-4 space-y-1">
+{/* Footer - User Info & Actions */}
+        <div className="mt-auto p-4 border-t border-white/5">
           <div className="px-3 py-2.5 rounded-lg text-xs text-neutral-500 border border-white/5 mb-2">
             <p>Department: {currentUser?.department || "N/A"}</p>
             <p>Email: {currentUser?.email || "N/A"}</p>
@@ -129,6 +131,13 @@ export function Sidebar() {
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200">
             <HelpCircle className="w-5 h-5" />
             Help & Support
+          </button>
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
           </button>
         </div>
     </aside>
