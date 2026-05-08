@@ -27,6 +27,7 @@ export default function Dashboard() {
     currentUserRole,
     currentView,
     setTickets,
+    setAllUsers,
     isAuthenticated,
     authToken,
     currentUser,
@@ -52,6 +53,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isAuthenticated && authToken) {
+      fetch("/api/users", {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setAllUsers(data);
+          }
+        })
+        .catch((e) => console.error("Failed to load users:", e));
+
       fetch("/api/tickets", {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -65,7 +79,7 @@ export default function Dashboard() {
         })
         .catch((e) => console.error("Failed to load tickets:", e));
     }
-  }, [isAuthenticated, authToken, setTickets]);
+  }, [isAuthenticated, authToken, setTickets, setAllUsers]);
 
   const renderContent = () => {
     switch (currentView) {

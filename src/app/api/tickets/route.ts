@@ -314,18 +314,18 @@ export async function DELETE(req: NextRequest) {
 
     console.log("[DELETE TICKET] Deleting:", { id, title: ticket.title, user: auth.email });
 
-    await prisma.$transaction(async (tx) => {
-      await tx.auditLog.create({
-        data: {
-          ticketId: id,
-          userId: auth.userId,
-          action: "TICKET_DELETED",
-          details: `Ticket deleted: ${ticket.title}`,
-        },
-      });
+await prisma.$transaction(async (tx) => {
+       await tx.auditLog.create({
+         data: {
+           ticketId: id,
+           userId: auth.userId,
+           action: "TICKET_DELETED",
+           details: `Ticket ${ticket.id} deleted`,
+         },
+       });
 
-      await tx.ticket.delete({ where: { id } });
-    });
+       await tx.ticket.delete({ where: { id } });
+     });
 
     const verify = await prisma.ticket.findUnique({ where: { id } });
     console.log("[DELETE TICKET] Verification - still exists:", verify !== null);

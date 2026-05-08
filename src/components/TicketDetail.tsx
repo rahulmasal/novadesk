@@ -33,14 +33,14 @@ const handleAssignToMe = () => {
      updateTicketStatus(ticket.id, "IN_PROGRESS");
    };
 
-   const handleAssignToAgent = (agentId: string) => {
-     const agent = allUsers.find(u => u.id === agentId);
-     if (agent) {
-       addActivity(ticket.id, `Ticket assigned to ${agent.name}`);
-       updateTicketStatus(ticket.id, "IN_PROGRESS");
-     }
-     setShowAssignDropdown(false);
-   };
+const handleAssignToAgent = (agentId: string) => {
+      const agent = allUsers.find(u => u.id === agentId);
+      if (agent) {
+        addActivity(ticket.id, `Ticket ${ticket.id} assigned to ${agent.name}`);
+        updateTicketStatus(ticket.id, "IN_PROGRESS");
+      }
+      setShowAssignDropdown(false);
+    };
 
   const handleDelete = async () => {
     console.log("[TicketDetail] handleDelete called, currentUserRole:", currentUserRole, "ticketId:", ticket.id);
