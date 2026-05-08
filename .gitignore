@@ -29,6 +29,7 @@ dev-*.txt
 
 # unwanted folders
 .graphify-out
+graphify-out
 .opencode
 .claude
 
