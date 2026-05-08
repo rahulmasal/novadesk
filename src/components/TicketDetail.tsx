@@ -1,29 +1,59 @@
 import { useState } from "react";
-import { useTicketStore, Ticket } from "@/lib/store";
-import { X, Send, UserCheck, CheckCircle, Clock } from "lucide-react";
+import { useTicketStore } from "@/lib/store";
+import { X, Send, UserCheck, CheckCircle, Clock, Trash2, ChevronDown } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
-import { cn } from "@/lib/utils";
 
+/**
+ * TicketDetail - Slide-out detail panel showing full ticket info, activity thread, and admin actions
+ *
+ * @param ticketId - ID of the ticket to display
+ * @param onClose - Callback to close the detail panel
+ */
 export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
-  const { tickets, activities, currentUserRole, updateTicketStatus, addActivity } = useTicketStore();
-  const [comment, setComment] = useState("");
+   const { tickets, activities, currentUserRole, updateTicketStatus, addActivity, deleteTicket, allUsers } = useTicketStore();
+   const [comment, setComment] = useState("");
+   const [isDeleting, setIsDeleting] = useState(false);
+   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
 
-  const ticket = tickets.find((t) => t.id === ticketId);
-  if (!ticket) return null;
+   const ticket = tickets.find((t) => t.id === ticketId);
+   if (!ticket) return null;
 
   const ticketActivities = activities.filter((a) => a.ticketId === ticketId).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) return;
-    addActivity(ticket.id, `${currentUserRole === "Agent" ? "Agent" : "User"} commented: ${comment}`);
+    const isAgentOrAdmin = currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR";
+    addActivity(ticket.id, `${isAgentOrAdmin ? "Agent" : "User"} commented: ${comment}`);
     setComment("");
   };
 
-  const handleAssignToMe = () => {
-    addActivity(ticket.id, `Ticket assigned to Agent.`);
-    // In a real app we'd have an updateTicket method. For now we use status change or activity.
-    updateTicketStatus(ticket.id, "In Progress");
+const handleAssignToMe = () => {
+     addActivity(ticket.id, `Ticket assigned to Agent.`);
+     updateTicketStatus(ticket.id, "IN_PROGRESS");
+   };
+
+   const handleAssignToAgent = (agentId: string) => {
+     const agent = allUsers.find(u => u.id === agentId);
+     if (agent) {
+       addActivity(ticket.id, `Ticket assigned to ${agent.name}`);
+       updateTicketStatus(ticket.id, "IN_PROGRESS");
+     }
+     setShowAssignDropdown(false);
+   };
+
+  const handleDelete = async () => {
+    console.log("[TicketDetail] handleDelete called, currentUserRole:", currentUserRole, "ticketId:", ticket.id);
+    if (!confirm("Delete this ticket? This action cannot be undone.")) return;
+    setIsDeleting(true);
+    const success = await deleteTicket(ticket.id);
+    console.log("[TicketDetail] deleteTicket result:", success);
+    if (success) {
+      onClose();
+    } else {
+      alert("Failed to delete ticket.");
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -81,25 +111,60 @@ export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose:
             </div>
           </div>
 
-          {/* Quick Actions (Agent Only) */}
-          {currentUserRole === "Agent" && (
-            <div className="flex gap-3 pt-4 border-t border-white/10">
-              <button 
-                onClick={handleAssignToMe}
-                className="flex items-center gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-blue-500/30"
-              >
-                <UserCheck className="w-4 h-4" />
-                Assign to me
-              </button>
-              <button 
-                onClick={() => updateTicketStatus(ticket.id, "Resolved")}
-                className="flex items-center gap-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-emerald-500/30"
-              >
-                <CheckCircle className="w-4 h-4" />
-                Mark Resolved
-              </button>
-            </div>
-          )}
+{/* Quick Actions (Agent/Admin) */}
+           {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (
+             <div className="flex gap-3 pt-4 border-t border-white/10">
+               {currentUserRole === "ADMINISTRATOR" && (
+                 <div className="relative">
+                   <button 
+                     onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+                     className="flex items-center gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-blue-500/30"
+                   >
+                     <UserCheck className="w-4 h-4" />
+                     Assign to Agent
+                     <ChevronDown className="w-3 h-3" />
+                   </button>
+                   {showAssignDropdown && (
+                     <div className="absolute z-10 mt-1 w-48 bg-neutral-800 border border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                       {allUsers.filter(u => u.role === "AGENT" || u.role === "ADMINISTRATOR").map(agent => (
+                         <button
+                           key={agent.id}
+                           onClick={() => handleAssignToAgent(agent.id)}
+                           className="w-full text-left px-4 py-2 hover:bg-blue-500/20 text-white text-sm border-b border-white/5 last:border-0"
+                         >
+                           {agent.name}
+                         </button>
+                       ))}
+                     </div>
+                   )}
+                 </div>
+               )}
+               <button 
+                 onClick={handleAssignToMe}
+                 className="flex items-center gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-blue-500/30"
+               >
+                 <UserCheck className="w-4 h-4" />
+                 Assign to me
+               </button>
+               <button 
+                 onClick={() => updateTicketStatus(ticket.id, "RESOLVED")}
+                 className="flex items-center gap-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-emerald-500/30"
+               >
+                 <CheckCircle className="w-4 h-4" />
+                 Mark Resolved
+               </button>
+               {currentUserRole === "ADMINISTRATOR" && (
+                 <button 
+                   onClick={handleDelete}
+                   disabled={isDeleting}
+                   className="flex items-center gap-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-red-500/30 ml-auto disabled:opacity-50"
+                 >
+                   <Trash2 className="w-4 h-4" />
+                   {isDeleting ? "Deleting..." : "Delete"}
+                 </button>
+               )}
+             </div>
+           )}
 
           {/* Activity/Comments Thread */}
           <div>

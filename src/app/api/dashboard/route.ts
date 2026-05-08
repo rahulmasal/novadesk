@@ -11,6 +11,8 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { updateDashboardLayoutSchema } from "@/lib/schemas";
 
+export const dynamic = 'force-dynamic';
+
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -51,6 +53,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  console.log(`[DASHBOARD GET] Fetching dashboard layout`, { user: auth.email });
+
   try {
     let layout = await prisma.dashboardLayout.findUnique({
       where: { userId: auth.userId },
@@ -62,13 +66,15 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    console.log(`[DASHBOARD GET] Layout fetched`, { userId: auth.userId });
+
     return NextResponse.json({
       id: layout.id,
       layout: layout.layout,
       updatedAt: layout.updatedAt.toISOString(),
     });
   } catch (error) {
-    console.error("Error fetching dashboard layout:", error);
+    console.error(`[DASHBOARD GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch dashboard layout" }, { status: 500 });
   }
 }
@@ -79,6 +85,8 @@ export async function PUT(req: NextRequest) {
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  console.log(`[DASHBOARD PUT] Updating dashboard layout`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -97,13 +105,15 @@ export async function PUT(req: NextRequest) {
       create: { userId: auth.userId, layout },
     });
 
+    console.log(`[DASHBOARD PUT] Layout updated`, { userId: auth.userId });
+
     return NextResponse.json({
       id: updatedLayout.id,
       layout: updatedLayout.layout,
       updatedAt: updatedLayout.updatedAt.toISOString(),
     });
   } catch (error) {
-    console.error("Error updating dashboard layout:", error);
+    console.error(`[DASHBOARD PUT] Error:`, error);
     return NextResponse.json({ error: "Failed to update dashboard layout" }, { status: 500 });
   }
 }

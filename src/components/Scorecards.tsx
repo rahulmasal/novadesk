@@ -1,16 +1,19 @@
 import { useTicketStore } from "@/lib/store";
 import { TicketIcon, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 
+/**
+ * Scorecards - KPI scorecards displaying total tickets, open tickets, overdue count, and avg resolution time
+ */
 export function Scorecards() {
   const tickets = useTicketStore((state) => state.tickets);
 
   const total = tickets.length;
-  const open = tickets.filter((t) => t.status !== "Closed" && t.status !== "Resolved").length;
+  const open = tickets.filter((t) => t.status !== "CLOSED" && t.status !== "RESOLVED").length;
   const overdue = tickets.filter(
-    (t) => new Date(t.dueDate) < new Date() && t.status !== "Closed" && t.status !== "Resolved"
+    (t) => new Date(t.dueDate) < new Date() && t.status !== "CLOSED" && t.status !== "RESOLVED"
   ).length;
 
-  const resolved = tickets.filter((t) => t.status === "Resolved" || t.status === "Closed");
+  const resolved = tickets.filter((t) => t.status === "RESOLVED" || t.status === "CLOSED");
   const avgTimeMs =
     resolved.reduce((acc, t) => acc + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()), 0) /
     (resolved.length || 1);

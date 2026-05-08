@@ -14,6 +14,8 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/reports - Generate report with date range (Admin only)
  *
@@ -24,6 +26,8 @@ import { requireAdmin } from "@/lib/auth";
  * Returns all tickets with user information within the date range
  */
 export async function GET(req: NextRequest) {
+  console.log(`[REPORTS GET] Generating report`);
+
   const auth = await requireAdmin(req);
 
   if (!auth) {
@@ -37,7 +41,8 @@ export async function GET(req: NextRequest) {
   const from = fromDate ? new Date(fromDate) : new Date(0);
   const to = toDate ? new Date(toDate) : new Date(8640000000000000);
 
-  const tickets = await prisma.ticket.findMany({
+  try {
+  const ticketsRaw = await prisma.ticket.findMany({
     where: {
       createdAt: {
         gte: from,
@@ -45,9 +50,25 @@ export async function GET(req: NextRequest) {
       },
     },
     include: {
-      createdBy: true,
+      createdBy: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          department: true,
+        }
+      },
     },
   });
+
+  const tickets = ticketsRaw.map(t => ({
+    ...t,
+    userInfo: t.createdBy,
+    dueDate: t.dueDate.toISOString(),
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt.toISOString(),
+  }));
 
   const summary = {
     totalTickets: tickets.length,
@@ -68,6 +89,8 @@ export async function GET(req: NextRequest) {
       (summary.byDepartment[ticket.department] || 0) + 1;
   });
 
+  console.log(`[REPORTS GET] Report generated`, { totalTickets: tickets.length, dateRange: { from: fromDate || "all", to: toDate || "all" } });
+
   return NextResponse.json({
     tickets,
     summary,
@@ -77,4 +100,8 @@ export async function GET(req: NextRequest) {
       to: toDate || "all",
     },
   });
+  } catch (error) {
+    console.error(`[REPORTS GET] Error:`, error);
+    return NextResponse.json({ error: "Failed to generate report" }, { status: 500 });
+  }
 }

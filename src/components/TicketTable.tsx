@@ -7,8 +7,11 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TicketDetail } from "./TicketDetail";
 
+/**
+ * TicketTable - Searchable, paginated table of tickets with status/priority indicators and row selection
+ */
 export function TicketTable() {
-  const { tickets, currentUserRole } = useTicketStore();
+  const { tickets } = useTicketStore();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
@@ -42,26 +45,29 @@ export function TicketTable() {
       
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-white/[0.02] border-b border-white/5 text-neutral-400 text-sm">
-              <th className="p-4 font-medium">Ticket</th>
-              <th className="p-4 font-medium">Status</th>
-              <th className="p-4 font-medium">Priority</th>
-              <th className="p-4 font-medium">Category</th>
-              <th className="p-4 font-medium">SLA Time Left</th>
-            </tr>
-          </thead>
+<thead>
+             <tr className="bg-white/[0.02] border-b border-white/5 text-neutral-400 text-sm">
+               <th className="p-4 font-medium">Ticket</th>
+               <th className="p-4 font-medium">Username</th>
+               <th className="p-4 font-medium">Status</th>
+               <th className="p-4 font-medium">Priority</th>
+               <th className="p-4 font-medium">Category</th>
+               <th className="p-4 font-medium">Hostname</th>
+               <th className="p-4 font-medium">Serial</th>
+               <th className="p-4 font-medium">SLA Time Left</th>
+             </tr>
+           </thead>
           <tbody>
             {paginated.map((ticket) => (
               <TicketRow key={ticket.id} ticket={ticket} onClick={() => setSelectedTicketId(ticket.id)} />
             ))}
-            {paginated.length === 0 && (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-neutral-500 text-sm">
-                  No tickets found.
-                </td>
-              </tr>
-            )}
+{paginated.length === 0 && (
+               <tr>
+                 <td colSpan={8} className="p-8 text-center text-neutral-500 text-sm">
+                   No tickets found.
+                 </td>
+               </tr>
+             )}
           </tbody>
         </table>
       </div>
@@ -96,11 +102,11 @@ export function TicketTable() {
 }
 
 function TicketRow({ ticket, onClick }: { ticket: Ticket, onClick: () => void }) {
-  const isUrgent = ticket.priority === "Urgent";
+  const isUrgent = ticket.priority === "URGENT";
   
   const createdTime = new Date(ticket.createdAt).getTime();
   const dueTime = new Date(ticket.dueDate).getTime();
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -117,11 +123,11 @@ function TicketRow({ ticket, onClick }: { ticket: Ticket, onClick: () => void })
   const barColor = isBreached ? "bg-red-500" : isWarning ? "bg-amber-400" : "bg-emerald-400";
   
   const statusColors: Record<string, string> = {
-    "New": "bg-blue-500/20 text-blue-400 border-blue-500/20",
-    "In Progress": "bg-amber-500/20 text-amber-400 border-amber-500/20",
-    "Pending Vendor": "bg-purple-500/20 text-purple-400 border-purple-500/20",
-    "Resolved": "bg-emerald-500/20 text-emerald-400 border-emerald-500/20",
-    "Closed": "bg-neutral-500/20 text-neutral-400 border-neutral-500/20",
+    "NEW": "bg-blue-500/20 text-blue-400 border-blue-500/20",
+    "IN_PROGRESS": "bg-amber-500/20 text-amber-400 border-amber-500/20",
+    "PENDING_VENDOR": "bg-purple-500/20 text-purple-400 border-purple-500/20",
+    "RESOLVED": "bg-emerald-500/20 text-emerald-400 border-emerald-500/20",
+    "CLOSED": "bg-neutral-500/20 text-neutral-400 border-neutral-500/20",
   };
 
   return (
@@ -131,16 +137,18 @@ function TicketRow({ ticket, onClick }: { ticket: Ticket, onClick: () => void })
       "border-b border-white/5 hover:bg-white/[0.05] transition-colors group cursor-pointer",
       isUrgent ? "bg-red-500/5 hover:bg-red-500/10" : ""
     )}>
-      <td className="p-4">
-        <div className="flex items-center gap-3">
-          {isUrgent && <AlertCircle className="w-4 h-4 text-red-500 animate-pulse" />}
-          <div>
-            <p className="text-sm font-medium text-white mb-0.5">{ticket.title}</p>
-            <p className="text-xs text-neutral-500">#{ticket.id} • created {formatDistanceToNow(parseISO(ticket.createdAt))} ago</p>
+<td className="p-4">
+          <div className="flex items-center gap-3">
+            {isUrgent && <AlertCircle className="w-4 h-4 text-red-500 animate-pulse" />}
+            <div>
+              <p className="text-sm font-medium text-white mb-0.5">{ticket.title}</p>
+            </div>
           </div>
-        </div>
-      </td>
-      <td className="p-4">
+        </td>
+       <td className="p-4 text-sm text-neutral-300">
+         {ticket.username || "-"}
+       </td>
+       <td className="p-4">
         <span className={cn("px-2.5 py-1 text-xs font-medium rounded-full border", statusColors[ticket.status])}>
           {ticket.status}
         </span>
@@ -149,9 +157,9 @@ function TicketRow({ ticket, onClick }: { ticket: Ticket, onClick: () => void })
         <div className="flex items-center gap-2">
           <span className={cn(
             "w-2 h-2 rounded-full",
-            ticket.priority === "Low" ? "bg-blue-400" :
-            ticket.priority === "Medium" ? "bg-amber-400" :
-            ticket.priority === "High" ? "bg-orange-500" :
+            ticket.priority === "LOW" ? "bg-blue-400" :
+            ticket.priority === "MEDIUM" ? "bg-amber-400" :
+            ticket.priority === "HIGH" ? "bg-orange-500" :
             "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"
           )} />
           <span className={cn("text-sm", isUrgent ? "text-red-400 font-medium" : "text-neutral-300")}>
@@ -161,6 +169,12 @@ function TicketRow({ ticket, onClick }: { ticket: Ticket, onClick: () => void })
       </td>
       <td className="p-4 text-sm text-neutral-300">
         {ticket.category}
+      </td>
+      <td className="p-4 text-sm text-neutral-300">
+        {ticket.hostname || "-"}
+      </td>
+      <td className="p-4 text-sm text-neutral-300 font-mono">
+        {ticket.laptopSerial || "-"}
       </td>
       <td className="p-4">
         <div className="flex flex-col gap-1.5 w-32">

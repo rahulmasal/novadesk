@@ -52,6 +52,9 @@ interface ReportData {
   };
 }
 
+/**
+ * Reports - Report generation interface with date range picker, export buttons (CSV/PDF), and results table
+ */
 export function Reports() {
   const { authToken, currentUserRole } = useTicketStore();
   const [fromDate, setFromDate] = useState("");
@@ -59,7 +62,7 @@ export function Reports() {
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const isAdmin = currentUserRole === "Administrator";
+  const isAdmin = currentUserRole === "ADMINISTRATOR";
 
   const generateReport = async () => {
     if (!isAdmin) return;
@@ -311,11 +314,11 @@ export function Reports() {
                           </p>
                           <span
                             className={`text-xs px-2 py-0.5 rounded-full ${
-                              ticket.priority === "Urgent"
+                              ticket.priority === "URGENT"
                                 ? "bg-red-500/20 text-red-400"
-                                : ticket.priority === "High"
+                                : ticket.priority === "HIGH"
                                   ? "bg-orange-500/20 text-orange-400"
-                                  : ticket.priority === "Medium"
+                                  : ticket.priority === "MEDIUM"
                                     ? "bg-yellow-500/20 text-yellow-400"
                                     : "bg-green-500/20 text-green-400"
                             }`}
@@ -338,16 +341,16 @@ export function Reports() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <span
-                          className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                            ticket.status === "New"
-                              ? "bg-blue-500/20 text-blue-400"
-                              : ticket.status === "In Progress"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : ticket.status === "Resolved"
-                                  ? "bg-green-500/20 text-green-400"
-                                  : "bg-neutral-500/20 text-neutral-400"
-                          }`}
+                          <span
+                            className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                              ticket.status === "NEW"
+                                ? "bg-blue-500/20 text-blue-400"
+                                : ticket.status === "IN_PROGRESS"
+                                  ? "bg-yellow-500/20 text-yellow-400"
+                                  : ticket.status === "RESOLVED"
+                                    ? "bg-green-500/20 text-green-400"
+                                    : "bg-neutral-500/20 text-neutral-400"
+                            }`}
                         >
                           {ticket.status}
                         </span>

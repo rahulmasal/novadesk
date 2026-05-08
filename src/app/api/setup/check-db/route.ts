@@ -10,31 +10,53 @@
  */
 
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-export async function GET() {
+export async function POST(req: Request) {
+  console.log(`[SETUP CHECK-DB POST] Testing database connection`);
+
   try {
-    // Check if DATABASE_URL is set
-    const databaseUrl = process.env.DATABASE_URL;
+    const { host, port, user, pass, name } = await req.json();
     
-    if (!databaseUrl) {
+    if (!host || !port || !user || !name) {
       return NextResponse.json(
-        { connected: false, error: "DATABASE_URL environment variable is not set" },
-        { status: 200 }
+        { connected: false, error: "Missing required connection details" },
+        { status: 400 }
       );
     }
 
-    // Try to import prisma and test connection
-    const prisma = (await import("@/lib/prisma")).default;
-    
-    // Attempt a simple query to test connection
-    await prisma.$queryRaw`SELECT 1`;
-    
-    return NextResponse.json({
-      connected: true,
-      message: "Database connection successful",
+    // Construct connection string
+    // Format: postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+    const databaseUrl = `postgresql://${user}:${encodeURIComponent(pass)}@${host}:${port}/${name}`;
+
+    // Create a temporary prisma client to test connection
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
     });
+    
+    try {
+      // Attempt a simple query to test connection
+      await prisma.$queryRaw`SELECT 1`;
+      await prisma.$disconnect();
+      
+      console.log(`[SETUP CHECK-DB POST] Database connection successful`, { host, database: name });
+
+      return NextResponse.json({
+        connected: true,
+        message: "Database connection successful",
+        url: databaseUrl, // Return the URL so it can be used in the final step
+      });
+    } catch (dbError) {
+      console.error(`[SETUP CHECK-DB POST] Database test failed:`, dbError);
+      await prisma.$disconnect();
+      throw dbError;
+    }
   } catch (error) {
-    console.error("Database connection check failed:", error);
+    console.error(`[SETUP CHECK-DB POST] Error:`, error);
     
     const errorMessage = error instanceof Error 
       ? error.message 
@@ -44,9 +66,20 @@ export async function GET() {
       { 
         connected: false, 
         error: errorMessage,
-        hint: "Check your DATABASE_URL environment variable. For Supabase, use the Connection string from Settings > Database."
+        hint: "Check your database credentials and ensure the database exists and is accessible."
       },
       { status: 200 }
     );
   }
+}
+
+// Keep GET for compatibility or status check if needed
+export async function GET() {
+  console.log(`[SETUP CHECK-DB GET] Checking database URL configuration`);
+  const databaseUrl = process.env.DATABASE_URL;
+  console.log(`[SETUP CHECK-DB GET] Database URL configured: ${!!databaseUrl}`);
+  return NextResponse.json({
+    configured: !!databaseUrl,
+    hasEnv: !!process.env.DATABASE_URL,
+  });
 }

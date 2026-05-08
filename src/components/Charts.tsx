@@ -4,6 +4,9 @@ import { useTicketStore } from "@/lib/store";
 import { format, parseISO } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 
+/**
+ * Charts - Dashboard charts showing ticket volume trends (line chart) and priority distribution (pie chart)
+ */
 export function Charts() {
   const tickets = useTicketStore((state) => state.tickets);
 

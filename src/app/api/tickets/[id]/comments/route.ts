@@ -53,15 +53,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    console.log(`[COMMENTS GET] Fetching comments for ticket`, { ticketId, user: auth.email });
+
     const comments = await prisma.comment.findMany({
       where: { ticketId },
       include: { author: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: "asc" },
     });
 
+    console.log(`[COMMENTS GET] Returning ${comments.length} comments`);
+
     return NextResponse.json(comments.map(formatComment));
   } catch (error) {
-    console.error("Error fetching comments:", error);
+    console.error(`[COMMENTS GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch comments" }, { status: 500 });
   }
 }
@@ -95,6 +99,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    console.log(`[COMMENTS POST] Creating comment for ticket`, { ticketId, user: auth.email });
+
     const comment = await prisma.comment.create({
       data: { content, ticketId, authorId: auth.userId },
       include: { author: { select: { id: true, name: true, email: true } } },
@@ -107,9 +113,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       details: `Comment added: ${content.substring(0, 100)}...`,
     });
 
+    console.log(`[COMMENTS POST] Comment created`, { commentId: comment.id });
+
     return NextResponse.json(formatComment(comment), { status: 201 });
   } catch (error) {
-    console.error("Error creating comment:", error);
+    console.error(`[COMMENTS POST] Error:`, error);
     return NextResponse.json({ error: "Failed to create comment" }, { status: 500 });
   }
 }
@@ -147,6 +155,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    console.log(`[COMMENTS PATCH] Updating comment`, { commentId: id, ticketId, user: auth.email });
+
     const updatedComment = await prisma.comment.update({
       where: { id },
       data: { content },
@@ -161,9 +171,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       newValue: content,
     });
 
+    console.log(`[COMMENTS PATCH] Comment updated`, { commentId: updatedComment.id });
+
     return NextResponse.json(formatComment(updatedComment));
   } catch (error) {
-    console.error("Error updating comment:", error);
+    console.error(`[COMMENTS PATCH] Error:`, error);
     return NextResponse.json({ error: "Failed to update comment" }, { status: 500 });
   }
 }
@@ -198,6 +210,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    console.log(`[COMMENTS DELETE] Deleting comment`, { commentId: id, ticketId, user: auth.email });
+
     await prisma.comment.delete({ where: { id } });
 
     await logAuditEvent({
@@ -207,9 +221,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       details: "Comment deleted",
     });
 
+    console.log(`[COMMENTS DELETE] Comment deleted`, { commentId: id });
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting comment:", error);
+    console.error(`[COMMENTS DELETE] Error:`, error);
     return NextResponse.json({ error: "Failed to delete comment" }, { status: 500 });
   }
 }

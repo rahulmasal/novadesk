@@ -22,6 +22,12 @@ interface KnowledgeBaseProps {
   onClose?: () => void;
 }
 
+/**
+ * KnowledgeBase - Knowledge base article viewer with search filtering and category selection
+ *
+ * @param onArticleClick - Callback when an article is clicked
+ * @param onClose - Callback to close the viewer
+ */
 export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,22 +35,20 @@ export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null);
 
-  const fetchArticles = async () => {
-    try {
-      const res = await fetch("/api/knowledge");
-      if (res.ok) {
-        const data = await res.json();
-        setArticles(data.articles || []);
-      }
-    } catch (error) {
-      console.error("Error fetching knowledge base:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchArticles();
+    (async () => {
+      try {
+        const res = await fetch("/api/knowledge");
+        if (res.ok) {
+          const data = await res.json();
+          setArticles(data.articles || []);
+        }
+      } catch (error) {
+        console.error("Error fetching knowledge base:", error);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const categories = Array.from(new Set(articles.map((a) => a.category)));

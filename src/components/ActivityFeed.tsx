@@ -4,8 +4,11 @@ import { useTicketStore } from "@/lib/store";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { Activity, MessageSquare } from "lucide-react";
 
+/**
+ * ActivityFeed - Recent activity feed showing latest ticket comments, status changes, and system events
+ */
 export function ActivityFeed() {
-  const activities = useTicketStore((state) => state.activities).slice(0, 8);
+   const activities = useTicketStore((state) => state.activities);
 
   return (
     <div className="glass-dark rounded-2xl p-5 mt-4 flex flex-col h-full min-h-[400px]">

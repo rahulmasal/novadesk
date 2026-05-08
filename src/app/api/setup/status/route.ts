@@ -12,6 +12,8 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  console.log(`[SETUP STATUS GET] Checking setup status`);
+
   try {
     // Check if DATABASE_URL is set
     const databaseUrl = process.env.DATABASE_URL;

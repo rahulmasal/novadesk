@@ -109,7 +109,7 @@ async function runDailyReport(): Promise<{ sent: boolean; error?: string }> {
     const openTickets = await prisma.ticket.count({ where: { status: { notIn: ["RESOLVED", "CLOSED"] } } });
     const breachedTickets = await prisma.slaEscalation.count({ where: { breachLevel: "BREACHED" } });
 
-    console.log(`Daily Report: Created=${created}, Resolved=${resolved}, Open=${openTickets}, Breached=${breachedTickets}`);
+    console.log(`[CRON REPORT] Daily report`, { created, resolved, open: openTickets, breached: breachedTickets });
 
     return { sent: true };
   } catch (error) {
@@ -118,6 +118,8 @@ async function runDailyReport(): Promise<{ sent: boolean; error?: string }> {
 }
 
 export async function GET(req: NextRequest) {
+  console.log(`[CRON GET] Running scheduled tasks`);
+
   const authHeader = req.headers.get("authorization");
   const expectedToken = process.env.CRON_SECRET;
 
@@ -146,11 +148,12 @@ export async function GET(req: NextRequest) {
       success: true, action, results, timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Cron job error:", error);
+    console.error(`[CRON GET] Error:`, error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
+  console.log(`[CRON POST] Running scheduled tasks`);
   return GET(req);
 }

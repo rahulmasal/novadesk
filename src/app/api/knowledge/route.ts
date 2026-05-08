@@ -11,6 +11,8 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { createKnowledgeArticleSchema, updateKnowledgeArticleSchema } from "@/lib/schemas";
 
+export const dynamic = 'force-dynamic';
+
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -36,6 +38,8 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
 export async function GET(req: NextRequest) {
   const auth = await getAuthUser(req);
   const { searchParams } = new URL(req.url);
+
+  console.log(`[KNOWLEDGE GET] Fetching articles`, { query: searchParams.get("query"), category: searchParams.get("category"), user: auth?.email });
 
   try {
     const query = searchParams.get("query") || "";
@@ -67,12 +71,14 @@ export async function GET(req: NextRequest) {
       prisma.knowledgeBaseArticle.count({ where }),
     ]);
 
+    console.log(`[KNOWLEDGE GET] Returning ${articles.length} of ${total} articles`);
+
     return NextResponse.json({
       articles: articles.map(formatArticle),
       total, limit, offset,
     });
   } catch (error) {
-    console.error("Error fetching knowledge articles:", error);
+    console.error(`[KNOWLEDGE GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch articles" }, { status: 500 });
   }
 }
@@ -83,6 +89,8 @@ export async function POST(req: NextRequest) {
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  console.log(`[KNOWLEDGE POST] Creating article`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -106,9 +114,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log(`[KNOWLEDGE POST] Article created`, { articleId: article.id, title: article.title });
+
     return NextResponse.json(formatArticle(article), { status: 201 });
   } catch (error) {
-    console.error("Error creating knowledge article:", error);
+    console.error(`[KNOWLEDGE POST] Error:`, error);
     return NextResponse.json({ error: "Failed to create article" }, { status: 500 });
   }
 }
@@ -119,6 +129,8 @@ export async function PATCH(req: NextRequest) {
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  console.log(`[KNOWLEDGE PATCH] Updating article`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -136,9 +148,11 @@ export async function PATCH(req: NextRequest) {
       data: updates,
     });
 
+    console.log(`[KNOWLEDGE PATCH] Article updated`, { articleId: id });
+
     return NextResponse.json(formatArticle(article));
   } catch (error) {
-    console.error("Error updating knowledge article:", error);
+    console.error(`[KNOWLEDGE PATCH] Error:`, error);
     return NextResponse.json({ error: "Failed to update article" }, { status: 500 });
   }
 }
@@ -150,6 +164,8 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  console.log(`[KNOWLEDGE DELETE] Deleting article`, { user: auth.email });
+
   try {
     const body = await req.json();
     const { id } = body;
@@ -160,9 +176,11 @@ export async function DELETE(req: NextRequest) {
 
     await prisma.knowledgeBaseArticle.delete({ where: { id } });
 
+    console.log(`[KNOWLEDGE DELETE] Article deleted`, { articleId: id });
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting knowledge article:", error);
+    console.error(`[KNOWLEDGE DELETE] Error:`, error);
     return NextResponse.json({ error: "Failed to delete article" }, { status: 500 });
   }
 }

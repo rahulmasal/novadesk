@@ -25,10 +25,22 @@ export const supabaseAdmin = supabaseUrl && supabaseServiceKey
 
 export const STORAGE_BUCKETS = { ATTACHMENTS: "ticket-attachments" } as const;
 
+/**
+ * Gets a signed URL for accessing a file attachment from Supabase storage
+ *
+ * @param filename - The name of the file in storage
+ * @returns Public URL string for the attachment
+ */
 export function getAttachmentUrl(filename: string): string {
   return `${supabaseUrl}/storage/v1/object/public/${STORAGE_BUCKETS.ATTACHMENTS}/${filename}`;
 }
 
+/**
+ * Creates a signed upload URL for a file attachment
+ *
+ * @param filename - The name of the file to upload
+ * @returns Object with signed URL and token, or null if creation fails or service key is missing
+ */
 export async function createUploadUrl(filename: string): Promise<{ url: string; token: string } | null> {
   if (!supabaseServiceKey) return null;
 
@@ -49,6 +61,11 @@ export async function createUploadUrl(filename: string): Promise<{ url: string; 
   }
 }
 
+/**
+ * Checks whether Supabase environment variables are configured
+ *
+ * @returns True if both SUPABASE_URL and SUPABASE_ANON_KEY are set
+ */
 export function isSupabaseConfigured(): boolean {
   return Boolean(supabaseUrl && supabaseAnonKey);
 }

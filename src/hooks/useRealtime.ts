@@ -27,7 +27,10 @@ type RealtimeCallback = (payload: {
 }) => void;
 
 /**
- * Hook for subscribing to real-time ticket updates
+ * Subscribes to real-time INSERT/UPDATE/DELETE events on the tickets table via Supabase.
+ * Automatically updates the Zustand store's ticket list so the UI stays in sync.
+ *
+ * @returns void (side-effect only: mutates the global ticket store)
  */
 export function useRealtimeTickets() {
   const { setTickets, tickets } = useTicketStore();
@@ -95,7 +98,12 @@ export function useRealtimeTickets() {
 }
 
 /**
- * Hook for subscribing to real-time comments on a specific ticket
+ * Subscribes to real-time comment changes for a specific ticket.
+ * Provides a `subscribe` method that callers use to register a callback
+ * invoked on every INSERT / UPDATE / DELETE on the ticket's comments.
+ *
+ * @param ticketId - The ID of the ticket to listen for comment changes on (pass null to skip)
+ * @returns An object with a `subscribe` method to register a RealtimeCallback
  */
 export function useRealtimeComments(ticketId: string | null) {
   const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -145,7 +153,10 @@ export function useRealtimeComments(ticketId: string | null) {
 }
 
 /**
- * Hook for subscribing to SLA escalation events
+ * Subscribes to real-time SLA escalation alert events.
+ * Fires a callback whenever an SLA record transitions to WARNING or BREACHED level.
+ *
+ * @returns An object with an `onSlaAlert` method to register a callback for SLA breach events
  */
 export function useRealtimeSlaAlerts() {
   const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -195,7 +206,14 @@ export function useRealtimeSlaAlerts() {
 }
 
 /**
- * Generic real-time subscription hook
+ * Generic real-time subscription hook for any Supabase table.
+ * Opens a channel scoped to the given table and optional filter, calling
+ * `onChange` for every INSERT, UPDATE, or DELETE event.
+ *
+ * @param table - The database table name to subscribe to
+ * @param filter - Optional filter string (e.g. "ticketId=eq.123") to narrow which rows trigger events
+ * @param onChange - Callback fired on INSERT / UPDATE / DELETE events, receiving the typed payload
+ * @returns void (side-effect only; cleans up the channel on unmount or dependency change)
  */
 export function useRealtimeSubscription<T>(
   table: string,

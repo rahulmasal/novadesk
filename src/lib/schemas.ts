@@ -309,6 +309,31 @@ export const setupWizardSchema = z.object({
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number"),
   adminName: z.string().min(2, "Admin name must be at least 2 characters"),
+  databaseUrl: z.string().startsWith("postgresql://", "Invalid database URL format"),
+});
+
+// ============================================================================
+// PASSWORD SCHEMAS
+// ============================================================================
+
+export const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, "Current password is required"),
+  newPassword: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+});
+
+export const adminResetPasswordSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  newPassword: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
 });
 
 // ============================================================================

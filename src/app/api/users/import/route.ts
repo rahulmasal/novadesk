@@ -21,6 +21,8 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 const BCRYPT_SALT_ROUNDS = 12;
 
 function parseCSV(csvText: string): string[][] {
@@ -70,6 +72,8 @@ export async function POST(req: NextRequest) {
   if (!auth) {
     return new NextResponse("Forbidden - Admin only", { status: 403 });
   }
+
+  console.log(`[USERS IMPORT POST] Starting bulk user import`, { adminUser: auth?.email });
 
   try {
     const { csv } = await req.json();
@@ -154,6 +158,8 @@ export async function POST(req: NextRequest) {
       results.imported++;
     }
 
+    console.log(`[USERS IMPORT POST] Import completed`, { total: dataRows.length, imported: results.imported, skipped: results.skipped });
+
     return NextResponse.json({
       success: true,
       summary: {
@@ -165,7 +171,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Import error:", error);
+    console.error(`[USERS IMPORT POST] Error:`, error);
     return NextResponse.json(
       { error: "Failed to parse CSV: " + errorMessage },
       { status: 400 },

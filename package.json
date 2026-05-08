@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "schedule": "node scheduler.mjs"
+    "schedule": "node scheduler.mjs",
+    "db:users": "node scripts/fetch-users-by-role.cjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

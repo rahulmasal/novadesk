@@ -12,6 +12,8 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { createUserSchema, updateUserSchema } from "@/lib/schemas";
 
+export const dynamic = 'force-dynamic';
+
 const BCRYPT_SALT_ROUNDS = 12;
 
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
@@ -40,17 +42,21 @@ export async function GET(req: NextRequest) {
   const auth = await getAuthUser(req);
 
   if (!auth || (auth.role !== "ADMINISTRATOR" && auth.role !== "AGENT")) {
+    console.log(`[USERS GET] Forbidden - role: ${auth?.role}, user: ${auth?.email}`);
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  console.log(`[USERS GET] Fetching users`, { role: auth.role, user: auth.email });
+
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, email: true, name: true, role: true, department: true, createdAt: true, updatedAt: true },
+      select: { id: true, email: true, name: true, role: true, department: true, hostname: true, laptopSerial: true, createdAt: true, updatedAt: true },
       orderBy: { createdAt: "desc" },
     });
+    console.log(`[USERS GET] Returning ${users.length} users`);
     return NextResponse.json(users);
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error(`[USERS GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
 }
@@ -61,6 +67,8 @@ export async function POST(req: NextRequest) {
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  console.log(`[USERS POST] Creating user`, { adminUser: auth.email });
 
   try {
     const body = await req.json();
@@ -94,9 +102,11 @@ export async function POST(req: NextRequest) {
       select: { id: true, email: true, name: true, role: true, department: true, createdAt: true },
     });
 
+    console.log(`[USERS POST] User created`, { userId: user.id, email: user.email, role: user.role });
+
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
-    console.error("Error creating user:", error);
+    console.error(`[USERS POST] Error:`, error);
     return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
   }
 }
@@ -107,6 +117,8 @@ export async function PATCH(req: NextRequest) {
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  console.log(`[USERS PATCH] Updating user`, { adminUser: auth.email });
 
   try {
     const body = await req.json();
@@ -134,9 +146,11 @@ export async function PATCH(req: NextRequest) {
       select: { id: true, email: true, name: true, role: true, department: true, createdAt: true },
     });
 
+    console.log(`[USERS PATCH] User updated`, { userId: id, updatedBy: auth.userId });
+
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error updating user:", error);
+    console.error(`[USERS PATCH] Error:`, error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }
@@ -147,6 +161,8 @@ export async function DELETE(req: NextRequest) {
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  console.log(`[USERS DELETE] Deleting user`, { adminUser: auth.email });
 
   try {
     const body = await req.json();
@@ -162,9 +178,11 @@ export async function DELETE(req: NextRequest) {
 
     await prisma.user.delete({ where: { id } });
 
+    console.log(`[USERS DELETE] User deleted`, { userId: id, deletedBy: auth.userId });
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting user:", error);
+    console.error(`[USERS DELETE] Error:`, error);
     return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }
 }

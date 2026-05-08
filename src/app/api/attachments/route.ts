@@ -13,6 +13,8 @@ import prisma from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { supabaseAdmin, STORAGE_BUCKETS, getAttachmentUrl } from "@/lib/supabase";
 
+export const dynamic = 'force-dynamic';
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 const ALLOWED_MIME_TYPES = [
@@ -50,6 +52,8 @@ export async function POST(req: NextRequest) {
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  console.log(`[ATTACHMENTS POST] Uploading attachment`, { user: auth.email });
 
   try {
     const formData = await req.formData();
@@ -118,6 +122,8 @@ export async function POST(req: NextRequest) {
       details: `File uploaded: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`,
     });
 
+    console.log(`[ATTACHMENTS POST] Attachment uploaded`, { attachmentId: attachment.id, filename: file.name, ticketId });
+
     return NextResponse.json({
       id: attachment.id,
       filename: attachment.filename,
@@ -127,7 +133,7 @@ export async function POST(req: NextRequest) {
       createdAt: attachment.createdAt.toISOString(),
     }, { status: 201 });
   } catch (error) {
-    console.error("Error creating attachment:", error);
+    console.error(`[ATTACHMENTS POST] Error:`, error);
     return NextResponse.json({ error: "Failed to create attachment" }, { status: 500 });
   }
 }
@@ -146,6 +152,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Ticket ID is required" }, { status: 400 });
   }
 
+  console.log(`[ATTACHMENTS GET] Fetching attachments`, { ticketId, user: auth.email });
+
   try {
     const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
 
@@ -162,11 +170,13 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
+    console.log(`[ATTACHMENTS GET] Returning ${attachments.length} attachments`);
+
     return NextResponse.json(attachments.map((a: { id: string; filename: string; url: string; mimeType: string; size: number; createdAt: Date }) => ({
       id: a.id, filename: a.filename, url: a.url, mimeType: a.mimeType, size: a.size, createdAt: a.createdAt.toISOString(),
     })));
   } catch (error) {
-    console.error("Error fetching attachments:", error);
+    console.error(`[ATTACHMENTS GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch attachments" }, { status: 500 });
   }
 }
@@ -177,6 +187,8 @@ export async function DELETE(req: NextRequest) {
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  console.log(`[ATTACHMENTS DELETE] Deleting attachment`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -216,9 +228,11 @@ export async function DELETE(req: NextRequest) {
       oldValue: attachment.filename,
     });
 
+    console.log(`[ATTACHMENTS DELETE] Attachment deleted`, { attachmentId: id });
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting attachment:", error);
+    console.error(`[ATTACHMENTS DELETE] Error:`, error);
     return NextResponse.json({ error: "Failed to delete attachment" }, { status: 500 });
   }
 }

@@ -2,23 +2,25 @@
 
 import { useTicketStore } from "@/lib/store";
 import {
-  LayoutDashboard,
-  Ticket,
-  Users,
-  Settings,
-  HelpCircle,
-  UserCircle2,
-  LifeBuoy,
-  Shield,
-  Headset,
-  FileText,
-  Database,
-} from "lucide-react";
+   LayoutDashboard,
+   Ticket,
+   Users,
+   Settings,
+   HelpCircle,
+   LifeBuoy,
+   Shield,
+   Headset,
+   FileText,
+   Database,
+ } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Sidebar - Navigation sidebar with role-based menu items (Dashboard, Tickets, Customers, Reports, etc.)
+ */
 export function Sidebar() {
-  const { currentUserRole, currentView, setView, currentUser, logout } =
-    useTicketStore();
+   const { currentUserRole, currentView, setView, currentUser } =
+     useTicketStore();
 
   const links = [
     { icon: LayoutDashboard, label: "Dashboard", id: "Dashboard" as const },
@@ -55,16 +57,16 @@ export function Sidebar() {
   ];
 
   const filteredLinks = links.filter((l) => {
-    if (l.agentOnly && currentUserRole === "End User") return false;
-    if (l.adminOnly && currentUserRole !== "Administrator") return false;
+    if (l.agentOnly && currentUserRole === "END_USER") return false;
+    if (l.adminOnly && currentUserRole !== "ADMINISTRATOR") return false;
     return true;
   });
 
   const getRoleIcon = () => {
     switch (currentUserRole) {
-      case "Administrator":
+      case "ADMINISTRATOR":
         return <Shield className="w-4 h-4 text-emerald-400" />;
-      case "Agent":
+      case "AGENT":
         return <Headset className="w-4 h-4 text-purple-400" />;
       default:
         return null;
@@ -119,16 +121,16 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="mt-auto p-4 space-y-1">
-        <div className="px-3 py-2.5 rounded-lg text-xs text-neutral-500 border border-white/5 mb-2">
-          <p>Department: {currentUser?.department || "N/A"}</p>
-          <p>Email: {currentUser?.email || "N/A"}</p>
+<div className="mt-auto p-4 space-y-1">
+          <div className="px-3 py-2.5 rounded-lg text-xs text-neutral-500 border border-white/5 mb-2">
+            <p>Department: {currentUser?.department || "N/A"}</p>
+            <p>Email: {currentUser?.email || "N/A"}</p>
+          </div>
+          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200">
+            <HelpCircle className="w-5 h-5" />
+            Help & Support
+          </button>
         </div>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-white/5 transition-all duration-200">
-          <HelpCircle className="w-5 h-5" />
-          Help & Support
-        </button>
-      </div>
     </aside>
   );
 }

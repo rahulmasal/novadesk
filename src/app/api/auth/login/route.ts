@@ -23,6 +23,7 @@ import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "@/lib/prisma";
 import { loginSchema, registerSchema } from "@/lib/schemas";
+import { logAuditEvent } from "@/lib/audit";
 
 // Session expiry time in milliseconds (24 hours)
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
@@ -45,6 +46,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, password } = validationResult.data;
+
+    console.log(`[AUTH POST] Login attempt`, { email });
 
     // Authenticate against Prisma database with bcrypt
     const user = await prisma.user.findUnique({
@@ -75,14 +78,24 @@ export async function POST(req: NextRequest) {
     });
 
     // Return user without password
-    const { password: _, ...safeUser } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _pw, ...safeUser } = user;
+
+    console.log(`[AUTH POST] Login successful`, { userId: user.id, email: user.email });
+
+    await logAuditEvent({
+      ticketId: "system",
+      userId: user.id,
+      action: "LOGIN",
+      details: `User ${user.email} logged in`,
+    }).catch(() => {});
 
     return NextResponse.json({
       user: safeUser,
       token: sessionToken,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error(`[AUTH POST] Error:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -91,6 +104,8 @@ export async function POST(req: NextRequest) {
  * GET /api/auth/login - Check if current session is valid
  */
 export async function GET(req: NextRequest) {
+  console.log(`[AUTH GET] Checking session`);
+
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -108,6 +123,7 @@ export async function GET(req: NextRequest) {
       if (session) {
         await prisma.session.delete({ where: { id: session.id } });
       }
+      console.log(`[AUTH GET] Session invalid or expired`);
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
@@ -120,12 +136,14 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    console.log(`[AUTH GET] Session valid`, { userId: session.user.id, email: session.user.email });
+
     return NextResponse.json({
       authenticated: true,
       user: session.user,
     });
   } catch (error) {
-    console.error("Session check error:", error);
+    console.error(`[AUTH GET] Error:`, error);
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 }
@@ -134,6 +152,8 @@ export async function GET(req: NextRequest) {
  * DELETE /api/auth/login - Logout (destroy session)
  */
 export async function DELETE(req: NextRequest) {
+  console.log(`[AUTH DELETE] Logging out`);
+
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -141,7 +161,7 @@ export async function DELETE(req: NextRequest) {
     try {
       await prisma.session.deleteMany({ where: { token } });
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error(`[AUTH DELETE] Error:`, error);
     }
   }
 
@@ -163,6 +183,8 @@ export async function PUT(req: NextRequest) {
 
     const { email, password, name, department } = validationResult.data;
 
+    console.log(`[AUTH PUT] Registering user`, { email, name });
+
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
@@ -183,11 +205,14 @@ export async function PUT(req: NextRequest) {
       },
     });
 
-    const { password: _, ...safeUser } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _pw, ...safeUser } = user;
+
+    console.log(`[AUTH PUT] User registered`, { userId: user.id, email: user.email });
 
     return NextResponse.json(safeUser, { status: 201 });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error(`[AUTH PUT] Error:`, error);
     return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
   }
 }

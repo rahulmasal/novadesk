@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useTicketStore, Role } from "@/lib/store";
+import { useTicketStore } from "@/lib/store";
 import {
   LifeBuoy,
-  Shield,
-  User,
-  Headset,
   ArrowRight,
   Loader2,
   Eye,
   EyeOff,
   AlertCircle,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
+/**
+ * Login - Login form with email/password authentication, error/success states, and password visibility toggle
+ *
+ * @param onLogin - Callback invoked after successful login
+ */
 export function Login({ onLogin }: { onLogin: () => void }) {
   const { login } = useTicketStore();
   const [email, setEmail] = useState("");
@@ -39,32 +40,7 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     setIsLoading(false);
   };
 
-  const demoAccounts = [
-    {
-      email: "admin@novadesk.com",
-      password: "admin123",
-      role: "Administrator",
-      color: "emerald",
-    },
-    {
-      email: "sarah@novadesk.com",
-      password: "agent123",
-      role: "Agent",
-      color: "purple",
-    },
-    {
-      email: "mike@example.com",
-      password: "user123",
-      role: "End User",
-      color: "blue",
-    },
-  ];
 
-  const fillDemo = (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError("");
-  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-neutral-950">
@@ -159,54 +135,6 @@ export function Login({ onLogin }: { onLogin: () => void }) {
             )}
           </button>
         </form>
-
-        <div className="mt-8">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-neutral-950 text-neutral-500">
-                Demo Accounts
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-3">
-            {demoAccounts.map((demo) => (
-              <button
-                key={demo.email}
-                type="button"
-                onClick={() => fillDemo(demo.email, demo.password)}
-                className="w-full flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl hover:border-white/20 transition-all group"
-              >
-                <div
-                  className={cn(
-                    "p-2 rounded-lg",
-                    demo.color === "blue" && "bg-blue-500/20 text-blue-400",
-                    demo.color === "purple" &&
-                      "bg-purple-500/20 text-purple-400",
-                    demo.color === "emerald" &&
-                      "bg-emerald-500/20 text-emerald-400",
-                  )}
-                >
-                  {demo.role === "Administrator" && (
-                    <Shield className="w-5 h-5" />
-                  )}
-                  {demo.role === "Agent" && <Headset className="w-5 h-5" />}
-                  {demo.role === "End User" && <User className="w-5 h-5" />}
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-white font-medium">{demo.role}</p>
-                  <p className="text-xs text-neutral-500">{demo.email}</p>
-                </div>
-                <div className="text-xs text-neutral-500 group-hover:text-white transition-colors">
-                  Click to fill
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
 
         <p className="text-center text-neutral-500 text-xs mt-8">
           Secure Authentication • NovaDesk v2.0

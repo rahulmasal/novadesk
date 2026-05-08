@@ -31,31 +31,28 @@ import { create } from "zustand";
 // Persist middleware - saves state to localStorage and restores it on load
 import { persist } from "zustand/middleware";
 
-// UUID generates unique IDs for tickets and activities
-import { v4 as uuidv4 } from "uuid";
-
 /**
  * Priority levels for tickets
  * Used to indicate how urgent a ticket is
  */
-export type Priority = "Low" | "Medium" | "High" | "Urgent";
+export type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 /**
  * Categories help classify tickets by type
  * Makes it easier to filter and route tickets
  */
-export type Category = "Hardware" | "Software" | "Network" | "Access";
+export type Category = "HARDWARE" | "SOFTWARE" | "NETWORK" | "ACCESS";
 
 /**
  * Status represents the current state of a ticket
  * Tickets typically flow: New → In Progress → Resolved → Closed
  */
 export type Status =
-  | "New"
-  | "In Progress"
-  | "Pending Vendor"
-  | "Resolved"
-  | "Closed";
+  | "NEW"
+  | "IN_PROGRESS"
+  | "PENDING_VENDOR"
+  | "RESOLVED"
+  | "CLOSED";
 
 /**
  * User roles determine permissions
@@ -63,7 +60,7 @@ export type Status =
  * - Agent: Can view all tickets and update status
  * - Administrator: Full access including delete
  */
-export type Role = "End User" | "Agent" | "Administrator";
+export type Role = "END_USER" | "AGENT" | "ADMINISTRATOR";
 
 /**
  * View types for navigation
@@ -192,11 +189,14 @@ interface TicketStore {
   /** Activity log for the feed/timeline */
   activities: Activity[];
 
-  /** Current user's role - determines UI permissions */
-  currentUserRole: Role;
+/** Current user's role - determines UI permissions */
+   currentUserRole: Role;
 
-  /** Currently active view/page */
-  currentView: View;
+   /** Currently active view/page */
+   currentView: View;
+
+   /** All users in the system (for agent assignment) */
+   allUsers: User[];
 
   // ========================================
   // AUTHENTICATION ACTIONS
@@ -252,18 +252,24 @@ interface TicketStore {
   /** Sets the current user role directly */
   setRole: (role: Role) => void;
 
+  /** Deletes a ticket by ID (admin only, calls API) */
+  deleteTicket: (id: string) => Promise<boolean>;
+
   /** Replaces all tickets with a new array (used for API sync) */
   setTickets: (tickets: Ticket[]) => void;
 
-  /** Changes the current view/page */
-  setView: (view: View) => void;
+/** Changes the current view/page */
+   setView: (view: View) => void;
 
-  /**
-   * Logs a new activity event
-   * @param ticketId - ID of related ticket
-   * @param message - Description of what happened
-   */
-  addActivity: (ticketId: string, message: string) => void;
+   /**
+    * Logs a new activity event
+    * @param ticketId - ID of related ticket
+    * @param message - Description of what happened
+    */
+   addActivity: (ticketId: string, message: string) => void;
+
+   /** Sets all users in the system */
+   setAllUsers: (users: User[]) => void;
 }
 
 /**
@@ -293,77 +299,14 @@ export const useTicketStore = create<TicketStore>()(
       authToken: null,
 
       // App state - default values
-      currentUserRole: "Agent", // Default role for demo
+      currentUserRole: "AGENT", // Default role for demo
       currentView: "Dashboard", // Start at dashboard
 
-      // Sample tickets for demonstration
-      // In production, these would come from a database
-      tickets: [
-        {
-          id: "1",
-          title: "VPN connection dropping repeatedly",
-          description: "My VPN disconnects every 5 minutes.",
-          priority: "High",
-          category: "Network",
-          status: "In Progress",
-          createdBy: "user1",
-          dueDate: new Date(Date.now() + 86400000).toISOString(),
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-          updatedAt: new Date(Date.now() - 1800000).toISOString(),
-          username: "mike.thompson",
-          hostname: "MKTLAP-0042",
-          laptopSerial: "SN-2024-88421",
-          department: "Marketing",
-        },
-        {
-          id: "2",
-          title: "Laptop screen shattered",
-          description: "Dropped my laptop, screen is broken.",
-          priority: "Urgent",
-          category: "Hardware",
-          status: "New",
-          createdBy: "user2",
-          dueDate: new Date(Date.now() + 3600000).toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          username: "emma.wilson",
-          hostname: "EMMLAP-0018",
-          laptopSerial: "SN-2024-99234",
-          department: "Sales",
-        },
-        {
-          id: "3",
-          title: "Need access to Figma",
-          description: "Please grant me editor access to Figma.",
-          priority: "Medium",
-          category: "Access",
-          status: "Pending Vendor",
-          createdBy: "user3",
-          dueDate: new Date(Date.now() + 172800000).toISOString(),
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 43200000).toISOString(),
-          username: "alex.chen",
-          hostname: "ALXLAP-0055",
-          laptopSerial: "SN-2023-77612",
-          department: "Design",
-        },
-      ],
+tickets: [],
 
-      // Sample activities for demonstration
-      activities: [
-        {
-          id: "a1",
-          ticketId: "1",
-          message: "Agent Sarah assigned ticket #1 to Network Team",
-          timestamp: new Date(Date.now() - 1800000).toISOString(),
-        },
-        {
-          id: "a2",
-          ticketId: "2",
-          message: "User Mike submitted ticket #2 (Urgent)",
-          timestamp: new Date().toISOString(),
-        },
-      ],
+       activities: [],
+
+       allUsers: [],
 
       // ========================================
       // LOGIN ACTION
@@ -407,7 +350,7 @@ export const useTicketStore = create<TicketStore>()(
           });
 
           return { success: true };
-        } catch (error) {
+        } catch {
           // Network error or server unreachable
           return { success: false, error: "Network error. Please try again." };
         }
@@ -439,7 +382,7 @@ export const useTicketStore = create<TicketStore>()(
                 "Content-Type": "application/json",
               },
             });
-          } catch (e) {
+          } catch {
             // Ignore errors - we still want to clear local state
           }
         }
@@ -449,7 +392,7 @@ export const useTicketStore = create<TicketStore>()(
           currentUser: null,
           authToken: null,
           isAuthenticated: false,
-          currentUserRole: "End User", // Reset to default role
+          currentUserRole: "END_USER", // Reset to default role
         });
       },
 
@@ -501,55 +444,57 @@ export const useTicketStore = create<TicketStore>()(
             isAuthenticated: false,
           });
           return false;
-        } catch (error) {
+        } catch {
           return false;
         }
       },
 
-      // ========================================
-      // ADD TICKET ACTION
-      // ========================================
-      /**
-       * addTicket - Creates a new ticket
-       *
-       * WHAT IT DOES:
-       * 1. Generates a unique ID for the ticket
-       * 2. Creates a ticket object with timestamps
-       * 3. Adds it to the beginning of the tickets array
-       * 4. Logs an activity for the ticket submission
-       *
-       * @param ticketData - Ticket data without id, timestamps, or status
-       */
-      addTicket: (ticketData) => {
-        // Generate unique ID using random string
-        const id = Math.random().toString(36).substring(2, 9);
-        const now = new Date().toISOString();
+// ========================================
+       // ADD TICKET ACTION
+       // ========================================
+       /**
+        * addTicket - Creates a new ticket
+        *
+        * WHAT IT DOES:
+        * 1. Generates a unique ID for the ticket
+        * 2. Creates a ticket object with timestamps
+        * 3. Adds it to the beginning of the tickets array
+        * 4. Logs an activity for the ticket submission
+        *
+        * @param ticketData - Ticket data without id, timestamps, or status
+        */
+       addTicket: (ticketData) => {
+         const now = new Date().toISOString();
+         const id = (ticketData as Record<string, unknown>).id as string || Math.random().toString(36).substring(2, 9);
 
-        // Create new ticket with auto-generated fields
-        const newTicket: Ticket = {
-          ...ticketData,
-          id,
-          status: "New", // New tickets always start with "New" status
-          createdAt: now,
-          updatedAt: now,
-        };
+         const newTicket: Ticket = {
+           ...ticketData,
+           id,
+           status: ((ticketData as Record<string, unknown>).status as Status) || ("NEW" as Status),
+           createdAt: ((ticketData as Record<string, unknown>).createdAt as string) || now,
+           updatedAt: ((ticketData as Record<string, unknown>).updatedAt as string) || now,
+         };
 
-        // Update state using functional set - important when new state depends on old state
-        set((state) => ({
-          // Add new ticket to beginning of array (newest first)
-          tickets: [newTicket, ...state.tickets],
-          // Also log this activity for the feed
-          activities: [
-            {
-              id: Math.random().toString(36).substring(2, 9),
-              ticketId: id,
-              message: `User submitted ticket #${id}`,
-              timestamp: now,
-            },
-            ...state.activities,
-          ],
-        }));
-      },
+         // Update state using functional set - important when new state depends on old state
+         set((state) => {
+           // Keep only the latest activity per ticket (max 1 activity per ticket)
+           const filteredActivities = state.activities.filter((a) => a.ticketId !== id);
+           return {
+             // Add new ticket to beginning of array (newest first)
+             tickets: [newTicket, ...state.tickets],
+             // Store only 1 activity for the ticket
+             activities: [
+               {
+                 id: Math.random().toString(36).substring(2, 9),
+                 ticketId: id,
+                 message: `Ticket "${ticketData.title}" submitted`,
+                 timestamp: now,
+               },
+               ...filteredActivities,
+             ],
+           };
+         });
+       },
 
       // ========================================
       // UPDATE TICKET STATUS ACTION
@@ -565,26 +510,30 @@ export const useTicketStore = create<TicketStore>()(
        * @param id - ID of ticket to update
        * @param status - New status value
        */
-      updateTicketStatus: (id, status) => {
-        set((state) => ({
-          // map() creates a new array with the updated ticket
-          tickets: state.tickets.map((t) =>
-            t.id === id
-              ? { ...t, status, updatedAt: new Date().toISOString() }
-              : t,
-          ),
-          // Log the status change
-          activities: [
-            {
-              id: Math.random().toString(36).substring(2, 9),
-              ticketId: id,
-              message: `Ticket #${id} status changed to ${status}`,
-              timestamp: new Date().toISOString(),
-            },
-            ...state.activities,
-          ],
-        }));
-      },
+updateTicketStatus: (id, status) => {
+         set((state) => {
+           // Keep only the latest activity per ticket
+           const filteredActivities = state.activities.filter((a) => a.ticketId !== id);
+           return {
+             // map() creates a new array with the updated ticket
+             tickets: state.tickets.map((t) =>
+               t.id === id
+                 ? { ...t, status, updatedAt: new Date().toISOString() }
+                 : t,
+             ),
+             // Log the status change (replace previous activity for same ticket)
+             activities: [
+               {
+                 id: Math.random().toString(36).substring(2, 9),
+                 ticketId: id,
+                 message: `Ticket #${id} status changed to ${status}`,
+                 timestamp: new Date().toISOString(),
+               },
+               ...filteredActivities,
+             ],
+           };
+         });
+       },
 
       // ========================================
       // TOGGLE ROLE ACTION
@@ -601,11 +550,11 @@ export const useTicketStore = create<TicketStore>()(
       toggleRole: () =>
         set((state) => ({
           currentUserRole:
-            state.currentUserRole === "Agent"
-              ? "End User"
-              : state.currentUserRole === "End User"
-                ? "Administrator"
-                : "Agent",
+            state.currentUserRole === "AGENT"
+              ? "END_USER"
+              : state.currentUserRole === "END_USER"
+                ? "ADMINISTRATOR"
+                : "AGENT",
         })),
 
       // ========================================
@@ -616,6 +565,51 @@ export const useTicketStore = create<TicketStore>()(
        * @param role - The role to set
        */
       setRole: (role) => set(() => ({ currentUserRole: role })),
+
+      // ========================================
+      // DELETE TICKET ACTION
+      // ========================================
+      /**
+       * deleteTicket - Deletes a ticket via API and removes it from local state
+       * @param id - ID of ticket to delete
+       * @returns Promise<boolean> - true if deleted, false otherwise
+       */
+      deleteTicket: async (id) => {
+        const { authToken } = get();
+        console.log("[STORE deleteTicket] Attempting to delete ticket:", id, "with token:", authToken ? "present" : "missing");
+        try {
+          const res = await fetch("/api/tickets", {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ id }),
+          });
+          console.log("[STORE deleteTicket] Response status:", res.status, "ok:", res.ok);
+          if (!res.ok && res.status !== 404) {
+            console.error("[STORE deleteTicket] Failed with status:", res.status);
+            return false;
+          }
+          set((state) => ({
+            tickets: state.tickets.filter((t) => t.id !== id),
+            activities: [
+              {
+                id: Math.random().toString(36).substring(2, 9),
+                ticketId: id,
+                message: `Ticket #${id} deleted`,
+                timestamp: new Date().toISOString(),
+              },
+              ...state.activities.filter((a) => a.ticketId !== id),
+            ],
+          }));
+          console.log("[STORE deleteTicket] Successfully removed ticket from state");
+          return true;
+        } catch (error) {
+          console.error("[STORE deleteTicket] Exception:", error);
+          return false;
+        }
+      },
 
       // ========================================
       // SET TICKETS ACTION
@@ -648,23 +642,39 @@ export const useTicketStore = create<TicketStore>()(
        * @param ticketId - ID of related ticket
        * @param message - Description of the event
        */
-      addActivity: (ticketId, message) => {
-        set((state) => ({
-          activities: [
-            {
-              id: Math.random().toString(36).substring(2, 9),
-              ticketId,
-              message,
-              timestamp: new Date().toISOString(),
-            },
-            ...state.activities,
-          ],
-        }));
-      },
-    }),
+addActivity: (ticketId, message) => {
+         set((state) => {
+           // Keep only the latest activity per ticket (max 1 activity per ticket)
+           const filteredActivities = state.activities.filter((a) => a.ticketId !== ticketId);
+           return {
+             activities: [
+               {
+                 id: Math.random().toString(36).substring(2, 9),
+                 ticketId,
+                 message,
+                 timestamp: new Date().toISOString(),
+               },
+               ...filteredActivities,
+             ],
+           };
+         });
+},
+       // ========================================
+       // SET ALL USERS ACTION
+       // ========================================
+       setAllUsers: (users) => set(() => ({ allUsers: users })),
+     }),
     // Persist configuration - state will be saved to localStorage
     {
-      name: "ticket-storage", // localStorage key
+      name: "ticket-storage-v2",
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+        isAuthenticated: state.isAuthenticated,
+        authToken: state.authToken,
+        currentUserRole: state.currentUserRole,
+        currentView: state.currentView,
+        activities: state.activities,
+      }),
     },
   ),
 );

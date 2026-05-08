@@ -22,6 +22,8 @@ import {
   paginationSchema,
 } from "@/lib/schemas";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/tickets - Retrieve tickets
  */
@@ -59,6 +61,8 @@ export async function GET(req: NextRequest) {
       skip: offset,
     });
 
+    console.log(`[GET TICKETS] Returning ${tickets.length} tickets for role ${auth?.role} user ${auth?.email} (ids: ${tickets.map(t => t.id).join(",")})`);
+
     return NextResponse.json(tickets.map(formatTicket));
   } catch (error) {
     console.error("Error fetching tickets:", error);
@@ -78,10 +82,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    console.log("[POST TICKET] Body:", JSON.stringify(body));
     const validationResult = createTicketSchema.safeParse(body);
 
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0]?.message || "Validation failed";
+      console.error("[POST TICKET] Validation failed:", JSON.stringify(validationResult.error.issues));
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
@@ -183,37 +189,62 @@ export async function PATCH(req: NextRequest) {
  * DELETE /api/tickets - Remove a ticket (Admin only)
  */
 export async function DELETE(req: NextRequest) {
+  console.log("[DELETE TICKET] Request received");
   const auth = await getAuthUser(req);
+  console.log("[DELETE TICKET] Auth result:", JSON.stringify({ hasAuth: !!auth, role: auth?.role, userId: auth?.userId, email: auth?.email }));
 
-  if (!auth || auth.role !== "ADMINISTRATOR") {
+  if (!auth) {
+    console.error("[DELETE TICKET] No auth - returning 401");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (auth.role !== "ADMINISTRATOR") {
+    console.error("[DELETE TICKET] Forbidden - role mismatch - got:", auth.role, "expected: ADMINISTRATOR");
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
     const body = await req.json();
     const { id } = body;
+    console.log("[DELETE TICKET] Request body:", body);
 
     if (!id) {
+      console.error("[DELETE TICKET] Missing ID");
       return NextResponse.json({ error: "Ticket ID is required" }, { status: 400 });
     }
 
     const ticket = await prisma.ticket.findUnique({ where: { id } });
     if (!ticket) {
+      console.error("[DELETE TICKET] Not found - id:", id);
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    await prisma.ticket.delete({ where: { id } });
+    console.log("[DELETE TICKET] Deleting:", { id, title: ticket.title, user: auth.email });
 
-    await logAuditEvent({
-      ticketId: id,
-      userId: auth.userId,
-      action: "TICKET_DELETED",
-      details: `Ticket deleted: ${ticket.title}`,
+    await prisma.$transaction(async (tx) => {
+      await tx.auditLog.create({
+        data: {
+          ticketId: id,
+          userId: auth.userId,
+          action: "TICKET_DELETED",
+          details: `Ticket deleted: ${ticket.title}`,
+        },
+      });
+
+      await tx.ticket.delete({ where: { id } });
     });
+
+    const verify = await prisma.ticket.findUnique({ where: { id } });
+    console.log("[DELETE TICKET] Verification - still exists:", verify !== null);
+
+    if (verify !== null) {
+      console.error("[DELETE TICKET] FATAL: Ticket still exists after delete!");
+      return NextResponse.json({ error: "Delete verification failed" }, { status: 500 });
+    }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting ticket:", error);
+    console.error("[DELETE TICKET] Error:", error);
     return NextResponse.json({ error: "Failed to delete ticket" }, { status: 500 });
   }
 }

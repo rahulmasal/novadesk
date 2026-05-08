@@ -13,8 +13,17 @@ export type AuditAction =
   | "STATUS_CHANGED" | "PRIORITY_CHANGED" | "ASSIGNED" | "UNASSIGNED"
   | "COMMENT_ADDED" | "COMMENT_UPDATED" | "COMMENT_DELETED"
   | "ATTACHMENT_ADDED" | "ATTACHMENT_DELETED"
-  | "SLA_WARNING" | "SLA_BREACHED";
+  | "SLA_WARNING" | "SLA_BREACHED"
+  | "LOGIN" | "LOGOUT"
+  | "PASSWORD_CHANGED" | "PASSWORD_RESET"
+  | "USER_CREATED" | "USER_DELETED";
 
+/**
+ * Creates an audit log entry in the database
+ *
+ * @param params - Object containing ticketId, userId, action, and optional oldValue/newValue/details
+ * @returns Promise that resolves when the audit log is created
+ */
 export async function logAuditEvent(params: {
   ticketId: string;
   userId: string;
@@ -39,6 +48,14 @@ export async function logAuditEvent(params: {
   }
 }
 
+/**
+ * Retrieves audit logs for a specific ticket
+ *
+ * @param ticketId - The ID of the ticket to fetch logs for
+ * @param limit - Maximum number of logs to return (default 50)
+ * @param offset - Number of logs to skip for pagination (default 0)
+ * @returns List of audit log entries with associated user details
+ */
 export async function getTicketAuditLogs(ticketId: string, limit = 50, offset = 0) {
   return prisma.auditLog.findMany({
     where: { ticketId },
@@ -48,6 +65,12 @@ export async function getTicketAuditLogs(ticketId: string, limit = 50, offset = 
   });
 }
 
+/**
+ * Retrieves all audit logs with pagination and optional filters
+ *
+ * @param filters - Object with optional ticketId, userId, action, startDate, endDate, limit, and offset
+ * @returns List of matching audit log entries with user and ticket details
+ */
 export async function getAuditLogs(filters: {
   ticketId?: string;
   userId?: string;
@@ -76,6 +99,12 @@ export async function getAuditLogs(filters: {
   });
 }
 
+/**
+ * Exports audit logs as CSV
+ *
+ * @param filters - Object with optional startDate and endDate to filter the exported logs
+ * @returns CSV-formatted string of audit log entries
+ */
 export async function exportAuditLogs(filters: { startDate?: Date; endDate?: Date }): Promise<string> {
   const logs = await prisma.auditLog.findMany({
     where: {
@@ -99,6 +128,13 @@ export async function exportAuditLogs(filters: { startDate?: Date; endDate?: Dat
   return csvContent;
 }
 
+/**
+ * Gets audit statistics including total log count, action breakdown, and top users
+ *
+ * @param startDate - Start of the date range for statistics
+ * @param endDate - End of the date range for statistics
+ * @returns Object with totalLogs, actionBreakdown array, and topUsers array
+ */
 export async function getAuditStats(startDate: Date, endDate: Date) {
   type ActionItem = { action: string; _count: { action: number } };
   type UserItem = { userId: string; _count: { userId: number } };

@@ -18,6 +18,8 @@ model User {
   name        String
   role        Role     @default(END_USER)
   department  String   @default("General")
+  hostname    String?
+  laptopSerial String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -49,7 +51,7 @@ model Ticket {
 
   // User info
   createdById String
-  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
   assignedTo  String?
   username    String
   hostname    String?
@@ -125,11 +127,11 @@ model Attachment {
   @@map("attachments")
 }
 
-// AuditLog model - tracks all ticket changes
+// AuditLog model - tracks all ticket changes (ticketId is optional for system-level events)
 model AuditLog {
   id         String   @id @default(cuid())
-  ticketId   String
-  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId   String?
+  ticket     Ticket?  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   userId     String
   user       User     @relation(fields: [userId], references: [id])
   action     String

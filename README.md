@@ -84,7 +84,7 @@ Use it like an app on your phone with offline support, push notifications, and i
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/rahulmasal/novadesk.git
+https://github.com/rahulmasal/novadesk.git
 cd novadesk
 npm install
 ```

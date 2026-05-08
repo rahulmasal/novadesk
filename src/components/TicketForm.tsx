@@ -1,44 +1,108 @@
 "use client";
 
-import { useState } from "react";
-import { useTicketStore, Priority, Category } from "@/lib/store";
+import { useState, useEffect } from "react";
+import { useTicketStore, Priority, Category, User } from "@/lib/store";
 import { Paperclip, Send, X, Loader2 } from "lucide-react";
 
+/**
+ * TicketForm - Modal form for creating new tickets with priority, category, and advanced user fields
+ *
+ * @param onClose - Callback to close the form modal
+ */
 export function TicketForm({ onClose }: { onClose: () => void }) {
-  const addTicket = useTicketStore((state) => state.addTicket);
-  const authToken = useTicketStore((state) => state.authToken);
-  const currentUser = useTicketStore((state) => state.currentUser);
+   const addTicket = useTicketStore((state) => state.addTicket);
+   const authToken = useTicketStore((state) => state.authToken);
+   const currentUser = useTicketStore((state) => state.currentUser);
+   const setAllUsers = useTicketStore((state) => state.setAllUsers);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<Priority>("Medium");
-  const [category, setCategory] = useState<Category>("Software");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+   const [title, setTitle] = useState("");
+   const [description, setDescription] = useState("");
+   const [priority, setPriority] = useState<Priority>("MEDIUM");
+   const [category, setCategory] = useState<Category>("SOFTWARE");
+   const [isSubmitting, setIsSubmitting] = useState(false);
+
+   // Advanced fields
+   const [targetUser, setTargetUser] = useState<User | null>(currentUser);
+   const [hostname, setHostname] = useState(currentUser?.hostname || "");
+   const [laptopSerial, setLaptopSerial] = useState(currentUser?.laptopSerial || "");
+   const [department, setDepartment] = useState(currentUser?.department || "");
+   const [allUsers, setLocalAllUsers] = useState<User[]>([]);
+   const [showUserDropdown, setShowUserDropdown] = useState(false);
+   const [userSearch, setUserSearch] = useState(currentUser?.name || "");
+
+   // Sync with currentUser when it changes (e.g., after login)
+   useEffect(() => {
+     if (currentUser) {
+       setHostname(currentUser.hostname || "");
+       setLaptopSerial(currentUser.laptopSerial || "");
+       setDepartment(currentUser.department || "");
+       setTargetUser(currentUser);
+       setUserSearch(currentUser.name);
+     }
+   }, [currentUser]);
+
+   const [errors, setErrors] = useState<{
+     title?: string;
+     description?: string;
+     submit?: string;
+   }>({});
+
+   const isAdminOrAgent = currentUser?.role === "ADMINISTRATOR" || currentUser?.role === "AGENT";
+
+   useEffect(() => {
+     if (isAdminOrAgent && authToken) {
+       fetch("/api/users", {
+         headers: { Authorization: `Bearer ${authToken}` }
+       })
+       .then(res => res.json())
+       .then(data => {
+         setLocalAllUsers(data);
+         setAllUsers(data);
+       })
+       .catch(err => console.error("Failed to fetch users", err));
+     }
+   }, [isAdminOrAgent, authToken, setAllUsers]);
+
+  const handleUserSelect = (user: User) => {
+    setTargetUser(user);
+    setHostname(user.hostname || "");
+    setLaptopSerial(user.laptopSerial || "");
+    setDepartment(user.department || "");
+    setUserSearch(user.name);
+    setShowUserDropdown(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description) return;
 
+    // Client-side validation matching server schema
+    const newErrors: { title?: string; description?: string } = {};
+    if (!title || title.trim().length < 5) {
+      newErrors.title = "Title must be at least 5 characters";
+    }
+    if (!description || description.trim().length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
     setIsSubmitting(true);
 
-    const userEmail = currentUser?.email || "guest@company.com";
-    const userName = currentUser?.name || "Guest User";
-    const userDepartment = currentUser?.department || "General";
-    const userHostname =
-      currentUser?.hostname ||
-      "HOST-" + Math.random().toString(36).substring(2, 6).toUpperCase();
-    const userLaptopSerial = currentUser?.laptopSerial || "SN-" + Date.now();
-
     const ticketData = {
-      title,
-      description,
-      priority: priority.toUpperCase(),
-      category: category.toUpperCase(),
-      username: userName.toLowerCase().replace(/\s+/g, "."),
-      hostname: userHostname,
-      laptopSerial: userLaptopSerial,
-      department: userDepartment,
+      title: title.trim(),
+      description: description.trim(),
+      priority: priority,
+      category: category,
+      username: targetUser?.email?.split("@")[0] || currentUser?.email?.split("@")[0] || "guest",
+      hostname: hostname || undefined,
+      laptopSerial: laptopSerial || undefined,
+      department: department || "General",
     };
+
+    console.log("[TicketForm] Submitting payload:", ticketData);
 
     try {
       if (authToken) {
@@ -54,31 +118,20 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
         if (res.ok) {
           const ticket = await res.json();
           addTicket(ticket);
+          onClose();
         } else {
-          console.error("Failed to create ticket via API");
-          addTicket({
-            ...ticketData,
-            createdBy: userEmail,
-            dueDate: new Date(Date.now() + (priority === "Urgent" ? 2 : priority === "High" ? 8 : priority === "Low" ? 72 : 24) * 3600000).toISOString(),
-          } as never);
+          const data = await res.json().catch(() => ({}));
+          console.error("[TicketForm] Server error:", res.status, data);
+          setErrors({ submit: data.error || "Failed to create ticket. Please check your input." });
         }
       } else {
-        addTicket({
-          ...ticketData,
-          createdBy: userEmail,
-          dueDate: new Date(Date.now() + (priority === "Urgent" ? 2 : priority === "High" ? 8 : priority === "Low" ? 72 : 24) * 3600000).toISOString(),
-        } as never);
+        setErrors({ submit: "You must be logged in to create a ticket." });
       }
     } catch (error) {
       console.error("Error creating ticket:", error);
-      addTicket({
-        ...ticketData,
-        createdBy: userEmail,
-        dueDate: new Date(Date.now() + (priority === "Urgent" ? 2 : priority === "High" ? 8 : priority === "Low" ? 72 : 24) * 3600000).toISOString(),
-      } as never);
+      setErrors({ submit: "Network error. Please try again." });
     } finally {
       setIsSubmitting(false);
-      onClose();
     }
   };
 
@@ -97,7 +150,43 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5">
+          {isAdminOrAgent && (
+            <div className="relative">
+              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                On Behalf Of (User)
+              </label>
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={userSearch}
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setShowUserDropdown(true);
+                }}
+                onFocus={() => setShowUserDropdown(true)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              />
+              {showUserDropdown && userSearch && (
+                <div className="absolute z-10 w-full mt-1 bg-neutral-800 border border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                  {allUsers
+                    .filter(u => u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
+                    .slice(0, 10)
+                    .map(u => (
+                      <div
+                        key={u.id}
+                        onClick={() => handleUserSelect(u)}
+                        className="px-4 py-2 hover:bg-blue-500/20 cursor-pointer text-white text-sm border-b border-white/5 last:border-0"
+                      >
+                        <p className="font-medium">{u.name}</p>
+                        <p className="text-xs text-neutral-400">{u.email}</p>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-neutral-300 mb-1.5">
               Subject
@@ -108,8 +197,11 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Brief description of the issue"
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className={`w-full bg-black/40 border rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:ring-1 transition-all ${errors.title ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-white/10 focus:border-blue-500 focus:ring-blue-500"}`}
             />
+            {errors.title && (
+              <p className="text-xs text-red-400 mt-1">{errors.title}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -122,10 +214,10 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setCategory(e.target.value as Category)}
                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none"
               >
-                <option value="Hardware">Hardware</option>
-                <option value="Software">Software</option>
-                <option value="Network">Network</option>
-                <option value="Access">Access</option>
+                <option value="HARDWARE">Hardware</option>
+                <option value="SOFTWARE">Software</option>
+                <option value="NETWORK">Network</option>
+                <option value="ACCESS">Access</option>
               </select>
             </div>
             <div>
@@ -137,11 +229,36 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setPriority(e.target.value as Priority)}
                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none"
               >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Urgent">Urgent</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
               </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                Hostname
+              </label>
+              <input
+                type="text"
+                readOnly
+                value={hostname}
+                className="w-full bg-white/5 border border-white/5 rounded-lg px-4 py-2.5 text-neutral-400 cursor-not-allowed text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                Serial Number
+              </label>
+              <input
+                type="text"
+                readOnly
+                value={laptopSerial}
+                className="w-full bg-white/5 border border-white/5 rounded-lg px-4 py-2.5 text-neutral-400 cursor-not-allowed text-sm"
+              />
             </div>
           </div>
 
@@ -155,9 +272,18 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Provide detailed information about the issue..."
               rows={4}
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all resize-none"
+              className={`w-full bg-black/40 border rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:ring-1 transition-all resize-none ${errors.description ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-white/10 focus:border-blue-500 focus:ring-blue-500"}`}
             />
+            {errors.description && (
+              <p className="text-xs text-red-400 mt-1">{errors.description}</p>
+            )}
           </div>
+
+          {errors.submit && (
+            <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
+              {errors.submit}
+            </p>
+          )}
 
           <div className="pt-2 flex items-center justify-between">
             <button
@@ -169,10 +295,15 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-all hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white px-5 py-2.5 rounded-lg font-medium transition-all hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] disabled:shadow-none"
             >
-              <Send className="w-4 h-4" />
-              Submit Ticket
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              {isSubmitting ? "Submitting..." : "Submit Ticket"}
             </button>
           </div>
         </form>

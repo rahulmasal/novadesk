@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -78,27 +78,33 @@ const defaultWidgets = [
   { id: "quick-actions", type: "quick-actions", visible: true, position: { x: 6, y: 10, w: 6, h: 3 } },
 ];
 
+/**
+ * DashboardBuilder - Drag-and-drop dashboard layout builder with sortable widget grid
+ *
+ * @param onSave - Callback with the saved layout configuration
+ * @param onClose - Callback to close the builder
+ */
 export function DashboardBuilder({ onSave, onClose }: DashboardBuilderProps) {
   const [layout, setLayout] = useState<DashboardLayout>({ widgets: defaultWidgets });
   const [activeId, setActiveId] = useState<string | null>(null);
 
+  const widgetCounter = useRef(0);
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-  const fetchLayout = useCallback(async () => {
-    try {
-      const res = await fetch("/api/dashboard");
-      if (res.ok) {
-        const data = await res.json();
-        setLayout(data.layout);
-      }
-    } catch (error) {
-      console.error("Error fetching dashboard layout:", error);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchLayout();
-  }, [fetchLayout]);
+    (async () => {
+      try {
+        const res = await fetch("/api/dashboard");
+        if (res.ok) {
+          const data = await res.json();
+          setLayout(data.layout);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard layout:", error);
+      }
+    })();
+  }, []);
 
   const handleDragStart = (event: DragStartEvent) => setActiveId(event.active.id as string);
 
@@ -122,7 +128,9 @@ export function DashboardBuilder({ onSave, onClose }: DashboardBuilderProps) {
   };
 
   const handleAddWidget = (type: string) => {
-    const newWidget: Widget = { id: `${type}-${Date.now()}`, type, visible: true, position: { x: 0, y: 0, w: 6, h: 3 } };
+    widgetCounter.current += 1;
+    const id = `${type}-${widgetCounter.current}`;
+    const newWidget: Widget = { id, type, visible: true, position: { x: 0, y: 0, w: 6, h: 3 } };
     setLayout((prev) => ({ widgets: [...prev.widgets, newWidget] }));
   };
 

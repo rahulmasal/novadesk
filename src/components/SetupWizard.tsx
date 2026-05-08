@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Database,
@@ -22,36 +22,48 @@ type Step = "database" | "organization" | "admin" | "complete";
 
 interface SetupData {
   dbConnected: boolean;
+  dbHost: string;
+  dbPort: string;
+  dbUser: string;
+  dbPass: string;
+  dbName: string;
+  dbUrl?: string; // Confirmed connection string
   organizationName: string;
   adminEmail: string;
   adminPassword: string;
   adminName: string;
 }
 
+/**
+ * SetupWizard - Multi-step initial configuration wizard for database setup and admin account creation
+ */
 export function SetupWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>("database");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Changed to false to show inputs immediately
   const [isCheckingDb, setIsCheckingDb] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [dbStatus, setDbStatus] = useState<"checking" | "success" | "error">("checking");
+  const [dbStatus, setDbStatus] = useState<"idle" | "checking" | "success" | "error">("idle"); // Added idle
   const [dbError, setDbError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const [data, setData] = useState<SetupData>({
     dbConnected: false,
+    dbHost: "localhost",
+    dbPort: "5432",
+    dbUser: "postgres",
+    dbPass: "",
+    dbName: "novadesk",
     organizationName: "",
     adminEmail: "",
     adminPassword: "",
     adminName: "",
+    dbUrl: undefined,
   });
 
-  // Check database connection on mount
-  useEffect(() => {
-    checkDatabaseConnection();
-  }, []);
+  // Initial setup check removed to allow manual input
 
   const checkDatabaseConnection = async () => {
     setIsCheckingDb(true);
@@ -59,12 +71,26 @@ export function SetupWizard() {
     setError("");
 
     try {
-      const res = await fetch("/api/setup/check-db");
+      const res = await fetch("/api/setup/check-db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          host: data.dbHost,
+          port: data.dbPort,
+          user: data.dbUser,
+          pass: data.dbPass,
+          name: data.dbName,
+        }),
+      });
       const result = await res.json();
 
       if (result.connected) {
         setDbStatus("success");
-        setData((prev) => ({ ...prev, dbConnected: true }));
+        setData((prev) => ({ 
+          ...prev, 
+          dbConnected: true,
+          dbUrl: result.url 
+        }));
       } else {
         setDbStatus("error");
         setDbError(result.error || "Failed to connect to database");
@@ -150,6 +176,7 @@ export function SetupWizard() {
           adminEmail: data.adminEmail,
           adminPassword: data.adminPassword,
           adminName: data.adminName,
+          databaseUrl: data.dbUrl, // Pass the confirmed URL
         }),
       });
 
@@ -240,48 +267,95 @@ export function SetupWizard() {
       </div>
       <h2 className="text-2xl font-bold text-white mb-3">Connect Your Database</h2>
       <p className="text-neutral-400 mb-8 max-w-md mx-auto">
-        NovaDesk uses PostgreSQL for data storage. Let&apos;s verify your database connection.
+        NovaDesk uses PostgreSQL for data storage. Enter your connection details below.
       </p>
 
-      <div className="max-w-sm mx-auto">
-        {dbStatus === "checking" && (
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-            <p className="text-neutral-400">Checking database connection...</p>
+      <div className="max-w-sm mx-auto text-left space-y-4">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-neutral-300 mb-1.5">Host</label>
+            <input
+              type="text"
+              value={data.dbHost}
+              onChange={(e) => updateData("dbHost", e.target.value)}
+              placeholder="localhost"
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+            />
           </div>
-        )}
+          <div>
+            <label className="block text-sm font-medium text-neutral-300 mb-1.5">Port</label>
+            <input
+              type="text"
+              value={data.dbPort}
+              onChange={(e) => updateData("dbPort", e.target.value)}
+              placeholder="5432"
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
 
-        {dbStatus === "success" && (
-          <div className="flex flex-col items-center gap-3">
-            <div className="p-3 rounded-full bg-emerald-500/20">
-              <Check className="w-8 h-8 text-emerald-400" />
-            </div>
-            <p className="text-emerald-400 font-medium">Database connected successfully!</p>
-            <p className="text-neutral-500 text-sm">Your PostgreSQL database is ready to use.</p>
-          </div>
-        )}
+        <div>
+          <label className="block text-sm font-medium text-neutral-300 mb-1.5">Database Name</label>
+          <input
+            type="text"
+            value={data.dbName}
+            onChange={(e) => updateData("dbName", e.target.value)}
+            placeholder="novadesk"
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-neutral-300 mb-1.5">User</label>
+          <input
+            type="text"
+            value={data.dbUser}
+            onChange={(e) => updateData("dbUser", e.target.value)}
+            placeholder="postgres"
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-neutral-300 mb-1.5">Password</label>
+          <input
+            type="password"
+            value={data.dbPass}
+            onChange={(e) => updateData("dbPass", e.target.value)}
+            placeholder="••••••••"
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <button
+          onClick={checkDatabaseConnection}
+          disabled={isCheckingDb}
+          className={cn(
+            "w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all",
+            dbStatus === "success" 
+              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
+              : "bg-blue-500 hover:bg-blue-600 text-white"
+          )}
+        >
+          {isCheckingDb ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Testing Connection...
+            </>
+          ) : dbStatus === "success" ? (
+            <>
+              <Check className="w-4 h-4" />
+              Connected Successfully
+            </>
+          ) : (
+            "Test Connection"
+          )}
+        </button>
 
         {dbStatus === "error" && (
-          <div className="flex flex-col items-center gap-3">
-            <div className="p-3 rounded-full bg-red-500/20">
-              <AlertCircle className="w-8 h-8 text-red-400" />
-            </div>
-            <p className="text-red-400 font-medium">Connection Failed</p>
-            <p className="text-neutral-500 text-sm max-w-xs text-center">{dbError}</p>
-            <button
-              onClick={checkDatabaseConnection}
-              disabled={isCheckingDb}
-              className="mt-2 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-            >
-              {isCheckingDb ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Retrying...
-                </>
-              ) : (
-                "Retry Connection"
-              )}
-            </button>
+          <div className="mt-4 flex items-center gap-2 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg p-2.5">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{dbError}</span>
           </div>
         )}
       </div>
