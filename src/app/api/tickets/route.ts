@@ -26,6 +26,17 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/tickets - Retrieve tickets
+ * 
+ * WHAT IT DOES:
+ * - Fetches tickets based on user role:
+ *   - ADMINISTRATOR: sees all tickets
+ *   - AGENT: sees tickets (assigned ones shown to agents)
+ *   - END_USER: sees only their own created tickets
+ * - Supports filtering by status, priority, category
+ * - Supports pagination via limit/offset
+ * 
+ * @param req - Next.js request object with auth headers
+ * @returns Array of formatted tickets
  */
 export async function GET(req: NextRequest) {
   const auth = await getAuthUser(req);
@@ -72,6 +83,29 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/tickets - Create a new ticket
+ * 
+ * WHAT IT DOES:
+ * 1. Validates user authentication - rejects unauthenticated requests
+ * 2. Validates request body against schema (title, description, etc.)
+ * 3. Calculates due date based on priority if not provided:
+ *    - URGENT: 2 hours
+ *    - HIGH: 8 hours
+ *    - MEDIUM: 24 hours
+ *    - LOW: 72 hours
+ * 4. Auto-assigns ticket to an AGENT using round-robin:
+ *    - Finds all users with AGENT role
+ *    - Uses systemConfig to track last assigned agent index
+ *    - Distributes tickets evenly across all agents
+ * 5. Creates ticket in database with creator info
+ * 6. Logs audit event for tracking
+ * 
+ * @param req - Request containing ticket data in JSON body
+ * @returns Created ticket with formatting applied
+ * 
+ * ROUND-ROBIN ASSIGNMENT LOGIC:
+ * - Stores last assigned agent index in systemConfig table
+ * - Next ticket goes to next agent in sequence (wraps around)
+ * - Ensures fair distribution of workload
  */
 export async function POST(req: NextRequest) {
   const auth = await getAuthUser(req);
@@ -101,16 +135,24 @@ export async function POST(req: NextRequest) {
       dueDate = new Date(Date.now() + hours * 60 * 60 * 1000);
     }
 
+    /* ========================================
+     * ROUND-ROBIN AUTO-ASSIGNMENT
+     * ========================================
+     * Finds all AGENTS and assigns ticket to next agent
+     * in rotation to distribute workload evenly
+     * ======================================== */
     let assignedToId: string | undefined;
     const agents = await prisma.user.findMany({
       where: { role: "AGENT" },
       orderBy: { id: "asc" },
     });
+    
     if (agents.length > 0) {
       const lastAssignment = await prisma.systemConfig.findUnique({
         where: { key: "lastAssignedAgentIndex" },
       });
       let nextIndex = 0;
+      // Increment index (wraps around using modulo)
       if (lastAssignment) {
         nextIndex = (parseInt(lastAssignment.value, 10) + 1) % agents.length;
         await prisma.systemConfig.update({
@@ -118,6 +160,7 @@ export async function POST(req: NextRequest) {
           data: { value: nextIndex.toString() },
         });
       } else {
+        // First ticket - initialize config
         await prisma.systemConfig.create({
           data: { key: "lastAssignedAgentIndex", value: "0" },
         });
@@ -125,6 +168,9 @@ export async function POST(req: NextRequest) {
       assignedToId = agents[nextIndex].id;
     }
 
+    /* ========================================
+     * CREATE TICKET IN DATABASE
+     * ======================================== */
     const ticket = await prisma.ticket.create({
       data: {
         title: data.title,
@@ -158,6 +204,20 @@ export async function POST(req: NextRequest) {
 
 /**
  * PATCH /api/tickets - Update ticket status or fields
+ * 
+ * WHAT IT DOES:
+ * - Only AGENTS and ADMINISTRATORS can update tickets
+ * - Supports partial updates (only provided fields are changed)
+ * - Validates updates against schema
+ * - Logs audit event for tracking
+ * 
+ * UPDATABLE FIELDS:
+ * - status: NEW, IN_PROGRESS, PENDING_VENDOR, RESOLVED, CLOSED
+ * - assignedTo: Agent ID to reassign ticket
+ * - priority: LOW, MEDIUM, HIGH, URGENT
+ * 
+ * @param req - Request with ticket ID and fields to update
+ * @returns Updated ticket
  */
 export async function PATCH(req: NextRequest) {
   const auth = await getAuthUser(req);
@@ -212,6 +272,14 @@ export async function PATCH(req: NextRequest) {
 
 /**
  * DELETE /api/tickets - Remove a ticket (Admin only)
+ * 
+ * WHAT IT DOES:
+ * - Only ADMINISTRATORS can delete tickets (destructive operation)
+ * - Deletes ticket and all related comments/attachments
+ * - Logs audit event for tracking
+ * 
+ * @param req - Request with ticket ID in JSON body
+ * @returns Success message
  */
 export async function DELETE(req: NextRequest) {
   console.log("[DELETE TICKET] Request received");
@@ -274,7 +342,17 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-// Helper functions
+/**
+ * getAuthUser - Extracts and validates the authenticated user from request
+ * 
+ * WHAT IT DOES:
+ * 1. Extracts Bearer token from Authorization header
+ * 2. Looks up session in database
+ * 3. Returns user info if valid, null if invalid/expired
+ * 
+ * @param req - Next.js request with Authorization header
+ * @returns User object with role, userId, email or null
+ */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -287,6 +365,7 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
       include: { user: true },
     });
 
+    // Check if session exists and hasn't expired
     if (!session || session.expiresAt < new Date()) {
       return null;
     }
@@ -297,6 +376,17 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
   }
 }
 
+/**
+ * formatTicket - Converts database ticket to frontend-friendly format
+ * 
+ * WHY NEEDED:
+ * - Database returns Date objects, frontend needs ISO strings
+ * - Renames createdById to createdBy for clarity
+ * - Can be extended to include related user/tick info
+ * 
+ * @param ticket - Raw ticket from database
+ * @returns Formatted ticket with ISO date strings
+ */
 function formatTicket(ticket: {
   id: string;
   title: string;

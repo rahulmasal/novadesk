@@ -19,9 +19,30 @@ interface SecurityState {
 }
 
 /**
- * Login - Login form with email/password authentication, rate limiting, and brute-force protection
- *
- * @param onLogin - Callback invoked after successful login
+ * Login - Login form component with authentication and security features
+ * 
+ * WHAT IT DOES:
+ * 1. Renders a full-screen login form with email/password fields
+ * 2. Handles form submission and calls the store's login action
+ * 3. Implements brute-force attack prevention:
+ *    - Rate limiting after failed attempts
+ *    - Account lockout after 5 failed attempts
+ *    - Security question verification after 3 attempts
+ * 4. Provides visual feedback for errors and loading states
+ * 
+ * SECURITY FEATURES:
+ * - Input validation (email format, password length)
+ * - Account lockout with countdown timer
+ * - Math-based security verification for suspicious activity
+ * - Attempt tracking stored in localStorage
+ * 
+ * STATE VARIABLES:
+ * - email/password: Form input values
+ * - loginAttempts: Count of failed login attempts
+ * - lockoutTime: Timestamp when lockout expires
+ * - security: Security question state for verification
+ * 
+ * @param onLogin - Callback function to invoke after successful login
  */
 export function Login({ onLogin }: { onLogin: () => void }) {
   const { login } = useTicketStore();
@@ -85,6 +106,15 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     }
   }, [remainingTime, lockoutTime]);
 
+  /**
+   * generateSecurityQuestion - Creates a random math problem for security verification
+   * 
+   * WHY: After multiple failed login attempts, we need extra verification
+   * to prevent automated attacks. A simple math question is effective
+   * against bots while being easy for humans.
+   * 
+   * @returns Object with question string and correct answer string
+   */
   const generateSecurityQuestion = useCallback((): SecurityState => {
     const num1 = Math.floor(Math.random() * 15) + 1;
     const num2 = Math.floor(Math.random() * 15) + 1;
@@ -99,12 +129,16 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     return { question: `${num1} ${op} ${num2} = ?`, answer: answer.toString() };
   }, []);
 
-  useEffect(() => {
-    if (loginAttempts >= 3 && !lockoutTime && !security) {
-      setSecurity(generateSecurityQuestion());
-    }
-  }, [loginAttempts, lockoutTime, security, generateSecurityQuestion]);
-
+  /**
+   * validateInput - Checks email and password for basic validity
+   * 
+   * WHAT: Prevents obviously invalid inputs from being submitted
+   * WHY: Better UX than server-side errors, reduces unnecessary requests
+   * 
+   * @param email - User's email input
+   * @param password - User's password input
+   * @returns Error message string if invalid, null if valid
+   */
   const validateInput = (email: string, password: string): string | null => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return "Invalid email format";
@@ -113,6 +147,17 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     return null;
   };
 
+  /**
+   * handleSubmit - Main form submission handler
+   * 
+   * FLOW:
+   * 1. Prevent default form behavior
+   * 2. Check if account is locked (show remaining time)
+   * 3. Validate inputs (email format, password requirements)
+   * 4. Verify security question answer if triggered
+   * 5. Call login API with credentials
+   * 6. Handle success (reset attempts, call onLogin) or failure (increment attempts)
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -154,6 +199,12 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     setIsLoading(false);
   };
 
+  /**
+   * formatTime - Converts seconds to MM:SS display format
+   * 
+   * @param seconds - Total seconds remaining
+   * @returns Formatted string like "1:30" for 90 seconds
+   */
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
