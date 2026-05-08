@@ -13,7 +13,7 @@ import { Reports } from "@/components/Reports";
 import { Backup } from "@/components/Backup";
 import { SetupWizard } from "@/components/SetupWizard";
 import { useTicketStore } from "@/lib/store";
-import { Plus, LogOut, Lock, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Lock, CheckCircle, XCircle } from "lucide-react";
 
 export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -31,7 +31,6 @@ export default function Dashboard() {
     authToken,
     currentUser,
     checkAuth,
-    logout,
   } = useTicketStore();
 
   useEffect(() => {
@@ -68,10 +67,6 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, authToken, setTickets]);
 
-  const handleLogout = () => {
-    logout();
-  };
-
   const renderContent = () => {
     switch (currentView) {
       case "Customers":
@@ -79,13 +74,6 @@ export default function Dashboard() {
           <div className="p-8 max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-white tracking-tight">User Management</h2>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
             </div>
             <UserManagement />
           </div>
@@ -95,13 +83,6 @@ export default function Dashboard() {
           <div className="p-8 max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-white tracking-tight">Reports</h2>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
             </div>
             <Reports />
           </div>
@@ -113,13 +94,6 @@ export default function Dashboard() {
               <h2 className="text-3xl font-bold text-white tracking-tight">
                 System Settings
               </h2>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="glass-dark p-6 rounded-2xl">
@@ -278,13 +252,6 @@ export default function Dashboard() {
           <div className="p-8 max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-white tracking-tight">Backup</h2>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
             </div>
             <Backup />
           </div>
@@ -309,13 +276,6 @@ export default function Dashboard() {
                   <Plus className="w-5 h-5" />
                   New Ticket
                 </button>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
               </div>
             </div>
             <div className="glass-dark rounded-2xl overflow-hidden">
@@ -323,42 +283,35 @@ export default function Dashboard() {
             </div>
           </div>
         );
-      case "Dashboard":
-      default:
-        return (
-          <div className="p-8 max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold text-white tracking-tight">
-                  {currentUserRole === "END_USER"
-                    ? "My Tickets"
-                    : currentUserRole === "AGENT"
-                      ? "Agent Dashboard"
-                      : "Admin Console"}
-                </h2>
-                <p className="text-neutral-400 mt-1">
-                  {currentUserRole === "END_USER"
-                    ? "Track and manage your IT support requests."
-                    : "Comprehensive overview of the support landscape."}
-                </p>
-              </div>
+case "Dashboard":
+       default:
+         return (
+           <div className="p-8 max-w-7xl mx-auto">
+             <div className="flex items-center justify-between mb-8">
+               <div>
+                 <h2 className="text-3xl font-bold text-white tracking-tight">
+                   {currentUserRole === "END_USER"
+                     ? "My Tickets"
+                     : currentUserRole === "AGENT"
+                       ? "Agent Dashboard"
+                       : "Admin Console"}
+                 </h2>
+                 <p className="text-neutral-400 mt-1">
+                   {currentUserRole === "END_USER"
+                     ? "Track and manage your IT support requests."
+                     : "Comprehensive overview of the support landscape."}
+                 </p>
+               </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setIsFormOpen(true)}
-                  className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95"
-                >
-                  <Plus className="w-5 h-5" />
-                  New Ticket
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-white/10"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
-              </div>
+               <div className="flex items-center gap-3">
+                 <button
+                   onClick={() => setIsFormOpen(true)}
+                   className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95"
+                 >
+                   <Plus className="w-5 h-5" />
+                   New Ticket
+                 </button>
+               </div>
             </div>
 
             {(currentUserRole === "AGENT" ||
