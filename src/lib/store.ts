@@ -504,28 +504,23 @@ tickets: [],
        * @param status - New status value
        */
 updateTicketStatus: (id, status) => {
-         set((state) => ({
-           tickets: state.tickets.map((t) =>
-             t.id === id
-               ? { ...t, status, updatedAt: new Date().toISOString() }
-               : t,
-           ),
-           activities: [
-             {
-               id: Math.random().toString(36).substring(2, 9),
-               ticketId: id,
-               message: `Ticket #${id} status changed to ${status}`,
-               timestamp: new Date().toISOString(),
-             },
-             ...state.activities,
-           ],
-         }));
-       },
-               ...filteredActivities,
-             ],
-           };
-         });
-       },
+          set((state) => ({
+            tickets: state.tickets.map((t) =>
+              t.id === id
+                ? { ...t, status, updatedAt: new Date().toISOString() }
+                : t,
+            ),
+            activities: [
+              {
+                id: Math.random().toString(36).substring(2, 9),
+                ticketId: id,
+                message: `Ticket #${id} status changed to ${status}`,
+                timestamp: new Date().toISOString(),
+              },
+              ...state.activities,
+            ],
+          }));
+        },
 
       // ========================================
       // TOGGLE ROLE ACTION

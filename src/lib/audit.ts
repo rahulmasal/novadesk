@@ -118,10 +118,10 @@ export async function exportAuditLogs(filters: { startDate?: Date; endDate?: Dat
   });
 
   const headers = ["ID", "Timestamp", "User", "User Email", "Ticket ID", "Ticket Title", "Action", "Old Value", "New Value", "Details"];
-  type LogRow = { id: string; createdAt: Date; user: { name: string; email: string }; ticket: { id: string; title: string }; action: string; oldValue: string | null; newValue: string | null; details: string | null };
+  type LogRow = { id: string; createdAt: Date; user: { name: string; email: string }; ticket: { id: string; title: string } | null; action: string; oldValue: string | null; newValue: string | null; details: string | null };
   const rows = logs.map((log: LogRow) => [
     log.id, log.createdAt.toISOString(), log.user.name, log.user.email,
-    log.ticket.id, log.ticket.title, log.action, log.oldValue || "", log.newValue || "", log.details || "",
+    log.ticket?.id ?? "", log.ticket?.title ?? "", log.action, log.oldValue || "", log.newValue || "", log.details || "",
   ]);
 
   const csvContent = [headers.join(","), ...rows.map((row: string[]) => row.map((cell: string) => `"${cell.replace(/"/g, '""')}"`).join(","))].join("\n");

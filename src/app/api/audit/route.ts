@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
 
     console.log(`[AUDIT GET] Returning ${logs.length} audit logs`);
 
-    return NextResponse.json(logs.map((log: { id: string; ticketId: string; ticket: { id: string; title: string }; userId: string; user: { id: string; name: string; email: string }; action: string; oldValue: string | null; newValue: string | null; details: string | null; createdAt: Date }) => ({
+    return NextResponse.json(logs.map((log: { id: string; ticketId: string | null; ticket: { id: string; title: string } | null; userId: string; user: { id: string; name: string; email: string }; action: string; oldValue: string | null; newValue: string | null; details: string | null; createdAt: Date }) => ({
       id: log.id, ticketId: log.ticketId, ticket: log.ticket, userId: log.userId,
       user: log.user, action: log.action, oldValue: log.oldValue,
       newValue: log.newValue, details: log.details, createdAt: log.createdAt.toISOString(),
