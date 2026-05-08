@@ -101,6 +101,30 @@ export async function POST(req: NextRequest) {
       dueDate = new Date(Date.now() + hours * 60 * 60 * 1000);
     }
 
+    let assignedToId: string | undefined;
+    const agents = await prisma.user.findMany({
+      where: { role: "AGENT" },
+      orderBy: { id: "asc" },
+    });
+    if (agents.length > 0) {
+      const lastAssignment = await prisma.systemConfig.findUnique({
+        where: { key: "lastAssignedAgentIndex" },
+      });
+      let nextIndex = 0;
+      if (lastAssignment) {
+        nextIndex = (parseInt(lastAssignment.value, 10) + 1) % agents.length;
+        await prisma.systemConfig.update({
+          where: { key: "lastAssignedAgentIndex" },
+          data: { value: nextIndex.toString() },
+        });
+      } else {
+        await prisma.systemConfig.create({
+          data: { key: "lastAssignedAgentIndex", value: "0" },
+        });
+      }
+      assignedToId = agents[nextIndex].id;
+    }
+
     const ticket = await prisma.ticket.create({
       data: {
         title: data.title,
@@ -110,6 +134,7 @@ export async function POST(req: NextRequest) {
         status: "NEW",
         dueDate,
         createdById: auth.userId,
+        assignedTo: assignedToId,
         username: data.username || auth.email.split("@")[0],
         hostname: data.hostname,
         laptopSerial: data.laptopSerial,
