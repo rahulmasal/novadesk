@@ -58,7 +58,7 @@ const handleAssignToAgent = (agentId: string) => {
 
 return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-3xl h-full bg-neutral-900 border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="w-full max-w-lg h-full bg-neutral-900 border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
          
         {/* Header */}
         <div className="p-6 border-b border-white/10 flex justify-between items-start bg-white/[0.02]">
