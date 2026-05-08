@@ -475,25 +475,18 @@ tickets: [],
            updatedAt: ((ticketData as Record<string, unknown>).updatedAt as string) || now,
          };
 
-         // Update state using functional set - important when new state depends on old state
-         set((state) => {
-           // Keep only the latest activity per ticket (max 1 activity per ticket)
-           const filteredActivities = state.activities.filter((a) => a.ticketId !== id);
-           return {
-             // Add new ticket to beginning of array (newest first)
-             tickets: [newTicket, ...state.tickets],
-             // Store only 1 activity for the ticket
-             activities: [
-               {
-                 id: Math.random().toString(36).substring(2, 9),
-                 ticketId: id,
-                 message: `Ticket "${ticketData.title}" submitted`,
-                 timestamp: now,
-               },
-               ...filteredActivities,
-             ],
-           };
-         });
+         set((state) => ({
+           tickets: [newTicket, ...state.tickets],
+           activities: [
+             {
+               id: Math.random().toString(36).substring(2, 9),
+               ticketId: id,
+               message: `Ticket "${ticketData.title}" submitted`,
+               timestamp: now,
+             },
+             ...state.activities,
+           ],
+         }));
        },
 
       // ========================================
@@ -511,24 +504,23 @@ tickets: [],
        * @param status - New status value
        */
 updateTicketStatus: (id, status) => {
-         set((state) => {
-           // Keep only the latest activity per ticket
-           const filteredActivities = state.activities.filter((a) => a.ticketId !== id);
-           return {
-             // map() creates a new array with the updated ticket
-             tickets: state.tickets.map((t) =>
-               t.id === id
-                 ? { ...t, status, updatedAt: new Date().toISOString() }
-                 : t,
-             ),
-             // Log the status change (replace previous activity for same ticket)
-             activities: [
-               {
-                 id: Math.random().toString(36).substring(2, 9),
-                 ticketId: id,
-                 message: `Ticket #${id} status changed to ${status}`,
-                 timestamp: new Date().toISOString(),
-               },
+         set((state) => ({
+           tickets: state.tickets.map((t) =>
+             t.id === id
+               ? { ...t, status, updatedAt: new Date().toISOString() }
+               : t,
+           ),
+           activities: [
+             {
+               id: Math.random().toString(36).substring(2, 9),
+               ticketId: id,
+               message: `Ticket #${id} status changed to ${status}`,
+               timestamp: new Date().toISOString(),
+             },
+             ...state.activities,
+           ],
+         }));
+       },
                ...filteredActivities,
              ],
            };
@@ -591,18 +583,18 @@ updateTicketStatus: (id, status) => {
             console.error("[STORE deleteTicket] Failed with status:", res.status);
             return false;
           }
-          set((state) => ({
-            tickets: state.tickets.filter((t) => t.id !== id),
-            activities: [
-              {
-                id: Math.random().toString(36).substring(2, 9),
-                ticketId: id,
-                message: `Ticket #${id} deleted`,
-                timestamp: new Date().toISOString(),
-              },
-              ...state.activities.filter((a) => a.ticketId !== id),
-            ],
-          }));
+set((state) => ({
+             tickets: state.tickets.filter((t) => t.id !== id),
+             activities: [
+               {
+                 id: Math.random().toString(36).substring(2, 9),
+                 ticketId: id,
+                 message: `Ticket #${id} deleted`,
+                 timestamp: new Date().toISOString(),
+               },
+               ...state.activities,
+             ],
+           }));
           console.log("[STORE deleteTicket] Successfully removed ticket from state");
           return true;
         } catch (error) {
@@ -643,22 +635,18 @@ updateTicketStatus: (id, status) => {
        * @param message - Description of the event
        */
 addActivity: (ticketId, message) => {
-         set((state) => {
-           // Keep only the latest activity per ticket (max 1 activity per ticket)
-           const filteredActivities = state.activities.filter((a) => a.ticketId !== ticketId);
-           return {
-             activities: [
-               {
-                 id: Math.random().toString(36).substring(2, 9),
-                 ticketId,
-                 message,
-                 timestamp: new Date().toISOString(),
-               },
-               ...filteredActivities,
-             ],
-           };
-         });
-},
+         set((state) => ({
+           activities: [
+             {
+               id: Math.random().toString(36).substring(2, 9),
+               ticketId,
+               message,
+               timestamp: new Date().toISOString(),
+             },
+             ...state.activities,
+           ],
+         }));
+       },
        // ========================================
        // SET ALL USERS ACTION
        // ========================================
