@@ -56,10 +56,10 @@ const handleAssignToMe = () => {
     }
   };
 
-  return (
+return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-xl h-full bg-neutral-900 border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-        
+      <div className="w-full max-w-3xl h-full bg-neutral-900 border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+         
         {/* Header */}
         <div className="p-6 border-b border-white/10 flex justify-between items-start bg-white/[0.02]">
           <div>
@@ -113,7 +113,7 @@ const handleAssignToMe = () => {
 
 {/* Quick Actions (Agent/Admin) */}
            {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (
-             <div className="flex gap-3 pt-4 border-t border-white/10">
+             <div className="flex gap-3 pt-4 border-t border-white/10 relative">
                {currentUserRole === "ADMINISTRATOR" && (
                  <div className="relative">
                    <button 
@@ -125,12 +125,12 @@ const handleAssignToMe = () => {
                      <ChevronDown className="w-3 h-3" />
                    </button>
                    {showAssignDropdown && (
-                     <div className="absolute z-10 mt-1 w-48 bg-neutral-800 border border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                     <div className="absolute z-20 mt-1 w-64 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-64 overflow-y-auto">
                        {allUsers.filter(u => u.role === "AGENT" || u.role === "ADMINISTRATOR").map(agent => (
                          <button
                            key={agent.id}
                            onClick={() => handleAssignToAgent(agent.id)}
-                           className="w-full text-left px-4 py-2 hover:bg-blue-500/20 text-white text-sm border-b border-white/5 last:border-0"
+                           className="w-full text-left px-4 py-3 hover:bg-blue-500/20 text-white text-sm border-b border-white/5 last:border-0 transition-colors"
                          >
                            {agent.name}
                          </button>
