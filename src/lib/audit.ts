@@ -16,7 +16,7 @@ export type AuditAction =
   | "SLA_WARNING" | "SLA_BREACHED"
   | "LOGIN" | "LOGOUT"
   | "PASSWORD_CHANGED" | "PASSWORD_RESET"
-  | "USER_CREATED" | "USER_DELETED";
+  | "USER_CREATED" | "USER_UPDATED" | "USER_DELETED";
 
 /**
  * Creates an audit log entry in the database

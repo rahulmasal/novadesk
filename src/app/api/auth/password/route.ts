@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { changePasswordSchema, adminResetPasswordSchema } from "@/lib/schemas";
+import { logAuditEvent } from "@/lib/audit";
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,13 @@ export async function POST(req: NextRequest) {
         data: { password: hashedPassword },
       });
 
+      await logAuditEvent({
+        ticketId: "system",
+        userId: auth.userId,
+        action: "PASSWORD_RESET",
+        details: `Password reset for ${targetUser.email} by ${auth.email}`,
+      }).catch(() => {});
+
       return NextResponse.json({ success: true, message: "Password reset successfully" });
     }
 
@@ -84,6 +92,13 @@ export async function POST(req: NextRequest) {
       where: { id: auth.userId },
       data: { password: hashedPassword },
     });
+
+    await logAuditEvent({
+      ticketId: "system",
+      userId: auth.userId,
+      action: "PASSWORD_CHANGED",
+      details: `Password changed for ${auth.email}`,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true, message: "Password changed successfully" });
   } catch (error) {

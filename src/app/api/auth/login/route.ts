@@ -159,6 +159,20 @@ export async function DELETE(req: NextRequest) {
 
   if (token) {
     try {
+      const session = await prisma.session.findUnique({
+        where: { token },
+        include: { user: true },
+      });
+
+      if (session) {
+        await logAuditEvent({
+          ticketId: "system",
+          userId: session.userId,
+          action: "LOGOUT",
+          details: `User ${session.user.email} logged out`,
+        }).catch(() => {});
+      }
+
       await prisma.session.deleteMany({ where: { token } });
     } catch (error) {
       console.error(`[AUTH DELETE] Error:`, error);

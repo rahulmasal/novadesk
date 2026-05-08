@@ -11,6 +11,7 @@ import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { createUserSchema, updateUserSchema } from "@/lib/schemas";
+import { logAuditEvent } from "@/lib/audit";
 
 export const dynamic = 'force-dynamic';
 
@@ -102,6 +103,13 @@ export async function POST(req: NextRequest) {
       select: { id: true, email: true, name: true, role: true, department: true, createdAt: true },
     });
 
+    await logAuditEvent({
+      ticketId: "system",
+      userId: auth.userId,
+      action: "USER_CREATED",
+      details: `User ${user.email} created by ${auth.email}`,
+    }).catch(() => {});
+
     console.log(`[USERS POST] User created`, { userId: user.id, email: user.email, role: user.role });
 
     return NextResponse.json(user, { status: 201 });
@@ -146,6 +154,13 @@ export async function PATCH(req: NextRequest) {
       select: { id: true, email: true, name: true, role: true, department: true, createdAt: true },
     });
 
+    await logAuditEvent({
+      ticketId: "system",
+      userId: auth.userId,
+      action: "USER_UPDATED",
+      details: `User ${user.email} updated by ${auth.email}`,
+    }).catch(() => {});
+
     console.log(`[USERS PATCH] User updated`, { userId: id, updatedBy: auth.userId });
 
     return NextResponse.json(user);
@@ -176,7 +191,17 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
     }
 
+    const targetUser = await prisma.user.findUnique({ where: { id } });
     await prisma.user.delete({ where: { id } });
+
+    if (targetUser) {
+      await logAuditEvent({
+        ticketId: "system",
+        userId: auth.userId,
+        action: "USER_DELETED",
+        details: `User ${targetUser.email} deleted by ${auth.email}`,
+      }).catch(() => {});
+    }
 
     console.log(`[USERS DELETE] User deleted`, { userId: id, deletedBy: auth.userId });
 

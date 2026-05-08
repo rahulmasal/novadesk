@@ -504,22 +504,26 @@ tickets: [],
        * @param status - New status value
        */
 updateTicketStatus: (id, status) => {
-          set((state) => ({
-            tickets: state.tickets.map((t) =>
-              t.id === id
-                ? { ...t, status, updatedAt: new Date().toISOString() }
-                : t,
-            ),
-            activities: [
-              {
-                id: Math.random().toString(36).substring(2, 9),
-                ticketId: id,
-                message: `Ticket #${id} status changed to ${status}`,
-                timestamp: new Date().toISOString(),
-              },
-              ...state.activities,
-            ],
-          }));
+          set((state) => {
+            const ticket = state.tickets.find(t => t.id === id);
+            const ticketLabel = ticket ? `${ticket.id} (${ticket.title})` : id;
+            return {
+              tickets: state.tickets.map((t) =>
+                t.id === id
+                  ? { ...t, status, updatedAt: new Date().toISOString() }
+                  : t,
+              ),
+              activities: [
+                {
+                  id: Math.random().toString(36).substring(2, 9),
+                  ticketId: id,
+                  message: `Ticket ${ticketLabel} status changed to ${status}`,
+                  timestamp: new Date().toISOString(),
+                },
+                ...state.activities,
+              ],
+            };
+          });
         },
 
       // ========================================
