@@ -15,7 +15,7 @@ export function TicketTable() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const itemsPerPage = 5;
+  const itemsPerPage = 50;
 
   const filtered = tickets.filter(
     (t) =>
