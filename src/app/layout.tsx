@@ -6,8 +6,6 @@ import { DigitalClock } from "@/components/DigitalClock";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
   title: "NovaDesk IT Ticket Management",
   description: "Modern IT Support Ticket Dashboard with real-time updates, SLA tracking, and knowledge base",
