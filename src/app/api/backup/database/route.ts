@@ -262,13 +262,52 @@ async function restoreViaPrisma(lines: string[]) {
     const statements = parseSqlInserts(lines);
 
     await prisma.$transaction(async (tx) => {
+      // Clear existing data first
+      await tx.comment.deleteMany();
+      await tx.auditLog.deleteMany();
+      await tx.attachment.deleteMany();
+      await tx.ticket.deleteMany();
+      await tx.knowledgeBaseArticle.deleteMany();
+      await tx.systemConfig.deleteMany();
+      await tx.user.deleteMany();
+
+      // Restore users
       for (const stmt of statements.users) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await tx.user.create({ data: stmt as any });
+        const data = stmt as any;
+        data.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
+        data.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
+        await tx.user.create({ data });
       }
+
+      // Restore tickets
       for (const stmt of statements.tickets) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await tx.ticket.create({ data: stmt as any });
+        const data = stmt as any;
+        data.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
+        data.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
+        data.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+        await tx.ticket.create({ data });
+      }
+
+      // Restore knowledge base articles
+      for (const stmt of statements.articles) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = stmt as any;
+        data.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
+        data.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
+        await tx.knowledgeBaseArticle.create({ data });
+      }
+
+      // Restore config
+      for (const stmt of statements.config) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = stmt as any;
+        await tx.systemConfig.upsert({
+          where: { key: data.key },
+          update: { value: data.value },
+          create: { key: data.key, value: data.value },
+        });
       }
     });
 
@@ -299,24 +338,100 @@ function parseSqlInserts(lines: string[]): ParsedSql {
     config: []
   };
 
-  // Simple parser for INSERT statements
-  // In production, use a proper SQL parser like 'sql-parser' or 'pg-query-stream'
-  let currentTable = "";
-  let buffer: string[] = [];
+  let fullSql = lines.join('\n');
 
-  for (const line of lines) {
-    if (line.match(/INSERT INTO (\w+)/)) {
-      currentTable = line.match(/INSERT INTO (\w+)/)?.[1] || "";
-      buffer = [line];
-    } else if (currentTable && line.trim().startsWith("(")) {
-      buffer.push(line);
-    } else if (currentTable && line.trim() === ";") {
-      buffer.push(line);
-      // In production, parse the INSERT statement and populate result based on currentTable
-      currentTable = "";
-      buffer = [];
+  // Match INSERT INTO statements with multiple rows
+  const insertRegex = /INSERT INTO (\w+)\s*\(([^)]+)\)\s*VALUES\s*([\s\S]*?);/gi;
+  let match;
+
+  while ((match = insertRegex.exec(fullSql)) !== null) {
+    const [, table, columnsStr, valuesBlock] = match;
+    const columns = columnsStr.split(',').map(c => c.trim());
+
+    // Split by "),(" for multi-row inserts
+    const rows = valuesBlock.split(/\),\s*\(/);
+
+    for (const rowStr of rows) {
+      let cleanedRow = rowStr.trim();
+      if (cleanedRow.startsWith('(')) cleanedRow = cleanedRow.slice(1);
+      if (cleanedRow.endsWith(')')) cleanedRow = cleanedRow.slice(0, -1);
+
+      const values = parseValues(cleanedRow);
+
+      const row: SqlRow = {};
+      columns.forEach((col, i) => {
+        row[col] = values[i];
+      });
+
+      switch (table.toLowerCase()) {
+        case 'users':
+          result.users.push(row);
+          break;
+        case 'tickets':
+          result.tickets.push(row);
+          break;
+        case 'knowledge_base_articles':
+          result.articles.push(row);
+          break;
+        case 'system_config':
+          result.config.push(row);
+          break;
+      }
     }
   }
 
   return result;
+}
+
+function parseValues(valuesStr: string): unknown[] {
+  const values: unknown[] = [];
+  let current = '';
+  let inString = false;
+  let inJson = false;
+
+  for (let i = 0; i < valuesStr.length; i++) {
+    const char = valuesStr[i];
+
+    if (char === "'" && !inJson) {
+      inString = !inString;
+      current += char;
+    } else if (char === '{' && !inString) {
+      inJson = true;
+      current += char;
+    } else if (char === '}' && !inString) {
+      inJson = false;
+      current += char;
+    } else if (char === ',' && !inString && !inJson) {
+      values.push(parseValue(current.trim()));
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  // Don't forget the last value
+  if (current.trim() && !current.trim().endsWith(')')) {
+    values.push(parseValue(current.trim()));
+  }
+
+  return values;
+}
+
+function parseValue(val: string): unknown {
+  if (val === 'NULL') return null;
+  if (val === 'true') return true;
+  if (val === 'false') return false;
+  if (/^-?\d+$/.test(val)) return parseInt(val, 10);
+  if (/^-?\d+\.\d+$/.test(val)) return parseFloat(val);
+  if (val.startsWith("'") && val.endsWith("'")) {
+    return val.slice(1, -1).replace(/''/g, "'");
+  }
+  if (val.startsWith('{') && val.endsWith('}')) {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val;
+    }
+  }
+  return val;
 }
