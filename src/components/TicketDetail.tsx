@@ -217,15 +217,15 @@ return (
                 <UserCheck className="w-3.5 h-3.5" />
                 Assign to me
               </button>
-              {/* Status Dropdown */}
-              <div className="relative inline-block">
-                <button
-                  onClick={() => setShowStatusModal(!showStatusModal)}
-                  className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors whitespace-nowrap min-w-[100px]"
-                >
-                  <span className="text-xs truncate max-w-[80px]">{ticket.status.replace(/_/g, ' ')}</span>
-                  <ChevronDown className="w-3 h-3" />
-                </button>
+{/* Status Dropdown */}
+               <div className="relative inline-block">
+                 <button
+                   onClick={() => setShowStatusModal(!showStatusModal)}
+                   className="flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
+                 >
+                   <span className="text-xs truncate max-w-[80px]">{ticket.status.replace(/_/g, ' ')}</span>
+                   <ChevronDown className="w-3 h-3" />
+                 </button>
                 {showStatusModal && (
                   <div 
                     className="absolute top-full left-0 mt-1 z-20 w-44 bg-neutral-900 border border-white/10 rounded-lg shadow-2xl"
