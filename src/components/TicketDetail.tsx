@@ -181,9 +181,14 @@ return (
 
 {/* Status Change Modal */}
             {showStatusModal && (
-              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div 
+                className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setShowStatusModal(false);
+                }}
+              >
                 <div className="bg-neutral-900 border border-white/10 rounded-lg shadow-2xl w-56 mx-4">
-                  <div className="py-2">
+                  <div className="py-2" onClick={(e) => e.stopPropagation()}>
                     <div className="px-3 pb-1">
                       <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">Change Status</h3>
                     </div>
