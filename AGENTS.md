@@ -31,6 +31,8 @@ Rules:
 - Added custom column selection for reports with 14 available columns
 - Added report type filtering (All, By Status, By Priority, By Category, By Department)
 - Updated report API to support type parameter with specific filters
+- Fixed SQL restore parser to properly handle multi-row INSERT statements
+- Added comprehensive Settings component with notifications, appearance, backup, and advanced settings
 
 ### In Progress
 - (none)
