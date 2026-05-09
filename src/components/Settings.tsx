@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTicketStore } from "@/lib/store";
 import {
@@ -36,16 +35,8 @@ const LANGUAGES = [
 export function Settings() {
   const { settings, updateSettings } = useSettings();
   const { currentUser, currentUserRole } = useTicketStore();
-  const [saved, setSaved] = useState(false);
 
   const isAdmin = currentUserRole === "ADMINISTRATOR";
-
-  // Auto-show saved message when settings change
-  useEffect(() => {
-    setSaved(true);
-    const timer = setTimeout(() => setSaved(false), 2000);
-    return () => clearTimeout(timer);
-  }, [settings]);
 
   return (
     <div className="p-8 pl-6 pr-6 max-w-5xl">
@@ -53,9 +44,6 @@ export function Settings() {
         <h2 className="text-3xl font-bold text-white tracking-tight">
           System Settings
         </h2>
-        {saved && (
-          <span className="text-emerald-400 text-sm">✓ Saved</span>
-        )}
       </div>
 
       <div className="space-y-6">
