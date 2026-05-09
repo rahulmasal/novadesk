@@ -181,11 +181,13 @@ return (
 
 {/* Status Change Modal */}
             {showStatusModal && (
-              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-neutral-900 border border-white/10 rounded-lg shadow-2xl w-full max-w-xs mx-4 animate-in zoom-in-95 duration-200">
-                  <div className="p-3">
-                    <h3 className="text-sm font-semibold text-white mb-2">Change Status</h3>
-                    <div className="space-y-1">
+              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="bg-neutral-900 border border-white/10 rounded-lg shadow-2xl w-56 mx-4">
+                  <div className="py-2">
+                    <div className="px-3 pb-1">
+                      <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">Change Status</h3>
+                    </div>
+                    <div className="space-y-px">
                       {STATUS_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}
@@ -193,20 +195,20 @@ return (
                             await updateTicketStatus(ticket.id, opt.value);
                             setShowStatusModal(false);
                           }}
-                          className={`w-full text-left px-2.5 py-1.5 rounded border text-xs transition-all ${opt.color} hover:opacity-80`}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-all ${opt.color} hover:opacity-80 rounded mx-1`}
                         >
                           {opt.label}
                         </button>
                       ))}
                     </div>
-                  </div>
-                  <div className="px-3 pb-2">
-                    <button
-                      onClick={() => setShowStatusModal(false)}
-                      className="w-full px-2.5 py-1 text-xs text-neutral-400 hover:text-white transition-colors"
-                    >
-                      Cancel
-                    </button>
+                    <div className="px-3 pt-1">
+                      <button
+                        onClick={() => setShowStatusModal(false)}
+                        className="w-full text-left px-2 py-1 text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
