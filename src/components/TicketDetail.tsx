@@ -160,37 +160,32 @@ return (
                   Assign to me
                 </button>
                 {/* Status Dropdown */}
-                <div className="relative">
+                <div className="relative inline-block">
                   <button
                     onClick={() => setShowStatusModal(!showStatusModal)}
-                    className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors"
+                    className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors whitespace-nowrap"
                   >
                     <span className="text-xs">{ticket.status.replace(/_/g, ' ')}</span>
                     <ChevronDown className="w-3 h-3" />
                   </button>
                   {showStatusModal && (
                     <div 
-                      className="absolute top-full left-0 mt-2 z-20 w-56 bg-neutral-900 border border-white/10 rounded-lg shadow-2xl"
+                      className="absolute top-full left-0 mt-1 z-20 w-48 bg-neutral-900 border border-white/10 rounded-lg shadow-2xl"
                       onMouseLeave={() => setShowStatusModal(false)}
                     >
                       <div className="py-1">
-                        <div className="px-3 pb-1">
-                          <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">Change Status</h3>
-                        </div>
-                        <div className="space-y-px">
-                          {STATUS_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              onClick={async () => {
-                                await updateTicketStatus(ticket.id, opt.value);
-                                setShowStatusModal(false);
-                              }}
-                              className={`w-full text-left px-3 py-1.5 text-xs transition-all ${opt.color} hover:opacity-80 rounded mx-1`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
+                        {STATUS_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={async () => {
+                              await updateTicketStatus(ticket.id, opt.value);
+                              setShowStatusModal(false);
+                            }}
+                            className={`w-full text-left px-2.5 py-1 text-xs transition-all ${opt.color} hover:opacity-80 rounded mx-1`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   )}
