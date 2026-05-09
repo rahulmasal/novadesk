@@ -79,11 +79,37 @@ const DEFAULT_SETTINGS: SettingsData = {
 
 export function Settings() {
   const { currentUser, currentUserRole } = useTicketStore();
-  const [settings, setSettings] = useState<SettingsData>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<SettingsData>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("app-settings");
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    }
+    return DEFAULT_SETTINGS;
+  });
   const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const isAdmin = currentUserRole === "ADMINISTRATOR";
+
+  useEffect(() => {
+    // Apply theme on mount - settings already initialized from localStorage
+    const theme = settings.appearance.theme;
+    const root = document.documentElement;
+    if (theme === "system") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
+      }
+    } else if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const applyTheme = (theme: "dark" | "light" | "system") => {
     const root = document.documentElement;
@@ -101,32 +127,26 @@ export function Settings() {
     }
   };
 
-  useEffect(() => {
-    const savedSettings = localStorage.getItem("app-settings");
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      applyTheme(settings.appearance.theme);
-    }
-  }, [settings.appearance.theme, loading]);
-
   const updateSettings = (section: keyof SettingsData, key: string, value: unknown) => {
-    setSettings((prev) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [key]: value,
-      },
-    }));
+    setSettings((prev) => {
+      const newSettings = {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [key]: value,
+        },
+      };
+      // Apply theme immediately if changed
+      if (section === "appearance" && key === "theme") {
+        applyTheme(value as "dark" | "light" | "system");
+      }
+      return newSettings;
+    });
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     localStorage.setItem("app-settings", JSON.stringify(settings));
+    applyTheme(settings.appearance.theme);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
