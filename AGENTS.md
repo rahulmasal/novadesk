@@ -41,6 +41,7 @@ Rules:
 - Theme and compact view changes apply immediately
 - Settings auto-save on change, no need for explicit save button
 - Added digital clock in Settings to test timezone selection
+- Added global digital clock visible on all pages
 
 ### In Progress
 - (none)
