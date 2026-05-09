@@ -189,7 +189,7 @@ return (
                 <div className="relative">
                   <button 
                     onClick={() => setShowAssignDropdown(!showAssignDropdown)}
-                    className="flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30"
+                    className="flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
                   >
                     <UserCheck className="w-3.5 h-3.5" />
                     Assign
@@ -212,7 +212,7 @@ return (
               )}
               <button
                 onClick={handleAssignToMe}
-                className="flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30"
+                className="flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
               >
                 <UserCheck className="w-3.5 h-3.5" />
                 Assign to me
@@ -252,7 +252,7 @@ return (
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="flex items-center gap-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-red-500/30 ml-auto disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-red-500/30 ml-auto disabled:opacity-50 min-w-[100px]"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   {isDeleting ? "Deleting..." : "Delete"}
