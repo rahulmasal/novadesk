@@ -185,16 +185,16 @@ return (
           {/* Quick Actions (Agent/Admin) */}
           {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (
             <div className="flex gap-2 pt-2 border-t border-white/10 relative">
-              {currentUserRole === "ADMINISTRATOR" && (
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowAssignDropdown(!showAssignDropdown)}
-                    className="flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
-                  >
-                    <UserCheck className="w-3.5 h-3.5" />
-                    Assign
-                    <ChevronDown className="w-3 h-3" />
-                  </button>
+{currentUserRole === "ADMINISTRATOR" && (
+                 <div className="relative">
+                   <button 
+                     onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+                     className="flex-shrink-0 flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
+                   >
+                     <UserCheck className="w-3.5 h-3.5" />
+                     Assign
+                     <ChevronDown className="w-3 h-3" />
+                   </button>
                   {showAssignDropdown && (
                     <div className="absolute z-20 mt-1 w-56 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
                       {allUsers.filter(u => u.role === "AGENT" || u.role === "ADMINISTRATOR").map(agent => (
@@ -210,18 +210,18 @@ return (
                   )}
                 </div>
               )}
-              <button
-                onClick={handleAssignToMe}
-                className="flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
-              >
-                <UserCheck className="w-3.5 h-3.5" />
-                Assign to me
-              </button>
+<button
+                 onClick={handleAssignToMe}
+                 className="flex-shrink-0 flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
+               >
+                 <UserCheck className="w-3.5 h-3.5" />
+                 Assign to me
+               </button>
 {/* Status Dropdown */}
                <div className="relative inline-block">
                  <button
                    onClick={() => setShowStatusModal(!showStatusModal)}
-                   className="flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
+                   className="flex-shrink-0 flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
                  >
                    <span className="text-xs truncate max-w-[80px]">{ticket.status.replace(/_/g, ' ')}</span>
                    <ChevronDown className="w-3 h-3" />
@@ -248,16 +248,16 @@ return (
                   </div>
                 )}
               </div>
-              {currentUserRole === "ADMINISTRATOR" && (
-                <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="flex items-center gap-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-red-500/30 ml-auto disabled:opacity-50 min-w-[100px]"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </button>
-              )}
+{currentUserRole === "ADMINISTRATOR" && (
+                 <button
+                   onClick={handleDelete}
+                   disabled={isDeleting}
+                   className="flex-shrink-0 flex items-center gap-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-red-500/30 ml-auto disabled:opacity-50 min-w-[100px]"
+                 >
+                   <Trash2 className="w-3.5 h-3.5" />
+                   {isDeleting ? "Deleting..." : "Delete"}
+                 </button>
+               )}
             </div>
           )}
 
