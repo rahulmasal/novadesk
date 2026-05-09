@@ -8,7 +8,6 @@ import {
   Bell,
   Database,
   Shield,
-  Clock,
 } from "lucide-react";
 
 const TIMEZONES = [
@@ -38,26 +37,8 @@ export function Settings() {
   const { settings, updateSettings } = useSettings();
   const { currentUser, currentUserRole } = useTicketStore();
   const [saved, setSaved] = useState(false);
-  const [currentTime, setCurrentTime] = useState("");
 
   const isAdmin = currentUserRole === "ADMINISTRATOR";
-
-  // Update clock every second
-  useEffect(() => {
-    const updateTime = () => {
-      const tz = settings.advanced.timezone;
-      const time = new Date().toLocaleTimeString("en-US", {
-        timeZone: tz,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-      setCurrentTime(time);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, [settings.advanced.timezone]);
 
   // Auto-show saved message when settings change
   useEffect(() => {
@@ -72,15 +53,9 @@ export function Settings() {
         <h2 className="text-3xl font-bold text-white tracking-tight">
           System Settings
         </h2>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-neutral-400">
-            <Clock className="w-4 h-4" />
-            <span className="font-mono text-lg">{currentTime}</span>
-          </div>
-          {saved && (
-            <span className="text-emerald-400 text-sm">✓ Saved</span>
-          )}
-        </div>
+        {saved && (
+          <span className="text-emerald-400 text-sm">✓ Saved</span>
+        )}
       </div>
 
       <div className="space-y-6">
