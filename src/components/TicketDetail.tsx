@@ -159,13 +159,42 @@ return (
                   <UserCheck className="w-4 h-4" />
                   Assign to me
                 </button>
-                <button
-                  onClick={() => setShowStatusModal(true)}
-                  className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors"
-                >
-                  <span className="text-xs">{ticket.status.replace(/_/g, ' ')}</span>
-                  <ChevronDown className="w-3 h-3" />
-                </button>
+                {/* Status Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowStatusModal(!showStatusModal)}
+                    className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors"
+                  >
+                    <span className="text-xs">{ticket.status.replace(/_/g, ' ')}</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  {showStatusModal && (
+                    <div 
+                      className="absolute top-full left-0 mt-2 z-20 w-56 bg-neutral-900 border border-white/10 rounded-lg shadow-2xl"
+                      onMouseLeave={() => setShowStatusModal(false)}
+                    >
+                      <div className="py-1">
+                        <div className="px-3 pb-1">
+                          <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">Change Status</h3>
+                        </div>
+                        <div className="space-y-px">
+                          {STATUS_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={async () => {
+                                await updateTicketStatus(ticket.id, opt.value);
+                                setShowStatusModal(false);
+                              }}
+                              className={`w-full text-left px-3 py-1.5 text-xs transition-all ${opt.color} hover:opacity-80 rounded mx-1`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {currentUserRole === "ADMINISTRATOR" && (
                   <button
                     onClick={handleDelete}
@@ -179,47 +208,7 @@ return (
               </div>
             )}
 
-{/* Status Change Modal */}
-            {showStatusModal && (
-              <div 
-                className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                onClick={(e) => {
-                  if (e.target === e.currentTarget) setShowStatusModal(false);
-                }}
-              >
-                <div className="bg-neutral-900 border border-white/10 rounded-lg shadow-2xl w-56 mx-4">
-                  <div className="py-2" onClick={(e) => e.stopPropagation()}>
-                    <div className="px-3 pb-1">
-                      <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">Change Status</h3>
-                    </div>
-                    <div className="space-y-px">
-                      {STATUS_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={async () => {
-                            await updateTicketStatus(ticket.id, opt.value);
-                            setShowStatusModal(false);
-                          }}
-                          className={`w-full text-left px-3 py-1.5 text-xs transition-all ${opt.color} hover:opacity-80 rounded mx-1`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="px-3 pt-1">
-                      <button
-                        onClick={() => setShowStatusModal(false)}
-                        className="w-full text-left px-2 py-1 text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-           {/* Activity/Comments Thread */}
+{/* Activity/Comments Thread */}
           <div>
             <h3 className="text-sm font-medium text-neutral-500 mb-4">Activity & Notes</h3>
             <div className="space-y-4">
