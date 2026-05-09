@@ -182,10 +182,10 @@ return (
             </div>
           </div>
 
-          {/* Quick Actions (Agent/Admin) */}
-          {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (
-            <div className="flex gap-2 pt-2 border-t border-white/10 relative">
-{currentUserRole === "ADMINISTRATOR" && (
+{/* Quick Actions (Agent/Admin) */}
+           {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (
+             <div className="flex gap-2 pt-2 border-t border-white/10 relative">
+               {currentUserRole === "ADMINISTRATOR" && (
                  <div className="relative">
                    <button 
                      onClick={() => setShowAssignDropdown(!showAssignDropdown)}
@@ -195,29 +195,29 @@ return (
                      Assign
                      <ChevronDown className="w-3 h-3" />
                    </button>
-                  {showAssignDropdown && (
-                    <div className="absolute z-20 mt-1 w-56 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
-                      {allUsers.filter(u => u.role === "AGENT" || u.role === "ADMINISTRATOR").map(agent => (
-                        <button
-                          key={agent.id}
-                          onClick={() => handleAssignToAgent(agent.id)}
-                          className="w-full text-left px-3 py-2 hover:bg-blue-500/20 text-white text-xs border-b border-white/5 last:border-0 transition-colors"
-                        >
-                          {agent.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-<button
+                   {showAssignDropdown && (
+                     <div className="absolute z-20 mt-1 w-56 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
+                       {allUsers.filter(u => u.role === "AGENT" || u.role === "ADMINISTRATOR").map(agent => (
+                         <button
+                           key={agent.id}
+                           onClick={() => handleAssignToAgent(agent.id)}
+                           className="w-full text-left px-3 py-2 hover:bg-blue-500/20 text-white text-xs border-b border-white/5 last:border-0 transition-colors"
+                         >
+                           {agent.name}
+                         </button>
+                       ))}
+                     </div>
+                   )}
+                 </div>
+               )}
+               <button
                  onClick={handleAssignToMe}
                  className="flex-shrink-0 flex items-center gap-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/30 min-w-[100px]"
                >
                  <UserCheck className="w-3.5 h-3.5" />
                  Assign to me
                </button>
-{/* Status Dropdown */}
+               {/* Status Dropdown */}
                <div className="relative inline-block">
                  <button
                    onClick={() => setShowStatusModal(!showStatusModal)}
@@ -226,29 +226,29 @@ return (
                    <span className="text-xs truncate max-w-[80px]">{ticket.status.replace(/_/g, ' ')}</span>
                    <ChevronDown className="w-3 h-3" />
                  </button>
-                {showStatusModal && (
-                  <div 
-                    className="absolute top-full left-0 mt-1 z-20 w-44 bg-neutral-900 border border-white/10 rounded-lg shadow-2xl"
-                    onMouseLeave={() => setShowStatusModal(false)}
-                  >
-                    <div className="py-1">
-                      {STATUS_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={async () => {
-                            await updateTicketStatus(ticket.id, opt.value);
-                            setShowStatusModal(false);
-                          }}
-                          className={`w-full text-left px-2.5 py-1 text-xs transition-all ${opt.color} hover:opacity-80 rounded mx-1`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-{currentUserRole === "ADMINISTRATOR" && (
+                 {showStatusModal && (
+                   <div 
+                     className="absolute top-full left-0 mt-1 z-20 w-44 bg-neutral-900 border border-white/10 rounded-lg shadow-2xl"
+                     onMouseLeave={() => setShowStatusModal(false)}
+                   >
+                     <div className="py-1">
+                       {STATUS_OPTIONS.map((opt) => (
+                         <button
+                           key={opt.value}
+                           onClick={async () => {
+                             await updateTicketStatus(ticket.id, opt.value);
+                             setShowStatusModal(false);
+                           }}
+                           className={`w-full text-left px-2.5 py-1 text-xs transition-all ${opt.color} hover:opacity-80 rounded mx-1`}
+                         >
+                           {opt.label}
+                         </button>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+               </div>
+               {currentUserRole === "ADMINISTRATOR" && (
                  <button
                    onClick={handleDelete}
                    disabled={isDeleting}
@@ -258,8 +258,8 @@ return (
                    {isDeleting ? "Deleting..." : "Delete"}
                  </button>
                )}
-            </div>
-          )}
+             </div>
+           )}
 
           {/* Activity/Comments Thread */}
           <div>
