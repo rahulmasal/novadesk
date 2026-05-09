@@ -33,6 +33,8 @@ Rules:
 - Updated report API to support type parameter with specific filters
 - Fixed SQL restore parser to properly handle multi-row INSERT statements
 - Added comprehensive Settings component with notifications, appearance, backup, and advanced settings
+- Fixed lint error: changed `let fullSql` to `const fullSql` in backup API
+- Removed unused imports (Moon, Clock, Globe, Key) from Settings.tsx
 
 ### In Progress
 - (none)
@@ -59,6 +61,7 @@ Rules:
 - `src/components/TicketDetail.tsx`: Contains the action buttons that needed sizing fixes
 - `src/components/Backup.tsx`: Database backup/restore interface with both JSON and SQL options
 - `src/components/TicketTable.tsx`: Ticket table with enhanced search
+- `src/components/Settings.tsx`: Comprehensive Settings component with notifications, appearance, backup, and advanced settings
 - `src/app/api/backup/database/route.ts`: Database backup API endpoint (GET/POST)
 - `scripts/db-backup.js`: CLI script for database backup
 - `scripts/db-restore.js`: CLI script for database restore
