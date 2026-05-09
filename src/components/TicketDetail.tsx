@@ -221,9 +221,9 @@ return (
               <div className="relative inline-block">
                 <button
                   onClick={() => setShowStatusModal(!showStatusModal)}
-                  className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors whitespace-nowrap min-w-[100px]"
                 >
-                  <span className="text-xs">{ticket.status.replace(/_/g, ' ')}</span>
+                  <span className="text-xs truncate max-w-[80px]">{ticket.status.replace(/_/g, ' ')}</span>
                   <ChevronDown className="w-3 h-3" />
                 </button>
                 {showStatusModal && (
