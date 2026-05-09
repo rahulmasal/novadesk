@@ -42,6 +42,7 @@ Rules:
 - Settings auto-save on change, no need for explicit save button
 - Added digital clock in Settings to test timezone selection
 - Added global digital clock visible on all pages
+- Settings backup to database via /api/settings endpoint
 
 ### In Progress
 - (none)
