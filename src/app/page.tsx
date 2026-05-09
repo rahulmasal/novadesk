@@ -12,17 +12,13 @@ import { UserManagement } from "@/components/UserManagement";
 import { Reports } from "@/components/Reports";
 import { Backup } from "@/components/Backup";
 import { SetupWizard } from "@/components/SetupWizard";
+import { Settings } from "@/components/Settings";
 import { useTicketStore } from "@/lib/store";
-import { Plus, Lock, CheckCircle, XCircle } from "lucide-react";
+import { Plus, CheckCircle, XCircle } from "lucide-react";
 
 export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const {
     currentUserRole,
     currentView,
@@ -101,166 +97,8 @@ case "Customers":
              <Reports />
            </div>
          );
-       case "Settings":
-         return (
-           <div className="p-8 pl-6 pr-6 max-w-7xl">
-             <div className="flex items-center justify-between mb-8">
-               <h2 className="text-3xl font-bold text-white tracking-tight">
-                 System Settings
-               </h2>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div className="glass-dark p-6 rounded-2xl">
-                 <h3 className="text-lg font-semibold text-white mb-4">
-                   General Configuration
-                 </h3>
-                 <div className="space-y-4">
-                   <div>
-                     <label className="block text-sm text-neutral-400 mb-1">
-                       Company Name
-                     </label>
-                     <input
-                       type="text"
-                       defaultValue="NovaDesk IT"
-                       className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
-                     />
-                   </div>
-                   <div>
-                     <label className="block text-sm text-neutral-400 mb-1">
-                       Support Email
-                     </label>
-                     <input
-                       type="text"
-                       defaultValue="support@novadesk.it"
-                       className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
-                     />
-                   </div>
-                 </div>
-               </div>
-               <div className="glass-dark p-6 rounded-2xl">
-                 <h3 className="text-lg font-semibold text-white mb-4">
-                   Role Management
-                 </h3>
-                 <p className="text-sm text-neutral-400 mb-4">
-                   Logged in as:{" "}
-                   <span className="text-blue-400 font-bold">
-                     {currentUser?.name || "Unknown"}
-                   </span>
-                 </p>
-                 <p className="text-sm text-neutral-400 mb-2">
-                   Role:{" "}
-                   <span
-                     className={`font-bold ${
-                       currentUserRole === "ADMINISTRATOR"
-                         ? "text-emerald-400"
-                         : currentUserRole === "AGENT"
-                           ? "text-purple-400"
-                           : "text-blue-400"
-                     }`}
-                   >
-                     {currentUserRole}
-                   </span>
-                 </p>
-                 <p className="text-xs text-neutral-500">
-                   Administrators can manage all system parameters, while Agents
-                   handle the ticket queue.
-                 </p>
-               </div>
-               <div className="glass-dark p-6 rounded-2xl">
-                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                   <Lock className="w-4 h-4 text-blue-400" />
-                   Change Password
-                 </h3>
-                 <form
-                   onSubmit={async (e) => {
-                     e.preventDefault();
-                     if (newPassword !== confirmPassword) {
-                       setPasswordMsg({ type: "error", text: "Passwords do not match" });
-                       return;
-                     }
-                     setPasswordMsg(null);
-                     setIsChangingPassword(true);
-                     try {
-                       const res = await fetch("/api/auth/password", {
-                         method: "POST",
-                         headers: {
-                           "Content-Type": "application/json",
-                           Authorization: `Bearer ${authToken}`,
-                         },
-                         body: JSON.stringify({ oldPassword, newPassword }),
-                       });
-                       const data = await res.json();
-                       if (res.ok) {
-                         setPasswordMsg({ type: "success", text: data.message });
-                         setOldPassword("");
-                         setNewPassword("");
-                         setConfirmPassword("");
-                       } else {
-                         setPasswordMsg({ type: "error", text: data.error || "Failed to change password" });
-                       }
-                     } catch {
-                       setPasswordMsg({ type: "error", text: "Network error. Please try again." });
-                     } finally {
-                       setIsChangingPassword(false);
-                     }
-                   }}
-                   className="space-y-4"
-                 >
-                   <div>
-                     <label className="block text-sm text-neutral-400 mb-1">
-                       Current Password
-                     </label>
-                     <input
-                       type="password"
-                       required
-                       value={oldPassword}
-                       onChange={(e) => setOldPassword(e.target.value)}
-                       className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
-                     />
-                   </div>
-                   <div>
-                     <label className="block text-sm text-neutral-400 mb-1">
-                       New Password
-                     </label>
-                     <input
-                       type="password"
-                       required
-                       value={newPassword}
-                       onChange={(e) => setNewPassword(e.target.value)}
-                       className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
-                       placeholder="Min 8 chars, uppercase, lowercase, number"
-                     />
-                   </div>
-                   <div>
-                     <label className="block text-sm text-neutral-400 mb-1">
-                       Confirm New Password
-                     </label>
-                     <input
-                       type="password"
-                       required
-                       value={confirmPassword}
-                       onChange={(e) => setConfirmPassword(e.target.value)}
-                       className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
-                     />
-                   </div>
-                   {passwordMsg && (
-                     <div className={`flex items-center gap-2 text-sm ${passwordMsg.type === "success" ? "text-green-400" : "text-red-400"}`}>
-                       {passwordMsg.type === "success" ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                       {passwordMsg.text}
-                     </div>
-                   )}
-                   <button
-                     type="submit"
-                     disabled={isChangingPassword}
-                     className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white px-4 py-2 rounded-lg font-medium transition-all"
-                   >
-                     {isChangingPassword ? "Changing..." : "Update Password"}
-                   </button>
-                 </form>
-               </div>
-             </div>
-           </div>
-         );
+case "Settings":
+          return <Settings />;
 case "Backup":
          return (
            <div className="p-8 pr-6 max-w-7xl">

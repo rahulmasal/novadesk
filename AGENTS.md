@@ -44,6 +44,7 @@ Rules:
 - Ticket search now searches across 6 fields for comprehensive results
 - Report type filters: status=NEW, priority=URGENT/HIGH, category=Hardware, department=IT
 - Default selected columns include: ID, Title, Status, Priority, Category, Department, Created At
+- SQL restore parser now properly handles multi-row INSERT statements with correct value parsing
 
 ## Next Steps
 - (none)
