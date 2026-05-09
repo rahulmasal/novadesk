@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +30,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-neutral-950 text-neutral-50 antialiased`}>
-        {children}
+        <SettingsProvider>
+          {children}
+        </SettingsProvider>
         <ServiceWorkerRegistration />
       </body>
     </html>

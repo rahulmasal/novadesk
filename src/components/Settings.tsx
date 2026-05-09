@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useTicketStore } from "@/lib/store";
 import {
   Sun,
@@ -9,28 +10,6 @@ import {
   Shield,
   Save,
 } from "lucide-react";
-
-interface SettingsData {
-  notifications: {
-    email: boolean;
-    push: boolean;
-    ticketAssignment: boolean;
-  };
-  appearance: {
-    theme: "dark" | "light" | "system";
-    compactView: boolean;
-  };
-  backup: {
-    schedule: "daily" | "weekly" | "monthly";
-    retentionDays: number;
-  };
-  advanced: {
-    timezone: string;
-    language: string;
-    slaResponseHours: number;
-    slaResolutionHours: number;
-  };
-}
 
 const TIMEZONES = [
   "UTC",
@@ -55,98 +34,14 @@ const LANGUAGES = [
   { code: "zh", name: "中文" },
 ];
 
-const DEFAULT_SETTINGS: SettingsData = {
-  notifications: {
-    email: true,
-    push: true,
-    ticketAssignment: true,
-  },
-  appearance: {
-    theme: "dark",
-    compactView: false,
-  },
-  backup: {
-    schedule: "daily",
-    retentionDays: 30,
-  },
-  advanced: {
-    timezone: "UTC",
-    language: "en",
-    slaResponseHours: 4,
-    slaResolutionHours: 24,
-  },
-};
-
 export function Settings() {
+  const { settings, updateSettings } = useSettings();
   const { currentUser, currentUserRole } = useTicketStore();
-  const [settings, setSettings] = useState<SettingsData>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("app-settings");
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    }
-    return DEFAULT_SETTINGS;
-  });
   const [saved, setSaved] = useState(false);
 
   const isAdmin = currentUserRole === "ADMINISTRATOR";
 
-  useEffect(() => {
-    // Apply theme on mount - settings already initialized from localStorage
-    const theme = settings.appearance.theme;
-    const root = document.documentElement;
-    if (theme === "system") {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
-    } else if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const applyTheme = (theme: "dark" | "light" | "system") => {
-    const root = document.documentElement;
-    if (theme === "system") {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
-    } else if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  };
-
-  const updateSettings = (section: keyof SettingsData, key: string, value: unknown) => {
-    setSettings((prev) => {
-      const newSettings = {
-        ...prev,
-        [section]: {
-          ...prev[section],
-          [key]: value,
-        },
-      };
-      // Apply theme immediately if changed
-      if (section === "appearance" && key === "theme") {
-        applyTheme(value as "dark" | "light" | "system");
-      }
-      return newSettings;
-    });
-  };
-
   const handleSave = () => {
-    localStorage.setItem("app-settings", JSON.stringify(settings));
-    applyTheme(settings.appearance.theme);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };

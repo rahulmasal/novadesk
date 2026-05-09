@@ -1,0 +1,131 @@
+"use client";
+
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+
+export interface Settings {
+  notifications: {
+    email: boolean;
+    push: boolean;
+    ticketAssignment: boolean;
+  };
+  appearance: {
+    theme: "dark" | "light" | "system";
+    compactView: boolean;
+  };
+  backup: {
+    schedule: "daily" | "weekly" | "monthly";
+    retentionDays: number;
+  };
+  advanced: {
+    timezone: string;
+    language: string;
+    slaResponseHours: number;
+    slaResolutionHours: number;
+  };
+}
+
+const defaultSettings: Settings = {
+  notifications: {
+    email: true,
+    push: true,
+    ticketAssignment: true,
+  },
+  appearance: {
+    theme: "dark",
+    compactView: false,
+  },
+  backup: {
+    schedule: "daily",
+    retentionDays: 30,
+  },
+  advanced: {
+    timezone: "UTC",
+    language: "en",
+    slaResponseHours: 4,
+    slaResolutionHours: 24,
+  },
+};
+
+interface SettingsContextType {
+  settings: Settings;
+  updateSettings: (section: keyof Settings, key: string, value: unknown) => void;
+  applyTheme: (theme: "dark" | "light" | "system") => void;
+}
+
+const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+
+export function SettingsProvider({ children }: { children: ReactNode }) {
+  const [settings, setSettings] = useState<Settings>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("app-settings");
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    }
+    return defaultSettings;
+  });
+
+  const applyTheme = (theme: "dark" | "light" | "system") => {
+    const root = document.documentElement;
+    const html = document.documentElement;
+    if (theme === "system") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) {
+        html.classList.add("dark");
+      } else {
+        html.classList.remove("dark");
+      }
+    } else if (theme === "dark") {
+      html.classList.add("dark");
+    } else {
+      html.classList.remove("dark");
+    }
+  };
+
+  useEffect(() => {
+    applyTheme(settings.appearance.theme);
+    // Apply compact view class
+    if (settings.appearance.compactView) {
+      document.body.classList.add("compact-view");
+    } else {
+      document.body.classList.remove("compact-view");
+    }
+  }, []);
+
+  const updateSettings = (section: keyof Settings, key: string, value: unknown) => {
+    setSettings((prev) => {
+      const newSettings = {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [key]: value,
+        },
+      };
+      localStorage.setItem("app-settings", JSON.stringify(newSettings));
+      if (section === "appearance") {
+        if (key === "theme") {
+          applyTheme(value as "dark" | "light" | "system");
+        } else if (key === "compactView") {
+          if (value) {
+            document.body.classList.add("compact-view");
+          } else {
+            document.body.classList.remove("compact-view");
+          }
+        }
+      }
+      return newSettings;
+    });
+  };
+
+  return (
+    <SettingsContext.Provider value={{ settings, updateSettings, applyTheme }}>{children}</SettingsContext.Provider>
+  );
+}
+
+export function useSettings() {
+  const context = useContext(SettingsContext);
+  if (!context) {
+    throw new Error("useSettings must be used within a SettingsProvider");
+  }
+  return context;
+}
