@@ -40,6 +40,7 @@ Rules:
 - Created SettingsContext for app-wide settings access
 - Theme and compact view changes apply immediately
 - Settings auto-save on change, no need for explicit save button
+- Added digital clock in Settings to test timezone selection
 
 ### In Progress
 - (none)
