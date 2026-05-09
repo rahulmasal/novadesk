@@ -37,18 +37,38 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const fromDate = url.searchParams.get("from");
   const toDate = url.searchParams.get("to");
+  const reportType = url.searchParams.get("type") || "all";
 
   const from = fromDate ? new Date(fromDate) : new Date(0);
   const to = toDate ? new Date(toDate) : new Date(8640000000000000);
 
   try {
-  const ticketsRaw = await prisma.ticket.findMany({
-    where: {
-      createdAt: {
-        gte: from,
-        lte: to,
-      },
+  const whereClause: Record<string, unknown> = {
+    createdAt: {
+      gte: from,
+      lte: to,
     },
+  };
+
+  switch (reportType) {
+    case "status":
+      whereClause.status = "NEW";
+      break;
+    case "priority":
+      whereClause.priority = { in: ["URGENT", "HIGH"] };
+      break;
+    case "category":
+      whereClause.category = "Hardware";
+      break;
+    case "department":
+      whereClause.department = "IT";
+      break;
+    default:
+      break;
+  }
+
+  const ticketsRaw = await prisma.ticket.findMany({
+    where: whereClause,
     include: {
       createdBy: {
         select: {
@@ -60,12 +80,15 @@ export async function GET(req: NextRequest) {
         }
       },
     },
+    orderBy: {
+      createdAt: 'desc',
+    },
   });
 
   const tickets = ticketsRaw.map(t => ({
     ...t,
     userInfo: t.createdBy,
-    dueDate: t.dueDate.toISOString(),
+    dueDate: t.dueDate?.toISOString() || null,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
   }));
@@ -89,7 +112,7 @@ export async function GET(req: NextRequest) {
       (summary.byDepartment[ticket.department] || 0) + 1;
   });
 
-  console.log(`[REPORTS GET] Report generated`, { totalTickets: tickets.length, dateRange: { from: fromDate || "all", to: toDate || "all" } });
+  console.log(`[REPORTS GET] Report generated`, { totalTickets: tickets.length, dateRange: { from: fromDate || "all", to: toDate || "all" }, type: reportType });
 
   return NextResponse.json({
     tickets,
@@ -99,6 +122,7 @@ export async function GET(req: NextRequest) {
       from: fromDate || "all",
       to: toDate || "all",
     },
+    reportType,
   });
   } catch (error) {
     console.error(`[REPORTS GET] Error:`, error);

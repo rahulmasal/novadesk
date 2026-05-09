@@ -28,6 +28,9 @@ Rules:
 - Added SQL database restore functionality in Backup.tsx
 - Enhanced ticket search to include username, hostname, serial, createdBy, and priority
 - Added "Created" column to ticket table showing creation date
+- Added custom column selection for reports with 14 available columns
+- Added report type filtering (All, By Status, By Priority, By Category, By Department)
+- Updated report API to support type parameter with specific filters
 
 ### In Progress
 - (none)
@@ -39,6 +42,8 @@ Rules:
 - Added `flex-shrink-0` class to prevent buttons from shrinking in flex containers when window width is large
 - Database backup uses `pg_dump` when available, falls back to Prisma JSON export for portability
 - Ticket search now searches across 6 fields for comprehensive results
+- Report type filters: status=NEW, priority=URGENT/HIGH, category=Hardware, department=IT
+- Default selected columns include: ID, Title, Status, Priority, Category, Department, Created At
 
 ## Next Steps
 - (none)
@@ -54,3 +59,5 @@ Rules:
 - `src/app/api/backup/database/route.ts`: Database backup API endpoint (GET/POST)
 - `scripts/db-backup.js`: CLI script for database backup
 - `scripts/db-restore.js`: CLI script for database restore
+- `src/components/Reports.tsx`: Report generation with column selection and type filtering
+- `src/app/api/reports/route.ts`: Report API with type-based filtering

@@ -9,6 +9,7 @@ import {
   BarChart3,
   Users,
   Laptop,
+  Filter,
 } from "lucide-react";
 
 interface ReportTicket {
@@ -52,6 +53,30 @@ interface ReportData {
   };
 }
 
+type ReportType = "all" | "status" | "priority" | "category" | "department";
+
+interface ColumnOption {
+  id: string;
+  label: string;
+}
+
+const AVAILABLE_COLUMNS: ColumnOption[] = [
+  { id: "id", label: "Ticket ID" },
+  { id: "title", label: "Title" },
+  { id: "description", label: "Description" },
+  { id: "priority", label: "Priority" },
+  { id: "status", label: "Status" },
+  { id: "category", label: "Category" },
+  { id: "createdBy", label: "Created By" },
+  { id: "assignedTo", label: "Assigned To" },
+  { id: "department", label: "Department" },
+  { id: "username", label: "Username" },
+  { id: "hostname", label: "Hostname" },
+  { id: "laptopSerial", label: "Laptop Serial" },
+  { id: "createdAt", label: "Created At" },
+  { id: "dueDate", label: "Due Date" },
+];
+
 /**
  * Reports - Report generation interface with date range picker, export buttons (CSV/PDF), and results table
  */
@@ -61,6 +86,11 @@ export function Reports() {
   const [toDate, setToDate] = useState("");
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [reportType, setReportType] = useState<ReportType>("all");
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([
+    "id", "title", "status", "priority", "category", "department", "createdAt",
+  ]);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
 
   const isAdmin = currentUserRole === "ADMINISTRATOR";
 
@@ -72,6 +102,7 @@ export function Reports() {
       const params = new URLSearchParams();
       if (fromDate) params.append("from", fromDate);
       if (toDate) params.append("to", toDate);
+      params.append("type", reportType);
 
       const res = await fetch(`/api/reports?${params.toString()}`, {
         headers: {
@@ -93,40 +124,60 @@ export function Reports() {
     }
   };
 
+  const toggleColumn = (columnId: string) => {
+    setSelectedColumns((prev) =>
+      prev.includes(columnId)
+        ? prev.filter((id) => id !== columnId)
+        : [...prev, columnId]
+    );
+  };
+
+  const getColumnValue = (ticket: ReportTicket, columnId: string) => {
+    switch (columnId) {
+      case "id":
+        return ticket.id.substring(0, 8);
+      case "title":
+        return ticket.title;
+      case "description":
+        return ticket.description;
+      case "priority":
+        return ticket.priority;
+      case "status":
+        return ticket.status;
+      case "category":
+        return ticket.category;
+      case "createdBy":
+        return ticket.userInfo.email;
+      case "assignedTo":
+        return ticket.assignedTo || "Unassigned";
+      case "department":
+        return ticket.department;
+      case "username":
+        return ticket.username;
+      case "hostname":
+        return ticket.hostname;
+      case "laptopSerial":
+        return ticket.laptopSerial;
+      case "createdAt":
+        return new Date(ticket.createdAt).toLocaleDateString();
+      case "dueDate":
+        return ticket.dueDate ? new Date(ticket.dueDate).toLocaleDateString() : "N/A";
+      default:
+        return "";
+    }
+  };
+
   const exportToCSV = () => {
     if (!reportData) return;
 
-    const headers = [
-      "Ticket ID",
-      "Title",
-      "Description",
-      "Priority",
-      "Category",
-      "Status",
-      "Created By",
-      "Username",
-      "Hostname",
-      "Laptop Serial",
-      "Department",
-      "Created At",
-      "Due Date",
-    ];
+    const headers = selectedColumns.map((colId) => {
+      const col = AVAILABLE_COLUMNS.find((c) => c.id === colId);
+      return col ? col.label : colId;
+    });
 
-    const rows = reportData.tickets.map((t) => [
-      t.id,
-      t.title,
-      t.description,
-      t.priority,
-      t.category,
-      t.status,
-      t.userInfo.email,
-      t.username,
-      t.hostname,
-      t.laptopSerial,
-      t.department,
-      t.createdAt,
-      t.dueDate,
-    ]);
+    const rows = reportData.tickets.map((ticket) =>
+      selectedColumns.map((colId) => getColumnValue(ticket, colId))
+    );
 
     const csvContent = [headers, ...rows]
       .map((row) => row.map((cell) => `"${cell}"`).join(","))
@@ -136,7 +187,8 @@ export function Reports() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tickets-report-${new Date().toISOString().split("T")[0]}.csv`;
+    const reportTypeLabel = reportType === "all" ? "tickets" : `${reportType}-tickets`;
+    a.download = `tickets-report-${reportTypeLabel}-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -169,7 +221,23 @@ export function Reports() {
         <h3 className="text-lg font-semibold text-white mb-4">
           Generate Report
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm text-neutral-400 mb-1">
+              Report Type
+            </label>
+            <select
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value as ReportType)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+            >
+              <option value="all">All Tickets</option>
+              <option value="status">By Status</option>
+              <option value="priority">By Priority</option>
+              <option value="category">By Category</option>
+              <option value="department">By Department</option>
+            </select>
+          </div>
           <div>
             <label className="block text-sm text-neutral-400 mb-1">
               From Date
@@ -264,8 +332,15 @@ export function Reports() {
             </div>
           </div>
 
-          {/* Export Button */}
-          <div className="flex justify-end mb-4">
+          {/* Export and Column Selector */}
+          <div className="flex justify-between items-center mb-4">
+            <button
+              onClick={() => setShowColumnSelector(!showColumnSelector)}
+              className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              <Filter className="w-4 h-4" />
+              Column Selection
+            </button>
             <button
               onClick={exportToCSV}
               className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -275,89 +350,53 @@ export function Reports() {
             </button>
           </div>
 
+          {/* Column Selector Panel */}
+          {showColumnSelector && (
+            <div className="glass-dark rounded-2xl p-4 mb-4">
+              <h4 className="text-white font-medium mb-3">Select Columns</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {AVAILABLE_COLUMNS.map((column) => (
+                  <label
+                    key={column.id}
+                    className="flex items-center gap-2 text-sm text-neutral-300 cursor-pointer hover:text-white"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedColumns.includes(column.id)}
+                      onChange={() => toggleColumn(column.id)}
+                      className="rounded border-white/20 bg-black/40"
+                    />
+                    <span>{column.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Tickets Table */}
           <div className="glass-dark rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-white/[0.02] border-b border-white/5 text-neutral-400 text-sm">
-                    <th className="p-4 font-medium">User</th>
-                    <th className="p-4 font-medium">Ticket</th>
-                    <th className="p-4 font-medium">Device Info</th>
-                    <th className="p-4 font-medium">Status</th>
-                    <th className="p-4 font-medium">Created</th>
+                    {selectedColumns.map((colId) => {
+                      const col = AVAILABLE_COLUMNS.find((c) => c.id === colId);
+                      return (
+                        <th key={colId} className="p-4 font-medium">
+                          {col ? col.label : colId}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
                   {reportData.tickets.map((ticket) => (
                     <tr key={ticket.id} className="border-b border-white/5">
-                      <td className="p-4">
-                        <div>
-                          <p className="text-white font-medium">
-                            {ticket.userInfo.name}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {ticket.userInfo.email}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {ticket.department}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div>
-                          <p className="text-white font-medium">
-                            {ticket.title}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {ticket.category}
-                          </p>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full ${
-                              ticket.priority === "URGENT"
-                                ? "bg-red-500/20 text-red-400"
-                                : ticket.priority === "HIGH"
-                                  ? "bg-orange-500/20 text-orange-400"
-                                  : ticket.priority === "MEDIUM"
-                                    ? "bg-yellow-500/20 text-yellow-400"
-                                    : "bg-green-500/20 text-green-400"
-                            }`}
-                          >
-                            {ticket.priority}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div>
-                          <p className="text-white text-sm">
-                            {ticket.hostname}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {ticket.laptopSerial}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            User: {ticket.username}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                          <span
-                            className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                              ticket.status === "NEW"
-                                ? "bg-blue-500/20 text-blue-400"
-                                : ticket.status === "IN_PROGRESS"
-                                  ? "bg-yellow-500/20 text-yellow-400"
-                                  : ticket.status === "RESOLVED"
-                                    ? "bg-green-500/20 text-green-400"
-                                    : "bg-neutral-500/20 text-neutral-400"
-                            }`}
-                        >
-                          {ticket.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-neutral-400 text-sm">
-                        {new Date(ticket.createdAt).toLocaleDateString()}
-                      </td>
+                      {selectedColumns.map((colId) => (
+                        <td key={colId} className="p-4 text-neutral-300 text-sm">
+                          {getColumnValue(ticket, colId)}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
