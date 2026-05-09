@@ -50,6 +50,7 @@ interface SettingsContextType {
   settings: Settings;
   updateSettings: (section: keyof Settings, key: string, value: unknown) => void;
   applyTheme: (theme: "dark" | "light" | "system") => void;
+  saveSettingsToDb: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -112,12 +113,38 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           applyCompactView(value as boolean);
         }
       }
+      // Also save to DB for admin backup
+      saveToDb(newSettings);
       return newSettings;
     });
   };
 
+  const saveSettingsToDb = async () => {
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings }),
+      });
+    } catch (error) {
+      console.error("Failed to save settings to DB:", error);
+    }
+  };
+
+  const saveToDb = async (newSettings: Settings) => {
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: newSettings }),
+      });
+    } catch (error) {
+      console.error("Failed to save settings to DB:", error);
+    }
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, applyTheme, applyCompactView }}>{children}</SettingsContext.Provider>
+    <SettingsContext.Provider value={{ settings, updateSettings, applyTheme, applyCompactView, saveSettingsToDb }}>{children}</SettingsContext.Provider>
   );
 }
 

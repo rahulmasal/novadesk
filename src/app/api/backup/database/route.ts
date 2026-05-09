@@ -120,6 +120,8 @@ async function generatePrismaSql(outputPath: string) {
     const tickets = await prisma.ticket.findMany({ include: { comments: true, attachments: true, auditLogs: true } });
     const knowledgeBase = await prisma.knowledgeBaseArticle.findMany();
     const config = await prisma.systemConfig.findMany();
+    // Get settings
+    const settingsConfig = await prisma.systemConfig.findUnique({ where: { key: "user-settings" } });
 
     let sql = `-- NovaDesk Database Backup\n-- Generated: ${new Date().toISOString()}\n\n`;
 
@@ -127,6 +129,13 @@ async function generatePrismaSql(outputPath: string) {
     sql += generateInserts("tickets", tickets);
     sql += generateInserts("knowledge_base_articles", knowledgeBase);
     sql += generateInserts("system_config", config);
+    
+    // Include settings as a separate INSERT
+    if (settingsConfig) {
+      sql += `\n-- Settings\n`;
+      sql += `INSERT INTO system_config (id, key, value, created_at, updated_at) VALUES\n`;
+      sql += `  ('settings-backup', 'user-settings', '${settingsConfig.value.replace(/'/g, "''")}', '${settingsConfig.createdAt.toISOString()}', '${settingsConfig.updatedAt.toISOString()}');\n`;
+    }
 
     fs.writeFileSync(outputPath, sql);
 
@@ -338,7 +347,7 @@ function parseSqlInserts(lines: string[]): ParsedSql {
     config: []
   };
 
-  let fullSql = lines.join('\n');
+  const fullSql = lines.join('\n');
 
   // Match INSERT INTO statements with multiple rows
   const insertRegex = /INSERT INTO (\w+)\s*\(([^)]+)\)\s*VALUES\s*([\s\S]*?);/gi;
