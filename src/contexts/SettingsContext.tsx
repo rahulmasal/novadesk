@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 
 export interface Settings {
   notifications: {
@@ -65,8 +65,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return defaultSettings;
   });
 
-  const applyTheme = (theme: "dark" | "light" | "system") => {
-    const root = document.documentElement;
+  const applyTheme = useCallback((theme: "dark" | "light" | "system") => {
     const html = document.documentElement;
     if (theme === "system") {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -80,17 +79,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     } else {
       html.classList.remove("dark");
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    applyTheme(settings.appearance.theme);
-    // Apply compact view class
-    if (settings.appearance.compactView) {
+  const applyCompactView = useCallback((enabled: boolean) => {
+    if (enabled) {
       document.body.classList.add("compact-view");
     } else {
       document.body.classList.remove("compact-view");
     }
   }, []);
+
+  // Apply settings on mount and when they change
+  useEffect(() => {
+    applyTheme(settings.appearance.theme);
+    applyCompactView(settings.appearance.compactView);
+  }, [settings.appearance.theme, settings.appearance.compactView, applyTheme, applyCompactView]);
 
   const updateSettings = (section: keyof Settings, key: string, value: unknown) => {
     setSettings((prev) => {
@@ -106,11 +109,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (key === "theme") {
           applyTheme(value as "dark" | "light" | "system");
         } else if (key === "compactView") {
-          if (value) {
-            document.body.classList.add("compact-view");
-          } else {
-            document.body.classList.remove("compact-view");
-          }
+          applyCompactView(value as boolean);
         }
       }
       return newSettings;
@@ -118,7 +117,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, applyTheme }}>{children}</SettingsContext.Provider>
+    <SettingsContext.Provider value={{ settings, updateSettings, applyTheme, applyCompactView }}>{children}</SettingsContext.Provider>
   );
 }
 

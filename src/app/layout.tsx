@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { useState, useEffect } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 import "./globals.css";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 
@@ -28,14 +30,41 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className={`${inter.className} bg-neutral-950 text-neutral-50 antialiased`}>
         <SettingsProvider>
+          <DigitalClock />
           {children}
         </SettingsProvider>
         <ServiceWorkerRegistration />
       </body>
     </html>
+  );
+}
+
+function DigitalClock() {
+  const { settings } = useSettings();
+  const [time, setTime] = useState("");
+
+  useEffect(() => {
+    const updateTime = () => {
+      const t = new Date().toLocaleTimeString("en-US", {
+        timeZone: settings.advanced.timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      setTime(t);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, [settings.advanced.timezone]);
+
+  return (
+    <div className="fixed top-4 right-4 z-50 glass-dark px-3 py-1 rounded-lg">
+      <span className="font-mono text-sm text-neutral-300">{time}</span>
+    </div>
   );
 }
 
