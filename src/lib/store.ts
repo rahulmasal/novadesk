@@ -239,12 +239,12 @@ interface TicketStore {
     ticket: Omit<Ticket, "id" | "createdAt" | "updatedAt" | "status">,
   ) => void;
 
-  /**
-   * Updates the status of an existing ticket
-   * @param id - ID of ticket to update
-   * @param status - New status value
-   */
-  updateTicketStatus: (id: string, status: Status) => void;
+/**
+    * Updates the status of an existing ticket
+    * @param id - ID of ticket to update
+    * @param status - New status value
+    */
+   updateTicketStatus: (id: string, status: Status) => Promise<void>;
 
   /** Cycles through roles (used for demo/testing) */
   toggleRole: () => void;
@@ -503,28 +503,46 @@ tickets: [],
        * @param id - ID of ticket to update
        * @param status - New status value
        */
-updateTicketStatus: (id, status) => {
-          set((state) => {
-            const ticket = state.tickets.find(t => t.id === id);
-            const ticketLabel = ticket ? `${ticket.id} (${ticket.title})` : id;
-            return {
-              tickets: state.tickets.map((t) =>
-                t.id === id
-                  ? { ...t, status, updatedAt: new Date().toISOString() }
-                  : t,
-              ),
-              activities: [
-                {
-                  id: Math.random().toString(36).substring(2, 9),
-                  ticketId: id,
-                  message: `Ticket ${ticketLabel} status changed to ${status}`,
-                  timestamp: new Date().toISOString(),
-                },
-                ...state.activities,
-              ],
-            };
-          });
-        },
+updateTicketStatus: async (id, status) => {
+           const { authToken, tickets } = get();
+           const ticket = tickets.find(t => t.id === id);
+           const ticketLabel = ticket ? `${ticket.id} (${ticket.title})` : id;
+           
+           // Optimistically update local state
+           set((state) => ({
+             tickets: state.tickets.map((t) =>
+               t.id === id
+                 ? { ...t, status, updatedAt: new Date().toISOString() }
+                 : t,
+             ),
+             activities: [
+               {
+                 id: Math.random().toString(36).substring(2, 9),
+                 ticketId: id,
+                 message: `Ticket ${ticketLabel} status changed to ${status}`,
+                 timestamp: new Date().toISOString(),
+               },
+               ...state.activities,
+             ],
+           }));
+
+           // Persist to server
+           try {
+             const res = await fetch("/api/tickets", {
+               method: "PATCH",
+               headers: {
+                 "Content-Type": "application/json",
+                 Authorization: `Bearer ${authToken}`,
+               },
+               body: JSON.stringify({ id, status }),
+             });
+             if (!res.ok) {
+               console.error("Failed to update ticket status:", res.status);
+             }
+           } catch (error) {
+             console.error("Error updating ticket status:", error);
+           }
+         },
 
       // ========================================
       // TOGGLE ROLE ACTION
@@ -654,14 +672,14 @@ addActivity: (ticketId, message) => {
     // Persist configuration - state will be saved to localStorage
     {
       name: "ticket-storage-v2",
-      partialize: (state) => ({
-        currentUser: state.currentUser,
-        isAuthenticated: state.isAuthenticated,
-        authToken: state.authToken,
-        currentUserRole: state.currentUserRole,
-        currentView: state.currentView,
-        activities: state.activities,
-      }),
+partialize: (state) => ({
+         currentUser: state.currentUser,
+         isAuthenticated: state.isAuthenticated,
+         authToken: state.authToken,
+         currentUserRole: state.currentUserRole,
+         currentView: state.currentView,
+         activities: state.activities,
+       }),
     },
   ),
 );

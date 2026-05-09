@@ -7,6 +7,8 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TicketDetail } from "./TicketDetail";
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200, 500];
+
 /**
  * TicketTable - Searchable, paginated table of tickets with status/priority indicators and row selection
  */
@@ -15,7 +17,7 @@ export function TicketTable() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const itemsPerPage = 50;
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const filtered = tickets.filter(
     (t) =>
@@ -29,19 +31,35 @@ export function TicketTable() {
   return (
     <>
     <div className="glass-dark rounded-2xl overflow-hidden mt-4 flex flex-col">
-      <div className="p-4 border-b border-white/5 flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-white">Active Tickets</h3>
-        <div className="relative max-w-xs w-full">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-          <input
-            type="text"
-            placeholder="Search tickets..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-neutral-500"
-          />
-        </div>
-      </div>
+<div className="p-4 border-b border-white/5 flex items-center justify-between gap-4">
+         <div className="flex items-center gap-4">
+           <h3 className="text-lg font-semibold text-white">Active Tickets</h3>
+           <select
+             value={itemsPerPage}
+             onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(1); }}
+             className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+           >
+             {PAGE_SIZE_OPTIONS.map(size => (
+               <option key={size} value={size} className="bg-neutral-800">
+                 {size} per page
+               </option>
+             ))}
+             <option value={tickets.length || 999999} className="bg-neutral-800">
+               All ({tickets.length})
+             </option>
+           </select>
+         </div>
+         <div className="relative max-w-xs w-full">
+           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+           <input
+             type="text"
+             placeholder="Search tickets..."
+             value={search}
+             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+             className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-neutral-500"
+           />
+         </div>
+       </div>
       
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -122,13 +140,13 @@ function TicketRow({ ticket, onClick }: { ticket: Ticket, onClick: () => void })
   
   const barColor = isBreached ? "bg-red-500" : isWarning ? "bg-amber-400" : "bg-emerald-400";
   
-  const statusColors: Record<string, string> = {
-    "NEW": "bg-blue-500/20 text-blue-400 border-blue-500/20",
-    "IN_PROGRESS": "bg-amber-500/20 text-amber-400 border-amber-500/20",
-    "PENDING_VENDOR": "bg-purple-500/20 text-purple-400 border-purple-500/20",
-    "RESOLVED": "bg-emerald-500/20 text-emerald-400 border-emerald-500/20",
-    "CLOSED": "bg-neutral-500/20 text-neutral-400 border-neutral-500/20",
-  };
+const statusColors: Record<string, string> = {
+  "NEW": "bg-blue-500/20 text-blue-400 border-blue-500/20",
+  "IN_PROGRESS": "bg-amber-500/20 text-amber-400 border-amber-500/20",
+  "PENDING_VENDOR": "bg-purple-500/20 text-purple-400 border-purple-500/20",
+  "RESOLVED": "bg-emerald-500/20 text-emerald-400 border-emerald-500/20",
+  "CLOSED": "bg-neutral-500/20 text-neutral-400 border-neutral-500/20",
+};
 
   return (
     <tr 

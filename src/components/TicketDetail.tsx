@@ -1,7 +1,19 @@
 import { useState } from "react";
+import { z } from "zod";
 import { useTicketStore } from "@/lib/store";
-import { X, Send, UserCheck, CheckCircle, Clock, Trash2, ChevronDown } from "lucide-react";
+import { X, Send, UserCheck, Clock, Trash2, ChevronDown } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import { StatusEnum } from "@/lib/schemas";
+
+type StatusType = z.infer<typeof StatusEnum>;
+
+const STATUS_OPTIONS: { value: StatusType; label: string; color: string }[] = [
+  { value: "NEW", label: "New", color: "bg-blue-500/20 text-blue-400 border-blue-500/20" },
+  { value: "IN_PROGRESS", label: "In Progress", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/20" },
+  { value: "PENDING_VENDOR", label: "Pending Vendor", color: "bg-purple-500/20 text-purple-400 border-purple-500/20" },
+  { value: "RESOLVED", label: "Resolved", color: "bg-green-500/20 text-green-400 border-green-500/20" },
+  { value: "CLOSED", label: "Closed", color: "bg-neutral-500/20 text-neutral-400 border-neutral-500/20" },
+];
 
 /**
  * TicketDetail - Slide-out detail panel showing full ticket info, activity thread, and admin actions
@@ -11,9 +23,10 @@ import { formatDistanceToNow, parseISO } from "date-fns";
  */
 export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
    const { tickets, activities, currentUserRole, updateTicketStatus, addActivity, deleteTicket, allUsers } = useTicketStore();
-   const [comment, setComment] = useState("");
-   const [isDeleting, setIsDeleting] = useState(false);
-   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
+    const [comment, setComment] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showAssignDropdown, setShowAssignDropdown] = useState(false);
+    const [showStatusModal, setShowStatusModal] = useState(false);
 
    const ticket = tickets.find((t) => t.id === ticketId);
    if (!ticket) return null;
@@ -28,19 +41,19 @@ export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose:
     setComment("");
   };
 
-const handleAssignToMe = () => {
-     addActivity(ticket.id, `Ticket assigned to Agent.`);
-     updateTicketStatus(ticket.id, "IN_PROGRESS");
-   };
-
-const handleAssignToAgent = (agentId: string) => {
-      const agent = allUsers.find(u => u.id === agentId);
-      if (agent) {
-        addActivity(ticket.id, `Ticket ${ticket.id} assigned to ${agent.name}`);
-        updateTicketStatus(ticket.id, "IN_PROGRESS");
-      }
-      setShowAssignDropdown(false);
+const handleAssignToMe = async () => {
+      addActivity(ticket.id, `Ticket assigned to Agent.`);
+      await updateTicketStatus(ticket.id, "IN_PROGRESS");
     };
+
+const handleAssignToAgent = async (agentId: string) => {
+       const agent = allUsers.find(u => u.id === agentId);
+       if (agent) {
+         addActivity(ticket.id, `Ticket ${ticket.id} assigned to ${agent.name}`);
+         await updateTicketStatus(ticket.id, "IN_PROGRESS");
+       }
+       setShowAssignDropdown(false);
+     };
 
   const handleDelete = async () => {
     console.log("[TicketDetail] handleDelete called, currentUserRole:", currentUserRole, "ticketId:", ticket.id);
@@ -112,61 +125,94 @@ return (
           </div>
 
 {/* Quick Actions (Agent/Admin) */}
-           {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (
-             <div className="flex gap-3 pt-4 border-t border-white/10 relative">
-               {currentUserRole === "ADMINISTRATOR" && (
-                 <div className="relative">
-                   <button 
-                     onClick={() => setShowAssignDropdown(!showAssignDropdown)}
-                     className="flex items-center gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-blue-500/30"
-                   >
-                     <UserCheck className="w-4 h-4" />
-                     Assign to Agent
-                     <ChevronDown className="w-3 h-3" />
-                   </button>
-                   {showAssignDropdown && (
-                     <div className="absolute z-20 mt-1 w-64 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-64 overflow-y-auto">
-                       {allUsers.filter(u => u.role === "AGENT" || u.role === "ADMINISTRATOR").map(agent => (
-                         <button
-                           key={agent.id}
-                           onClick={() => handleAssignToAgent(agent.id)}
-                           className="w-full text-left px-4 py-3 hover:bg-blue-500/20 text-white text-sm border-b border-white/5 last:border-0 transition-colors"
-                         >
-                           {agent.name}
-                         </button>
-                       ))}
-                     </div>
-                   )}
-                 </div>
-               )}
-               <button 
-                 onClick={handleAssignToMe}
-                 className="flex items-center gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-blue-500/30"
-               >
-                 <UserCheck className="w-4 h-4" />
-                 Assign to me
-               </button>
-               <button 
-                 onClick={() => updateTicketStatus(ticket.id, "RESOLVED")}
-                 className="flex items-center gap-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-emerald-500/30"
-               >
-                 <CheckCircle className="w-4 h-4" />
-                 Mark Resolved
-               </button>
-               {currentUserRole === "ADMINISTRATOR" && (
-                 <button 
-                   onClick={handleDelete}
-                   disabled={isDeleting}
-                   className="flex items-center gap-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-red-500/30 ml-auto disabled:opacity-50"
-                 >
-                   <Trash2 className="w-4 h-4" />
-                   {isDeleting ? "Deleting..." : "Delete"}
-                 </button>
-               )}
-             </div>
-           )}
+            {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (
+              <div className="flex gap-3 pt-4 border-t border-white/10 relative">
+                {currentUserRole === "ADMINISTRATOR" && (
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+                      className="flex items-center gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-blue-500/30"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      Assign to Agent
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
+                    {showAssignDropdown && (
+                      <div className="absolute z-20 mt-1 w-64 bg-neutral-800 border border-white/10 rounded-lg shadow-2xl max-h-64 overflow-y-auto">
+                        {allUsers.filter(u => u.role === "AGENT" || u.role === "ADMINISTRATOR").map(agent => (
+                          <button
+                            key={agent.id}
+                            onClick={() => handleAssignToAgent(agent.id)}
+                            className="w-full text-left px-4 py-3 hover:bg-blue-500/20 text-white text-sm border-b border-white/5 last:border-0 transition-colors"
+                          >
+                            {agent.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <button
+                  onClick={handleAssignToMe}
+                  className="flex items-center gap-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-blue-500/30"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  Assign to me
+                </button>
+                <button
+                  onClick={() => setShowStatusModal(true)}
+                  className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors"
+                >
+                  <span className="text-xs">{ticket.status.replace(/_/g, ' ')}</span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                {currentUserRole === "ADMINISTRATOR" && (
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-red-500/30 ml-auto disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </button>
+                )}
+              </div>
+            )}
 
-          {/* Activity/Comments Thread */}
+{/* Status Change Modal */}
+            {showStatusModal && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-neutral-900 border border-white/10 rounded-lg shadow-2xl w-full max-w-xs mx-4 animate-in zoom-in-95 duration-200">
+                  <div className="p-3">
+                    <h3 className="text-sm font-semibold text-white mb-2">Change Status</h3>
+                    <div className="space-y-1">
+                      {STATUS_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={async () => {
+                            await updateTicketStatus(ticket.id, opt.value);
+                            setShowStatusModal(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded border text-xs transition-all ${opt.color} hover:opacity-80`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="px-3 pb-2">
+                    <button
+                      onClick={() => setShowStatusModal(false)}
+                      className="w-full px-2.5 py-1 text-xs text-neutral-400 hover:text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+           {/* Activity/Comments Thread */}
           <div>
             <h3 className="text-sm font-medium text-neutral-500 mb-4">Activity & Notes</h3>
             <div className="space-y-4">
