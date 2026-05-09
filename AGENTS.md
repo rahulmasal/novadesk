@@ -37,6 +37,9 @@ Rules:
 - Removed unused imports (Moon, Clock, Globe, Key) from Settings.tsx
 - Fixed Settings component: added persistence to localStorage and theme application on load
 - Settings now persists to localStorage and applies theme on mount
+- Created SettingsContext for app-wide settings access
+- Theme and compact view changes apply immediately
+- Settings auto-save on change, no need for explicit save button
 
 ### In Progress
 - (none)
