@@ -9,7 +9,9 @@
     "lint": "eslint",
     "schedule": "node scheduler.mjs",
     "db:users": "node scripts/fetch-users-by-role.cjs",
-    "seed:tickets": "node scripts/seed-tickets.js"
+    "seed:tickets": "node scripts/seed-tickets.js",
+    "db:backup": "node scripts/db-backup.js",
+    "db:restore": "node scripts/db-restore.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

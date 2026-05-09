@@ -252,10 +252,16 @@ interface TicketStore {
   /** Sets the current user role directly */
   setRole: (role: Role) => void;
 
-  /** Deletes a ticket by ID (admin only, calls API) */
-  deleteTicket: (id: string) => Promise<boolean>;
+/** Deletes a ticket by ID (admin only, calls API) */
+   deleteTicket: (id: string) => Promise<boolean>;
 
-  /** Replaces all tickets with a new array (used for API sync) */
+   /** Bulk deletes multiple tickets by IDs */
+   deleteTickets: (ids: string[]) => Promise<void>;
+
+   /** Bulk updates status for multiple tickets */
+   updateTicketsStatus: (ids: string[], status: Status) => Promise<void>;
+
+   /** Replaces all tickets with a new array (used for API sync) */
   setTickets: (tickets: Ticket[]) => void;
 
 /** Changes the current view/page */
@@ -612,12 +618,91 @@ set((state) => ({
                ...state.activities,
              ],
            }));
-          console.log("[STORE deleteTicket] Successfully removed ticket from state");
-          return true;
-        } catch (error) {
-          console.error("[STORE deleteTicket] Exception:", error);
-          return false;
+console.log("[STORE deleteTicket] Successfully removed ticket from state");
+           return true;
+         } catch (error) {
+           console.error("[STORE deleteTicket] Exception:", error);
+           return false;
+         }
+       },
+
+      // ========================================
+      // DELETE TICKETS ACTION (Bulk)
+      // ========================================
+      /**
+       * deleteTickets - Bulk deletes multiple tickets via API
+       * @param ids - Array of ticket IDs to delete
+       */
+      deleteTickets: async (ids) => {
+        const { authToken } = get();
+        for (const id of ids) {
+          try {
+            await fetch("/api/tickets", {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authToken}`,
+              },
+              body: JSON.stringify({ id }),
+            });
+          } catch (error) {
+            console.error("[STORE deleteTickets] Failed for", id, error);
+          }
         }
+        set((state) => ({
+          tickets: state.tickets.filter((t) => !ids.includes(t.id)),
+          activities: [
+            {
+              id: Math.random().toString(36).substring(2, 9),
+              ticketId: ids[0] || "bulk",
+              message: `Bulk deleted ${ids.length} ticket(s)`,
+              timestamp: new Date().toISOString(),
+            },
+            ...state.activities,
+          ],
+        }));
+      },
+
+      // ========================================
+      // UPDATE TICKETS STATUS ACTION (Bulk)
+      // ========================================
+      /**
+       * updateTicketsStatus - Bulk updates status for multiple tickets
+       * @param ids - Array of ticket IDs
+       * @param status - New status value
+       */
+      updateTicketsStatus: async (ids, status) => {
+        const { authToken } = get();
+        for (const id of ids) {
+          try {
+            await fetch("/api/tickets", {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authToken}`,
+              },
+              body: JSON.stringify({ id, status }),
+            });
+          } catch (error) {
+            console.error("[STORE updateTicketsStatus] Failed for", id, error);
+          }
+        }
+        set((state) => ({
+          tickets: state.tickets.map((t) =>
+            ids.includes(t.id)
+              ? { ...t, status, updatedAt: new Date().toISOString() }
+              : t
+          ),
+          activities: [
+            {
+              id: Math.random().toString(36).substring(2, 9),
+              ticketId: ids[0] || "bulk",
+              message: `Bulk updated ${ids.length} ticket(s) to ${status}`,
+              timestamp: new Date().toISOString(),
+            },
+            ...state.activities,
+          ],
+        }));
       },
 
       // ========================================

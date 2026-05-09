@@ -255,8 +255,7 @@ async function restoreViaPsql(
 }
 
 async function restoreViaPrisma(lines: string[]) {
-  const { PrismaClient } = await import("@/lib/prisma");
-  const prisma = new PrismaClient();
+  const prisma = (await import("@/lib/prisma")).default;
 
   try {
     // Parse INSERT statements and restore via Prisma
@@ -264,24 +263,20 @@ async function restoreViaPrisma(lines: string[]) {
 
     await prisma.$transaction(async (tx) => {
       for (const stmt of statements.users) {
-        await tx.user.create({ data: stmt });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await tx.user.create({ data: stmt as any });
       }
       for (const stmt of statements.tickets) {
-        await tx.ticket.create({
-          data: {
-            ...stmt,
-            comments: { create: stmt.comments || [] },
-            attachments: { create: stmt.attachments || [] },
-            auditLogs: { create: stmt.auditLogs || [] }
-          }
-        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await tx.ticket.create({ data: stmt as any });
       }
     });
 
     console.log(`[DB RESTORE POST] Restored ${statements.users.length} users, ${statements.tickets.length} tickets`);
     return NextResponse.json({ message: "Database restored successfully" });
-  } finally {
-    await prisma.$disconnect();
+  } catch (error) {
+    console.error("[DB RESTORE POST] Prisma restore failed:", error);
+    return NextResponse.json({ error: "Failed to restore database" }, { status: 500 });
   }
 }
 

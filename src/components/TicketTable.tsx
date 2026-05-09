@@ -13,7 +13,7 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200, 500];
  * TicketTable - Searchable, paginated table of tickets with status/priority indicators and row selection
  */
 export function TicketTable() {
-  const { tickets, deleteTicket, currentUserRole } = useTicketStore();
+  const { tickets, deleteTickets, updateTicketsStatus, currentUserRole } = useTicketStore();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
@@ -35,31 +35,13 @@ export function TicketTable() {
   const paginated = filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   const handleBulkStatusChange = async (status: import("@/lib/store").Status) => {
-    const token = useTicketStore.getState().authToken;
-    for (const id of selectedTickets) {
-      try {
-        await fetch("/api/tickets", {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ id, status }),
-        });
-      } catch (error) {
-        console.error(`Failed to update ticket ${id}:`, error);
-      }
-    }
+    await updateTicketsStatus(Array.from(selectedTickets), status);
     setSelectedTickets(new Set());
-    window.location.reload();
   };
 
   const handleBulkDelete = async () => {
     if (!confirm(`Delete ${selectedTickets.size} ticket(s)? This cannot be undone.`)) return;
-    const token = useTicketStore.getState().authToken;
-    for (const id of selectedTickets) {
-      await deleteTicket(id);
-    }
+    await deleteTickets(Array.from(selectedTickets));
     setSelectedTickets(new Set());
   };
 
