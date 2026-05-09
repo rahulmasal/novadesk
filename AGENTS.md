@@ -36,6 +36,7 @@ Rules:
 - Fixed lint error: changed `let fullSql` to `const fullSql` in backup API
 - Removed unused imports (Moon, Clock, Globe, Key) from Settings.tsx
 - Fixed Settings component: added persistence to localStorage and theme application on load
+- Settings now persists to localStorage and applies theme on mount
 
 ### In Progress
 - (none)
