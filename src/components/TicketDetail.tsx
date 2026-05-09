@@ -182,7 +182,7 @@ return (
             </div>
           </div>
 
-{/* Quick Actions (Agent/Admin) */}
+           {/* Quick Actions (Agent/Admin) */}
            {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (
              <div className="flex gap-2 pt-2 border-t border-white/10 relative">
                {currentUserRole === "ADMINISTRATOR" && (
