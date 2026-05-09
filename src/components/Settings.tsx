@@ -1,15 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTicketStore } from "@/lib/store";
 import {
-  Moon,
   Sun,
   Bell,
-  Clock,
-  Globe,
   Database,
-  Key,
   Shield,
   Save,
 } from "lucide-react";
@@ -59,32 +55,65 @@ const LANGUAGES = [
   { code: "zh", name: "中文" },
 ];
 
+const DEFAULT_SETTINGS: SettingsData = {
+  notifications: {
+    email: true,
+    push: true,
+    ticketAssignment: true,
+  },
+  appearance: {
+    theme: "dark",
+    compactView: false,
+  },
+  backup: {
+    schedule: "daily",
+    retentionDays: 30,
+  },
+  advanced: {
+    timezone: "UTC",
+    language: "en",
+    slaResponseHours: 4,
+    slaResolutionHours: 24,
+  },
+};
+
 export function Settings() {
   const { currentUser, currentUserRole } = useTicketStore();
-  const [settings, setSettings] = useState<SettingsData>({
-    notifications: {
-      email: true,
-      push: true,
-      ticketAssignment: true,
-    },
-    appearance: {
-      theme: "dark",
-      compactView: false,
-    },
-    backup: {
-      schedule: "daily",
-      retentionDays: 30,
-    },
-    advanced: {
-      timezone: "UTC",
-      language: "en",
-      slaResponseHours: 4,
-      slaResolutionHours: 24,
-    },
-  });
+  const [settings, setSettings] = useState<SettingsData>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const isAdmin = currentUserRole === "ADMINISTRATOR";
+
+  const applyTheme = (theme: "dark" | "light" | "system") => {
+    const root = document.documentElement;
+    if (theme === "system") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
+      }
+    } else if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  };
+
+  useEffect(() => {
+    const savedSettings = localStorage.getItem("app-settings");
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings));
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      applyTheme(settings.appearance.theme);
+    }
+  }, [settings.appearance.theme, loading]);
 
   const updateSettings = (section: keyof SettingsData, key: string, value: unknown) => {
     setSettings((prev) => ({
@@ -96,7 +125,8 @@ export function Settings() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    localStorage.setItem("app-settings", JSON.stringify(settings));
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };

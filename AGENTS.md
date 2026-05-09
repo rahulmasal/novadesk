@@ -35,6 +35,7 @@ Rules:
 - Added comprehensive Settings component with notifications, appearance, backup, and advanced settings
 - Fixed lint error: changed `let fullSql` to `const fullSql` in backup API
 - Removed unused imports (Moon, Clock, Globe, Key) from Settings.tsx
+- Fixed Settings component: added persistence to localStorage and theme application on load
 
 ### In Progress
 - (none)
