@@ -80,65 +80,54 @@ export default function Dashboard() {
   const renderContent = () => {
     switch (currentView) {
 case "Customers":
-         return (
-           <div className="p-8 pl-6 pr-6 max-w-7xl">
-             <div className="flex items-center justify-between mb-8">
-               <h2 className="text-3xl font-bold text-white tracking-tight">User Management</h2>
-             </div>
-             <UserManagement />
-           </div>
-         );
-       case "Reports":
-         return (
-           <div className="p-8 pl-6 pr-6 max-w-7xl">
-             <div className="flex items-center justify-between mb-8">
-               <h2 className="text-3xl font-bold text-white tracking-tight">Reports</h2>
-             </div>
-             <Reports />
-           </div>
-         );
+          return (
+            <div className="p-8 pl-6 pr-6">
+              <UserManagement />
+            </div>
+          );
+        case "Reports":
+          return (
+            <div className="p-8 pl-6 pr-6">
+              <Reports />
+            </div>
+          );
 case "Settings":
           return <Settings />;
 case "Backup":
-         return (
-           <div className="p-8 pr-6 max-w-7xl">
-             <div className="flex items-center justify-between mb-8">
-               <h2 className="text-3xl font-bold text-white tracking-tight">Backup</h2>
-             </div>
-             <Backup />
-           </div>
-         );
-      case "Tickets":
-        return (
-          <div className="p-8 pl-6 pr-6 max-w-7xl">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold text-white tracking-tight">
-                  All Tickets
-                </h2>
-                <p className="text-neutral-400 mt-1">
-                  Manage and track all support requests
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setIsFormOpen(true)}
-                  className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]"
-                >
-                  <Plus className="w-5 h-5" />
-                  New Ticket
-                </button>
-              </div>
+          return (
+            <div className="p-8 pr-6">
+              <Backup />
             </div>
-            <div className="glass-dark rounded-2xl overflow-hidden">
+          );
+case "Tickets":
+          return (
+            <div className="p-8 pl-6 pr-6">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-3xl font-bold text-white tracking-tight">
+                    All Tickets
+                  </h2>
+                  <p className="text-neutral-400 mt-1">
+                    Manage and track all support requests
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsFormOpen(true)}
+                    className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Ticket
+                  </button>
+                </div>
+              </div>
               <TicketTable />
             </div>
-          </div>
-        );
+          );
 case "Dashboard":
-       default:
-          return (
-            <div className="p-8 pl-6 pr-6 max-w-7xl">
+default:
+           return (
+             <div className="p-8 pl-6 pr-6">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-3xl font-bold text-white tracking-tight">

@@ -84,7 +84,6 @@ export async function POST(req: NextRequest) {
     console.log(`[AUTH POST] Login successful`, { userId: user.id, email: user.email });
 
     await logAuditEvent({
-      ticketId: "system",
       userId: user.id,
       action: "LOGIN",
       details: `User ${user.email} logged in`,
@@ -164,14 +163,13 @@ export async function DELETE(req: NextRequest) {
         include: { user: true },
       });
 
-      if (session) {
-        await logAuditEvent({
-          ticketId: "system",
-          userId: session.userId,
-          action: "LOGOUT",
-          details: `User ${session.user.email} logged out`,
-        }).catch(() => {});
-      }
+if (session) {
+         await logAuditEvent({
+           userId: session.userId,
+           action: "LOGOUT",
+           details: `User ${session.user.email} logged out`,
+         }).catch(() => {});
+       }
 
       await prisma.session.deleteMany({ where: { token } });
     } catch (error) {

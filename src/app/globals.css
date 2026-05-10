@@ -1,21 +1,32 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+
+  html.dark {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
+  }
+
+  html.dark body {
+    background: #0a0a0a;
+    color: #ededed;
+  }
+
+  html.light body, body:not(.dark) {
+    background: #ffffff;
+    color: #171717;
+  }
 }
 
 @theme {
@@ -41,3 +52,8 @@ body {
   border-color: rgba(239, 68, 68, 0.5);
 }
 
+@utility compact-view {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+}

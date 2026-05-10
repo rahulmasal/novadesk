@@ -2,6 +2,15 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 
+// Request notification permission
+const requestNotificationPermission = async () => {
+  if (typeof window !== "undefined" && "Notification" in window) {
+    const permission = await Notification.requestPermission();
+    return permission === "granted";
+  }
+  return false;
+};
+
 export interface Settings {
   notifications: {
     email: boolean;
@@ -50,35 +59,43 @@ interface SettingsContextType {
   settings: Settings;
   updateSettings: (section: keyof Settings, key: string, value: unknown) => void;
   applyTheme: (theme: "dark" | "light" | "system") => void;
+  applyCompactView: (enabled: boolean) => void;
   saveSettingsToDb: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("app-settings");
-      if (saved) {
-        return JSON.parse(saved);
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+
+  // Load settings from DB on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await fetch("/api/settings");
+        const data = await response.json();
+        if (data.settings) {
+          setSettings(data.settings);
+        }
+      } catch (error) {
+        console.error("Failed to load settings:", error);
       }
-    }
-    return defaultSettings;
-  });
+    };
+    loadSettings();
+  }, []);
 
   const applyTheme = useCallback((theme: "dark" | "light" | "system") => {
     const html = document.documentElement;
+    html.classList.remove("dark", "light");
     if (theme === "system") {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       if (prefersDark) {
         html.classList.add("dark");
-      } else {
-        html.classList.remove("dark");
       }
     } else if (theme === "dark") {
       html.classList.add("dark");
     } else {
-      html.classList.remove("dark");
+      html.classList.add("light");
     }
   }, []);
 
@@ -105,7 +122,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           [key]: value,
         },
       };
-      localStorage.setItem("app-settings", JSON.stringify(newSettings));
       if (section === "appearance") {
         if (key === "theme") {
           applyTheme(value as "dark" | "light" | "system");
@@ -113,7 +129,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           applyCompactView(value as boolean);
         }
       }
-      // Also save to DB for admin backup
+      if (section === "notifications" && key === "push" && value === true) {
+        requestNotificationPermission();
+      }
       saveToDb(newSettings);
       return newSettings;
     });

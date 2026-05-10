@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider } from "@/contexts/SettingsContext";
-import { DigitalClock } from "@/components/DigitalClock";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,10 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-neutral-950 text-neutral-50 antialiased`}>
+    <html lang="en" className="dark">
+      <body className={`${inter.className} antialiased transition-colors duration-200`}>
         <SettingsProvider>
-          <DigitalClock />
           {children}
         </SettingsProvider>
         <ServiceWorkerRegistration />

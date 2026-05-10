@@ -16,33 +16,20 @@ Rules:
 
 ## Progress
 ### Done
-- Added `flex-shrink-0` to all four action buttons (Assign dropdown, Assign to me, Status dropdown, Delete)
-- Unified button styling with `gap-1.5`, `px-3 py-1.5`, `min-w-[100px]`, `text-xs font-medium`
-- Fixed indentation of Quick Actions section
-- Committed and pushed changes to GitHub
-- Updated knowledge graph with graphify
-- Created database backup scripts using `pg_dump` with Prisma fallback
-- Created database restore scripts supporting SQL file uploads
-- Added `/api/backup/database` API endpoint for SQL dumps with fallback
-- Added database backup UI (Generate SQL Dump button)
-- Added SQL database restore functionality in Backup.tsx
-- Enhanced ticket search to include username, hostname, serial, createdBy, and priority
-- Added "Created" column to ticket table showing creation date
 - Added custom column selection for reports with 14 available columns
 - Added report type filtering (All, By Status, By Priority, By Category, By Department)
-- Updated report API to support type parameter with specific filters
-- Fixed SQL restore parser to properly handle multi-row INSERT statements
-- Added comprehensive Settings component with notifications, appearance, backup, and advanced settings
-- Fixed lint error: changed `let fullSql` to `const fullSql` in backup API
-- Removed unused imports (Moon, Clock, Globe, Key) from Settings.tsx
-- Fixed Settings component: added persistence to localStorage and theme application on load
-- Settings now persists to localStorage and applies theme on mount
-- Created SettingsContext for app-wide settings access
-- Theme and compact view changes apply immediately
-- Settings auto-save on change, no need for explicit save button
-- Added digital clock in Settings to test timezone selection
-- Added global digital clock visible on all pages
-- Settings backup to database via /api/settings endpoint
+- Fixed SQL restore parser to handle multi-row INSERT statements
+- Added Settings component with notifications, appearance, backup, advanced settings
+- SettingsContext now loads settings from DB on mount (DB only, no localStorage)
+- Added notification permission request when push notifications enabled
+- Added ticket assignment notification in API route
+- Added CSS `.dark` and `.light` class support for theme switching with proper background colors
+- Digital clock displayed in sidebar below NovaDesk logo with gradient styling
+- Updated seed-tickets.js to generate 1000 random end-users with sample tickets
+- Added page size selection (10/25/50/100/200/500/All) to UserManagement
+- Added row selection checkboxes and bulk delete for UserManagement
+- Added progress modal for bulk delete operations
+- Fixed dual title issue in UserManagement and Reports components
 
 ### In Progress
 - (none)
@@ -61,17 +48,28 @@ Rules:
 ## Next Steps
 - (none)
 
+## Key Decisions
+- Added `flex-shrink-0` class to prevent buttons from shrinking in flex containers when window width is large
+- Database backup uses `pg_dump` when available, falls back to Prisma JSON export for portability
+- Ticket search now searches across 6 fields for comprehensive results
+- Report type filters: status=NEW, priority=URGENT/HIGH, category=Hardware, department=IT
+- Default selected columns include: ID, Title, Status, Priority, Category, Department, Created At
+- SQL restore parser now properly handles multi-row INSERT statements with correct value parsing
+- UserManagement page size selection matches TicketTable format (10/25/50/100/200/500/All)
+
 ## Critical Context
-- Original issue: status button had different padding (`px-2.5`) and gap (`gap-1`) compared to other buttons
-- Database backup requires PostgreSQL client tools (pg_dump/psql) for native SQL dumps; Prisma fallback generates compatible SQL
+- Settings now store to DB only (no localStorage). Loads from `/api/settings` on mount
+- Theme changes apply via `html.dark`/`html.light` class toggling with CSS variable overrides
+- Push notification permission triggers via browser Notification API when toggle is enabled
+- Ticket assignment creates DB notification when `assignedTo` differs from current assignment
+- Digital clock displayed in sidebar below NovaDesk logo with gradient styling
+- Progress modal shows deletion progress for bulk user operations
 
 ## Relevant Files
-- `src/components/TicketDetail.tsx`: Contains the action buttons that needed sizing fixes
-- `src/components/Backup.tsx`: Database backup/restore interface with both JSON and SQL options
-- `src/components/TicketTable.tsx`: Ticket table with enhanced search
 - `src/components/Settings.tsx`: Comprehensive Settings component with notifications, appearance, backup, and advanced settings
-- `src/app/api/backup/database/route.ts`: Database backup API endpoint (GET/POST)
-- `scripts/db-backup.js`: CLI script for database backup
-- `scripts/db-restore.js`: CLI script for database restore
-- `src/components/Reports.tsx`: Report generation with column selection and type filtering
-- `src/app/api/reports/route.ts`: Report API with type-based filtering
+- `src/contexts/SettingsContext.tsx`: Settings provider loading from DB only, notification permission handling
+- `src/app/api/settings/route.ts`: Settings API endpoint for saving/loading from database
+- `src/app/api/tickets/route.ts`: Ticket API with assignment notification trigger
+- `src/app/layout.tsx`: Root layout with theme class support
+- `src/app/globals.css`: Dark/light theme CSS
+- `src/components/Sidebar.tsx`: Sidebar with NovaDesk logo and embedded DigitalClock

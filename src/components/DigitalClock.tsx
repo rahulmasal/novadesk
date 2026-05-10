@@ -23,8 +23,10 @@ export function DigitalClock() {
   }, [settings.advanced.timezone]);
 
   return (
-    <div className="fixed top-4 right-4 z-50 glass-dark px-3 py-1 rounded-lg">
-      <span className="font-mono text-sm text-neutral-300">{time}</span>
+    <div className="mt-2 px-3 py-1 bg-black/40 backdrop-blur-md rounded-lg">
+      <span className="font-mono text-sm font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+        {time}
+      </span>
     </div>
   );
 }

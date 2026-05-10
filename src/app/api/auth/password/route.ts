@@ -59,7 +59,6 @@ export async function POST(req: NextRequest) {
       });
 
       await logAuditEvent({
-        ticketId: "system",
         userId: auth.userId,
         action: "PASSWORD_RESET",
         details: `Password reset for ${targetUser.email} by ${auth.email}`,
@@ -94,7 +93,6 @@ export async function POST(req: NextRequest) {
     });
 
     await logAuditEvent({
-      ticketId: "system",
       userId: auth.userId,
       action: "PASSWORD_CHANGED",
       details: `Password changed for ${auth.email}`,

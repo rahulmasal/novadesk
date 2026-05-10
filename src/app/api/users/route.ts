@@ -99,12 +99,13 @@ export async function POST(req: NextRequest) {
         name: data.name,
         role: data.role,
         department: data.department,
+        hostname: data.hostname,
+        laptopSerial: data.laptopSerial,
       },
-      select: { id: true, email: true, name: true, role: true, department: true, createdAt: true },
+      select: { id: true, email: true, name: true, role: true, department: true, hostname: true, laptopSerial: true, createdAt: true },
     });
 
     await logAuditEvent({
-      ticketId: "system",
       userId: auth.userId,
       action: "USER_CREATED",
       details: `User ${user.email} created by ${auth.email}`,
@@ -147,15 +148,16 @@ export async function PATCH(req: NextRequest) {
     if (updates.name) updateData.name = updates.name;
     if (updates.role) updateData.role = updates.role;
     if (updates.department) updateData.department = updates.department;
+    if (updates.hostname !== undefined) updateData.hostname = updates.hostname;
+    if (updates.laptopSerial !== undefined) updateData.laptopSerial = updates.laptopSerial;
 
     const user = await prisma.user.update({
       where: { id },
       data: updateData,
-      select: { id: true, email: true, name: true, role: true, department: true, createdAt: true },
+      select: { id: true, email: true, name: true, role: true, department: true, hostname: true, laptopSerial: true, createdAt: true },
     });
 
     await logAuditEvent({
-      ticketId: "system",
       userId: auth.userId,
       action: "USER_UPDATED",
       details: `User ${user.email} updated by ${auth.email}`,
@@ -196,7 +198,6 @@ export async function DELETE(req: NextRequest) {
 
     if (targetUser) {
       await logAuditEvent({
-        ticketId: "system",
         userId: auth.userId,
         action: "USER_DELETED",
         details: `User ${targetUser.email} deleted by ${auth.email}`,

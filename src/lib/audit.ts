@@ -25,7 +25,7 @@ export type AuditAction =
  * @returns Promise that resolves when the audit log is created
  */
 export async function logAuditEvent(params: {
-  ticketId: string;
+  ticketId?: string;
   userId: string;
   action: AuditAction;
   oldValue?: string | null;
@@ -35,7 +35,7 @@ export async function logAuditEvent(params: {
   try {
     await prisma.auditLog.create({
       data: {
-        ticketId: params.ticketId,
+        ticketId: params.ticketId || null,
         userId: params.userId,
         action: params.action,
         oldValue: params.oldValue || null,

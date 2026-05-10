@@ -13,8 +13,9 @@ import {
    FileText,
    Database,
    LogOut,
- } from "lucide-react";
+  } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DigitalClock } from "@/components/DigitalClock";
 
 /**
  * Sidebar - Navigation sidebar with role-based menu items (Dashboard, Tickets, Customers, Reports, etc.)
@@ -76,13 +77,14 @@ export function Sidebar() {
 
   return (
     <aside className="w-64 glass-dark border-r border-white/5 flex flex-col h-screen sticky top-0">
-      <div className="p-6 flex items-center gap-3">
+      <div className="p-6 flex flex-col items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
           <LifeBuoy className="w-5 h-5 text-white" />
         </div>
         <h1 className="text-xl font-bold text-white tracking-tight">
           Nova<span className="text-blue-400">Desk</span>
         </h1>
+        <DigitalClock />
       </div>
 
       <div className="px-4 py-2">

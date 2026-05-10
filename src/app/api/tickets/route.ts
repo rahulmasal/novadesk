@@ -242,19 +242,32 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
+    const { assignedTo, ...restUpdates } = updates;
     const updateData: Record<string, unknown> = {};
-    if (updates.title) updateData.title = updates.title;
-    if (updates.description) updateData.description = updates.description;
-    if (updates.priority) updateData.priority = updates.priority;
-    if (updates.category) updateData.category = updates.category;
-    if (updates.status) updateData.status = updates.status;
-    if (updates.dueDate) updateData.dueDate = new Date(updates.dueDate);
-    if (updates.assignedTo !== undefined) updateData.assignedTo = updates.assignedTo;
+    if (restUpdates.title) updateData.title = restUpdates.title;
+    if (restUpdates.description) updateData.description = restUpdates.description;
+    if (restUpdates.priority) updateData.priority = restUpdates.priority;
+    if (restUpdates.category) updateData.category = restUpdates.category;
+    if (restUpdates.status) updateData.status = restUpdates.status;
+    if (restUpdates.dueDate) updateData.dueDate = new Date(restUpdates.dueDate);
+    if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
 
     const updatedTicket = await prisma.ticket.update({
       where: { id },
       data: updateData,
     });
+
+    // Create notification when ticket is assigned
+    if (assignedTo && assignedTo !== ticket.assignedTo) {
+      await prisma.notification.create({
+        data: {
+          userId: assignedTo,
+          type: "TICKET_ASSIGNED",
+          subject: `Ticket Assigned: ${updatedTicket.title}`,
+          body: `You have been assigned ticket #${updatedTicket.id.substring(0, 8)}`,
+        },
+      });
+    }
 
     await logAuditEvent({
       ticketId: id,

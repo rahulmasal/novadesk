@@ -75,6 +75,8 @@ export const createUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   role: RoleEnum,
   department: z.string().optional().default("General"),
+  hostname: z.string().min(1, "Hostname is required"),
+  laptopSerial: z.string().min(1, "Laptop serial is required"),
 });
 
 export const updateUserSchema = z.object({
@@ -82,6 +84,8 @@ export const updateUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
   role: RoleEnum.optional(),
   department: z.string().optional(),
+  hostname: z.string().optional().nullable(),
+  laptopSerial: z.string().optional().nullable(),
 });
 
 export const deleteUserSchema = z.object({
