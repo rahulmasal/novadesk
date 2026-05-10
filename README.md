@@ -30,11 +30,11 @@
 
 ## ✨ Why NovaDesk?
 
-| | |
-|---|---|
-| 🟢 **Open Source & Self-Hosted** | Full control over your data with no vendor lock-in |
-| 🟢 **No Per-Agent Pricing** | Add unlimited agents without extra cost |
-| 🟢 **Modern Stack** | Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
+|                                  |                                                              |     |
+| -------------------------------- | ------------------------------------------------------------ | --- |
+| 🟢 **Open Source & Self-Hosted** | Full control over your data with no vendor lock-in           |
+| 🟢 **No Per-Agent Pricing**      | Add unlimited agents without extra cost                      |
+| 🟢 **Modern Stack**              | Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
 
 ---
 
@@ -66,9 +66,17 @@ Auto-assign tickets based on rules, add custom fields, and extend features with 
 
 ### 7. Dashboards & Reporting
 
-Monitor performance with real-time dashboards and analytics charts. Export detailed reports in CSV format for stakeholder updates.
+Monitor performance with real-time dashboards and analytics charts. Export detailed reports in CSV format for stakeholder updates. Customize report columns with 14 available fields and filter by status, priority, category, or department.
 
-### 8. Mobile Ready (PWA)
+### 8. User Management
+
+Manage users with bulk operations, page size selection, and row selection for efficient administration. Delete multiple users at once with progress tracking.
+
+### 9. Settings & Customization
+
+Configure notifications, appearance (light/dark theme), backup options, and advanced settings. All settings stored in database for consistency across sessions.
+
+### 10. Mobile Ready (PWA)
 
 Use it like an app on your phone with offline support, push notifications, and installable Progressive Web App (PWA).
 
@@ -180,12 +188,14 @@ npx prisma db push
 ### Option 2: Local PostgreSQL
 
 **macOS:**
+
 ```bash
 brew install postgresql@15
 brew services start postgresql@15
 ```
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt update && sudo apt install postgresql postgresql-contrib
 sudo systemctl start postgresql
@@ -221,11 +231,11 @@ docker run -d \
 
 On first run, the **Setup Wizard** will guide you through creating the first admin user. After setup:
 
-| Role | Email | Password | Access |
-|------|-------|----------|--------|
-| **Administrator** | admin@novadesk.com | (your choice) | Full access, user management, delete |
-| **Agent** | (create during setup) | | All tickets, no delete |
-| **End User** | (self-register) | | Own tickets only |
+| Role              | Email                 | Password      | Access                               |
+| ----------------- | --------------------- | ------------- | ------------------------------------ |
+| **Administrator** | admin@novadesk.com    | (your choice) | Full access, user management, delete |
+| **Agent**         | (create during setup) |               | All tickets, no delete               |
+| **End User**      | (self-register)       |               | Own tickets only                     |
 
 > **Password Requirements:** 8+ characters with uppercase, lowercase, and number
 
@@ -233,15 +243,15 @@ On first run, the **Setup Wizard** will guide you through creating the first adm
 
 ## 🛠️ Tech Stack
 
-| Category | Technology |
-|----------|------------|
-| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
-| **Database** | Prisma ORM 5.22.0, PostgreSQL 15+ |
-| **State** | Zustand 5 with localStorage persistence |
-| **UI** | Lucide Icons, Framer Motion, Recharts, @dnd-kit |
-| **Backend** | Next.js API Routes, Node-cron, Nodemailer |
-| **Validation** | Zod 4.4.3 |
-| **Security** | bcryptjs 3.0.3 |
+| Category       | Technology                                        |
+| -------------- | ------------------------------------------------- |
+| **Frontend**   | Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
+| **Database**   | Prisma ORM 5.22.0, PostgreSQL 15+                 |
+| **State**      | Zustand 5 with localStorage persistence           |
+| **UI**         | Lucide Icons, Framer Motion, Recharts, @dnd-kit   |
+| **Backend**    | Next.js API Routes, Node-cron, Nodemailer         |
+| **Validation** | Zod 4.4.3                                         |
+| **Security**   | bcryptjs 3.0.3                                    |
 
 ---
 
@@ -274,12 +284,12 @@ novadesk/
 
 SLA due dates are automatically calculated based on priority:
 
-| Priority | Response Time | Use Case |
-|----------|---------------|----------|
-| **URGENT** | 4 hours | Critical system down |
-| **HIGH** | 8 hours | Major functionality impaired |
-| **MEDIUM** | 24 hours | Minor functionality impacted |
-| **LOW** | 48 hours | General inquiries |
+| Priority   | Response Time | Use Case                     |
+| ---------- | ------------- | ---------------------------- |
+| **URGENT** | 4 hours       | Critical system down         |
+| **HIGH**   | 8 hours       | Major functionality impaired |
+| **MEDIUM** | 24 hours      | Minor functionality impacted |
+| **LOW**    | 48 hours      | General inquiries            |
 
 ---
 
