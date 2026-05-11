@@ -46,6 +46,7 @@ export type StatusEnum = z.infer<typeof StatusEnum>;
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
+  provider: z.enum(["local", "ldap"]).optional().default("local"),
 });
 
 export const registerSchema = z.object({

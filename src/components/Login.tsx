@@ -30,12 +30,15 @@ export function Login({ onLogin }: { onLogin: () => void }) {
   const [remainingTime, setRemainingTime] = useState(0);
   const [security, setSecurity] = useState<SecurityState | null>(null);
   const [userSecurityAnswer, setUserSecurityAnswer] = useState("");
+  const [authProvider, setAuthProvider] = useState<"local" | "ldap">("local");
 
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_DURATION = 60;
 
   const lockoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   const remainingTimeRef = useRef(remainingTime);
+
+  const ldapEnabled = typeof window !== "undefined" && process.env.NEXT_PUBLIC_LDAP_ENABLED === "true";
 
   useEffect(() => {
     remainingTimeRef.current = remainingTime;
@@ -156,7 +159,7 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     }
 
     setIsLoading(true);
-    const result = await login(email, password);
+    const result = await login(email, password, authProvider);
 
     if (result.success) {
       setLoginAttempts(0);
@@ -221,16 +224,43 @@ export function Login({ onLogin }: { onLogin: () => void }) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {ldapEnabled && (
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setAuthProvider("local")}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  authProvider === "local"
+                    ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                    : "bg-white/5 text-neutral-400 border border-white/10 hover:bg-white/10"
+                }`}
+              >
+                Local Auth
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuthProvider("ldap")}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  authProvider === "ldap"
+                    ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                    : "bg-white/5 text-neutral-400 border border-white/10 hover:bg-white/10"
+                }`}
+              >
+                LDAP / Active Directory
+              </button>
+            </div>
+          )}
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
-              Email Address
+              {authProvider === "ldap" ? "Username" : "Email Address"}
             </label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com"
+              placeholder={authProvider === "ldap" ? "username" : "name@company.com"}
               required
               disabled={!!lockoutTime}
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50"

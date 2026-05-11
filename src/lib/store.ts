@@ -207,11 +207,13 @@ interface TicketStore {
    * Attempts to log in with email and password
    * @param email - User's email address
    * @param password - User's password
+   * @param provider - Authentication provider (local or ldap)
    * @returns Promise with success status and optional error message
    */
   login: (
     email: string,
     password: string,
+    provider?: "local" | "ldap",
   ) => Promise<{ success: boolean; error?: string }>;
 
   /** Logs out current user and clears session */
@@ -317,25 +319,26 @@ tickets: [],
       // ========================================
       // LOGIN ACTION
       // ========================================
-      /**
-       * login - Authenticates user with email and password
-       *
-       * WHAT IT DOES:
-       * 1. Calls the /api/auth/login endpoint
-       * 2. On success, stores user data and token in state
-       * 3. Returns success or error message
-       *
-       * @param email - User's email address
-       * @param password - User's password
-       * @returns Promise<{ success: boolean, error?: string }>
-       */
-      login: async (email, password) => {
+/**
+        * login - Authenticates user with email and password
+        *
+        * WHAT IT DOES:
+        * 1. Calls the /api/auth/login endpoint
+        * 2. On success, stores user data and token in state
+        * 3. Returns success or error message
+        *
+        * @param email - User's email address
+        * @param password - User's password
+        * @param provider - Authentication provider (local or ldap)
+        * @returns Promise<{ success: boolean, error?: string }>
+        */
+      login: async (email, password, provider = "local") => {
         try {
           // Call the login API endpoint
           const res = await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, provider }),
           });
 
           // Parse the JSON response
