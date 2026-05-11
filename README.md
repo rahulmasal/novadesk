@@ -76,7 +76,11 @@ Manage users with bulk operations, page size selection, and row selection for ef
 
 Configure notifications, appearance (light/dark theme), backup options, and advanced settings. All settings stored in database for consistency across sessions.
 
-### 10. Mobile Ready (PWA)
+### 10. LDAP / Active Directory Authentication
+
+Seamlessly integrate with your organization's Active Directory. Users can authenticate using their corporate LDAP credentials with auto-provisioning support. Toggle between Local and LDAP authentication on the login page when enabled.
+
+### 11. Mobile Ready (PWA)
 
 Use it like an app on your phone with offline support, push notifications, and installable Progressive Web App (PWA).
 
@@ -112,6 +116,15 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/novadesk
 
 # Cron Job Security (required for automated tasks)
 CRON_SECRET=your-secure-random-string-here
+
+# LDAP / Active Directory Authentication (optional)
+LDAP_ENABLED=false
+LDAP_URL=ldap://localhost:389
+LDAP_BASE_DN=dc=company,dc=com
+LDAP_BIND_DN=cn=admin,dc=company,dc=com
+LDAP_BIND_PASSWORD=your-password
+LDAP_USER_SEARCH_BASE=ou=users,dc=company,dc=com
+LDAP_USER_SEARCH_FILTER=(uid={{username}})
 ```
 
 ### 3. Initialize Database

@@ -30,6 +30,9 @@ Rules:
 - Added row selection checkboxes and bulk delete for UserManagement
 - Added progress modal for bulk delete operations
 - Fixed dual title issue in UserManagement and Reports components
+- Added LDAP/Active Directory authentication support with ldapjs
+- LDAP users auto-created in DB with `source: "ldap"` flag
+- Login component has provider toggle (Local/LDAP) when LDAP enabled
 
 ### In Progress
 - (none)
@@ -44,6 +47,10 @@ Rules:
 - Report type filters: status=NEW, priority=URGENT/HIGH, category=Hardware, department=IT
 - Default selected columns include: ID, Title, Status, Priority, Category, Department, Created At
 - SQL restore parser now properly handles multi-row INSERT statements with correct value parsing
+- UserManagement page size selection matches TicketTable format (10/25/50/100/200/500/All)
+- LDAP authentication uses ldapjs library with auto-create users feature
+- LDAP users get `source: "ldap"` flag in user object for identification
+- Login component shows provider toggle only when LDAP_ENABLED=true in environment
 
 ## Next Steps
 - (none)
@@ -64,6 +71,8 @@ Rules:
 - Ticket assignment creates DB notification when `assignedTo` differs from current assignment
 - Digital clock displayed in sidebar below NovaDesk logo with gradient styling
 - Progress modal shows deletion progress for bulk user operations
+- LDAP authentication supports both LDAP and Active Directory servers
+- LDAP users are auto-created in local DB when `LDAP_AUTO_CREATE=true`
 
 ## Relevant Files
 - `src/components/Settings.tsx`: Comprehensive Settings component with notifications, appearance, backup, and advanced settings
@@ -73,3 +82,6 @@ Rules:
 - `src/app/layout.tsx`: Root layout with theme class support
 - `src/app/globals.css`: Dark/light theme CSS
 - `src/components/Sidebar.tsx`: Sidebar with NovaDesk logo and embedded DigitalClock
+- `src/lib/ldap-auth.ts`: LDAP authentication module with config and user sync
+- `src/app/api/auth/login/route.ts`: Login route with LDAP provider support
+- `src/components/Login.tsx`: Login component with auth provider toggle

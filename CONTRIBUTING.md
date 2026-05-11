@@ -52,23 +52,37 @@ Welcome, new contributor! This document will help you get started with contribut
 
 ```
 novadesk/
+├── prisma/
+│   ├── schema.prisma       # Database schema (PostgreSQL with Prisma)
+│   └── migrations/         # Database migrations
+├── scripts/
+│   ├── seed-tickets.js     # Seed script for test data
+│   └── db-backup.js        # Database backup utilities
 ├── src/
 │   ├── app/                  # Next.js app directory
 │   │   ├── api/            # API routes (backend endpoints)
-│   │   │   ├── auth/       # Authentication (login/logout)
-│   │   │   ├── cron/       # Scheduled report generation
-│   │   │   └── tickets/    # Ticket CRUD operations
+│   │   │   ├── auth/       # Authentication (login/logout/password)
+│   │   │   ├── tickets/    # Ticket CRUD operations
+│   │   │   ├── users/      # User management
+│   │   │   ├── reports/    # Reports and analytics
+│   │   │   ├── backup/     # Database backup/restore
+│   │   │   └── ...
 │   │   └── page.tsx        # Main dashboard page
 │   ├── components/          # React UI components
 │   │   ├── TicketForm.tsx   # Create ticket form
-│   │   ├── TicketTable.tsx # Display tickets list
+│   │   ├── TicketTable.tsx  # Display tickets list
+│   │   ├── Login.tsx        # Login with LDAP toggle
 │   │   └── ...
 │   ├── lib/                 # Utility functions and state
 │   │   ├── store.ts        # Zustand state management
-│   │   ├── csv.ts          # CSV export utility
-│   │   └── email.ts        # Email service
-│   └── data/               # JSON data files (simulated database)
+│   │   ├── prisma.ts       # Prisma client singleton
+│   │   ├── ldap-auth.ts    # LDAP authentication
+│   │   ├── schemas.ts      # Zod validation schemas
+│   │   └── ...
+│   └── contexts/           # React contexts
+│       └── SettingsContext.tsx
 ├── public/                  # Static assets
+│   └── manifest.json      # PWA manifest
 └── README.md               # Project documentation
 ```
 
@@ -161,18 +175,27 @@ docs: update README with setup instructions
 
 ### How Authentication Works
 
-1. User submits email/password to `/api/auth/login`
-2. Server validates credentials against `src/data/users.json`
-3. Server creates session in `src/data/sessions.json`
-4. Client receives token and stores in Zustand state
-5. All subsequent requests include `Authorization: Bearer <token>`
+NovaDesk supports two authentication methods:
+
+1. **Local Authentication**
+   - User submits email/password to `/api/auth/login`
+   - Server validates credentials against PostgreSQL database with bcrypt
+   - Server creates session in `sessions` table
+   - Client receives token and stores in Zustand state
+
+2. **LDAP / Active Directory Authentication**
+   - Enable via `LDAP_ENABLED=true` in environment
+   - User submits credentials to `/api/auth/login` with `provider: "ldap"`
+   - Server authenticates against LDAP/AD server
+   - Users are auto-created in local DB with `source: "ldap"` flag
+   - Login page shows provider toggle when LDAP is enabled
 
 ### How Tickets are Stored
 
-- Tickets are stored in `src/data/tickets.json`
+- Tickets are stored in PostgreSQL via Prisma ORM
 - Each ticket has: id, title, description, priority, category, status, timestamps
-- New tickets get status "New" by default
-- Agents/Admins can update status: New → In Progress → Pending Vendor → Resolved → Closed
+- New tickets get status "NEW" by default
+- Agents/Admins can update status: NEW → IN_PROGRESS → PENDING_VENDOR → RESOLVED → CLOSED
 
 ### State Management with Zustand
 
