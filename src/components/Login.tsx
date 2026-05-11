@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTicketStore } from "@/lib/store";
 import {
   LifeBuoy,
@@ -93,20 +93,6 @@ export function Login({ onLogin }: { onLogin: () => void }) {
       localStorage.removeItem("lockoutTime");
     }
   }, [lockoutTime]);
-
-  const generateSecurityQuestion = useCallback((): SecurityState => {
-    const num1 = Math.floor(Math.random() * 15) + 1;
-    const num2 = Math.floor(Math.random() * 15) + 1;
-    const ops = ["+", "-", "×"];
-    const op = ops[Math.floor(Math.random() * ops.length)];
-    let answer = 0;
-    switch (op) {
-      case "+": answer = num1 + num2; break;
-      case "-": answer = Math.max(0, num1 - num2); break;
-      case "×": answer = num1 * num2; break;
-    }
-    return { question: `${num1} ${op} ${num2} = ?`, answer: answer.toString() };
-  }, []);
 
   /**
    * validateInput - Checks email and password for basic validity

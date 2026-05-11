@@ -8,7 +8,6 @@ import { logAuditEvent } from "@/lib/audit";
 import { authenticateWithLdap } from "@/lib/ldap-auth";
 
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
-const BCRYPT_SALT_ROUNDS = 12;
 
 export async function POST(req: NextRequest) {
   try {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTicketStore, Role } from "@/lib/store";
-import { UserPlus, Upload, Trash2, Edit2, X, Check, Search, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { UserPlus, Upload, Trash2, Edit2, X, Check, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface UserData {
   id: string;
@@ -46,11 +46,6 @@ export function UserManagement() {
 
   const [csvData, setCsvData] = useState("");
   const [importResult, setImportResult] = useState<{ success: boolean; summary: { total: number; imported: number; skipped: number }; errors?: string[] } | null>(null);
-
-  const [resetPasswordUser, setResetPasswordUser] = useState<UserData | null>(null);
-  const [resetPasswordValue, setResetPasswordValue] = useState("");
-  const [resetPasswordMsg, setResetPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
   
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [progressStep, setProgressStep] = useState(0);

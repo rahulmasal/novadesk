@@ -4,6 +4,7 @@
  * Usage: node scripts/seed-tickets.js
  */
 /* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();

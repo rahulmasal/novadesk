@@ -14,7 +14,7 @@ import { Backup } from "@/components/Backup";
 import { SetupWizard } from "@/components/SetupWizard";
 import { Settings } from "@/components/Settings";
 import { useTicketStore } from "@/lib/store";
-import { Plus, CheckCircle, XCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -26,7 +26,6 @@ export default function Dashboard() {
     setAllUsers,
     isAuthenticated,
     authToken,
-    currentUser,
     checkAuth,
   } = useTicketStore();
 
