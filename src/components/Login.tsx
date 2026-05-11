@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTicketStore } from "@/lib/store";
 import {
   LifeBuoy,
@@ -18,32 +18,6 @@ interface SecurityState {
   answer: string;
 }
 
-/**
- * Login - Login form component with authentication and security features
- * 
- * WHAT IT DOES:
- * 1. Renders a full-screen login form with email/password fields
- * 2. Handles form submission and calls the store's login action
- * 3. Implements brute-force attack prevention:
- *    - Rate limiting after failed attempts
- *    - Account lockout after 5 failed attempts
- *    - Security question verification after 3 attempts
- * 4. Provides visual feedback for errors and loading states
- * 
- * SECURITY FEATURES:
- * - Input validation (email format, password length)
- * - Account lockout with countdown timer
- * - Math-based security verification for suspicious activity
- * - Attempt tracking stored in localStorage
- * 
- * STATE VARIABLES:
- * - email/password: Form input values
- * - loginAttempts: Count of failed login attempts
- * - lockoutTime: Timestamp when lockout expires
- * - security: Security question state for verification
- * 
- * @param onLogin - Callback function to invoke after successful login
- */
 export function Login({ onLogin }: { onLogin: () => void }) {
   const { login } = useTicketStore();
   const [email, setEmail] = useState("");
@@ -60,22 +34,48 @@ export function Login({ onLogin }: { onLogin: () => void }) {
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_DURATION = 60;
 
+  const lockoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const remainingTimeRef = useRef(remainingTime);
+
+  useEffect(() => {
+    remainingTimeRef.current = remainingTime;
+  }, [remainingTime]);
+
   useEffect(() => {
     if (lockoutTime && remainingTime > 0) {
-      const timer = setTimeout(() => {
-        setRemainingTime(remainingTime - 1);
+      lockoutTimerRef.current = setTimeout(() => {
+        const newTime = remainingTimeRef.current - 1;
+        if (newTime <= 0) {
+          setLockoutTime(null);
+          setLoginAttempts(0);
+          setSecurity(null);
+        } else {
+          setRemainingTime(newTime);
+        }
       }, 1000);
-      return () => clearTimeout(timer);
+      return () => {
+        if (lockoutTimerRef.current) {
+          clearTimeout(lockoutTimerRef.current);
+        }
+      };
     }
   }, [lockoutTime, remainingTime]);
 
   useEffect(() => {
     const storedAttempts = localStorage.getItem("loginAttempts");
     const storedLockout = localStorage.getItem("lockoutTime");
-    if (storedAttempts) setLoginAttempts(parseInt(storedAttempts, 10));
-    if (storedLockout && parseInt(storedLockout, 10) > Date.now()) {
-      setLockoutTime(parseInt(storedLockout, 10));
-      setRemainingTime(Math.ceil((parseInt(storedLockout, 10) - Date.now()) / 1000));
+    if (storedAttempts) {
+      const attempts = parseInt(storedAttempts, 10);
+      setLoginAttempts(attempts);
+    }
+    if (storedLockout) {
+      const storedTime = parseInt(storedLockout, 10);
+      if (storedTime > Date.now()) {
+        setLockoutTime(storedTime);
+        setRemainingTime(Math.ceil((storedTime - Date.now()) / 1000));
+      } else {
+        localStorage.removeItem("lockoutTime");
+      }
     }
   }, []);
 
@@ -91,30 +91,6 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     }
   }, [lockoutTime]);
 
-  useEffect(() => {
-    if (loginAttempts >= MAX_ATTEMPTS && !lockoutTime && remainingTime === 0) {
-      setLockoutTime(Date.now() + LOCKOUT_DURATION * 1000);
-      setRemainingTime(LOCKOUT_DURATION);
-    }
-  }, [loginAttempts, lockoutTime, remainingTime]);
-
-  useEffect(() => {
-    if (remainingTime === 0 && lockoutTime && Date.now() >= lockoutTime) {
-      setLockoutTime(null);
-      setLoginAttempts(0);
-      setSecurity(null);
-    }
-  }, [remainingTime, lockoutTime]);
-
-  /**
-   * generateSecurityQuestion - Creates a random math problem for security verification
-   * 
-   * WHY: After multiple failed login attempts, we need extra verification
-   * to prevent automated attacks. A simple math question is effective
-   * against bots while being easy for humans.
-   * 
-   * @returns Object with question string and correct answer string
-   */
   const generateSecurityQuestion = useCallback((): SecurityState => {
     const num1 = Math.floor(Math.random() * 15) + 1;
     const num2 = Math.floor(Math.random() * 15) + 1;

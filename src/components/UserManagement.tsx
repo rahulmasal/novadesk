@@ -45,7 +45,7 @@ export function UserManagement() {
   });
 
   const [csvData, setCsvData] = useState("");
-  const [importResult, setImportResult] = useState<{ total: number; imported: number; skipped: number; errors?: string[] } | null>(null);
+  const [importResult, setImportResult] = useState<{ success: boolean; summary: { total: number; imported: number; skipped: number }; errors?: string[] } | null>(null);
 
   const [resetPasswordUser, setResetPasswordUser] = useState<UserData | null>(null);
   const [resetPasswordValue, setResetPasswordValue] = useState("");
@@ -216,7 +216,7 @@ export function UserManagement() {
       const result = await res.json();
       setImportResult(result);
 
-      if (result.success && result.summary.imported > 0) {
+      if (result.success && result.summary?.imported > 0) {
         const refreshRes = await fetch("/api/users", {
           headers: { Authorization: `Bearer ${authToken}` },
         });

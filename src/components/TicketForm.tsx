@@ -21,22 +21,20 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
    const [category, setCategory] = useState<Category>("SOFTWARE");
    const [isSubmitting, setIsSubmitting] = useState(false);
 
-   // Advanced fields
-   const [targetUser, setTargetUser] = useState<User | null>(currentUser);
-   const [hostname, setHostname] = useState(currentUser?.hostname || "");
-   const [laptopSerial, setLaptopSerial] = useState(currentUser?.laptopSerial || "");
-   const [department, setDepartment] = useState(currentUser?.department || "");
+   const [targetUser, setTargetUser] = useState<User | null>(null);
+   const [hostname, setHostname] = useState("");
+   const [laptopSerial, setLaptopSerial] = useState("");
+   const [department, setDepartment] = useState("");
    const [allUsers, setLocalAllUsers] = useState<User[]>([]);
    const [showUserDropdown, setShowUserDropdown] = useState(false);
-   const [userSearch, setUserSearch] = useState(currentUser?.name || "");
+   const [userSearch, setUserSearch] = useState("");
 
-   // Sync with currentUser when it changes (e.g., after login)
    useEffect(() => {
      if (currentUser) {
+       setTargetUser(currentUser);
        setHostname(currentUser.hostname || "");
        setLaptopSerial(currentUser.laptopSerial || "");
        setDepartment(currentUser.department || "");
-       setTargetUser(currentUser);
        setUserSearch(currentUser.name);
      }
    }, [currentUser]);
