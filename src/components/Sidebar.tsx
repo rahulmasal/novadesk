@@ -50,12 +50,11 @@ export function Sidebar() {
       id: "Backup" as const,
       adminOnly: true,
     },
-    {
-      icon: Settings,
-      label: "Settings",
-      id: "Settings" as const,
-      adminOnly: true,
-    },
+{
+       icon: Settings,
+       label: "Settings",
+       id: "Settings" as const,
+     },
   ];
 
   const filteredLinks = links.filter((l) => {
