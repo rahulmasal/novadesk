@@ -17,11 +17,11 @@ export async function POST(req: Request) {
 
   try {
     const { host, port, user, pass, name } = await req.json();
-    
+
     if (!host || !port || !user || !name) {
       return NextResponse.json(
         { connected: false, error: "Missing required connection details" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,13 +37,16 @@ export async function POST(req: Request) {
         },
       },
     });
-    
+
     try {
       // Attempt a simple query to test connection
       await prisma.$queryRaw`SELECT 1`;
       await prisma.$disconnect();
-      
-      console.log(`[SETUP CHECK-DB POST] Database connection successful`, { host, database: name });
+
+      console.log(`[SETUP CHECK-DB POST] Database connection successful`, {
+        host,
+        database: name,
+      });
 
       return NextResponse.json({
         connected: true,
@@ -57,18 +60,17 @@ export async function POST(req: Request) {
     }
   } catch (error) {
     console.error(`[SETUP CHECK-DB POST] Error:`, error);
-    
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : "Failed to connect to database";
-    
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to connect to database";
+
     return NextResponse.json(
-      { 
-        connected: false, 
+      {
+        connected: false,
         error: errorMessage,
-        hint: "Check your database credentials and ensure the database exists and is accessible."
+        hint: "Check your database credentials and ensure the database exists and is accessible.",
       },
-      { status: 200 }
+      { status: 200 },
     );
   }
 }
