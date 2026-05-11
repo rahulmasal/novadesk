@@ -20,7 +20,7 @@
     <img src="https://img.shields.io/badge/Next.js-16.2.4-black?style=for-the-badge&logo=next.js" alt="Next.js" />
     <img src="https://img.shields.io/badge/React-19.2.4-blue?style=for-the-badge&logo=react" alt="React" />
     <img src="https://img.shields.io/badge/Tailwind-v4-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
-    <img src="https://img.shields.io/badge/Prisma-7.8.0-2D3A4A?style=for-the-badge&logo=prisma" alt="Prisma" />
+    <img src="https://img.shields.io/badge/Prisma-5.22.0-2D3A4A?style=for-the-badge&logo=prisma" alt="Prisma" />
     <img src="https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
     <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License" />
   </p>
@@ -30,11 +30,11 @@
 
 ## ✨ Why NovaDesk?
 
-|                                  |                                                              |     |
-| -------------------------------- | ------------------------------------------------------------ | --- |
-| 🟢 **Open Source & Self-Hosted** | Full control over your data with no vendor lock-in           |
-| 🟢 **No Per-Agent Pricing**      | Add unlimited agents without extra cost                      |
-| 🟢 **Modern Stack**              | Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
+| Feature | Description |
+| -------------------------------- | ------------------------------------------------------------ |
+| 🟢 **Open Source & Self-Hosted** | Full control over your data with no vendor lock-in |
+| 🟢 **No Per-Agent Pricing** | Add unlimited agents without extra cost |
+| 🟢 **Modern Stack** | Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
 
 ---
 
