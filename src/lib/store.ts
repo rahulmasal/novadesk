@@ -203,29 +203,29 @@ interface TicketStore {
   // ========================================
   // Functions that modify auth state
 
-  /**
-   * Attempts to log in with email and password
-   * @param email - User's email address
-   * @param password - User's password
-   * @param provider - Authentication provider (local or ldap)
-   * @returns Promise with success status and optional error message
-   */
-  login: (
-    email: string,
-    password: string,
-    provider?: "local" | "ldap",
-  ) => Promise<{ success: boolean; error?: string }>;
+/**
+    * Attempts to log in with email and password
+    * @param email - User's email address
+    * @param password - User's password
+    * @param provider - Authentication provider (local or ldap)
+    * @returns Promise with success status and optional error message
+    */
+   login: (
+     email: string,
+     password: string,
+     provider?: "local" | "ldap",
+   ) => Promise<{ success: boolean; error?: string }>;
 
-  /** Logs out current user and clears session */
-  logout: () => void;
+   /** Logs out current user and clears session */
+   logout: () => void;
 
-  /**
-   * Checks if current auth token is still valid
-   * @returns Promise with true if valid, false otherwise
-   */
-  checkAuth: () => Promise<boolean>;
+   /**
+    * Checks if current auth token is still valid
+    * @returns Promise with true if valid, false otherwise
+    */
+checkAuth: () => Promise<boolean>;
 
-  // ========================================
+   // ========================================
   // TICKET ACTIONS
   // ========================================
   // Functions that modify ticket state
@@ -312,9 +312,9 @@ export const useTicketStore = create<TicketStore>()(
 
 tickets: [],
 
-       activities: [],
+        activities: [],
 
-       allUsers: [],
+        allUsers: [],
 
       // ========================================
       // LOGIN ACTION

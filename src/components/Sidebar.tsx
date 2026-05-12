@@ -205,26 +205,38 @@ export function Sidebar() {
       </div>
 
 {/* Footer - Additional Info and Actions */}
-       <div className={`mt-auto p-4 border-t ${isLightTheme ? "border-gray-200" : "border-white/5"}`}>
-         {/* User details display */}
-         <div className={`px-3 py-2.5 rounded-lg text-xs border mb-2 ${isLightTheme ? "bg-gray-50 border-gray-200 text-gray-600" : "bg-white/5 border border-white/5 text-neutral-400"}`}>
-           <p>Department: {currentUser?.department || "N/A"}</p>
-           <p>Email: {currentUser?.email || "N/A"}</p>
-         </div>
-         {/* Help button */}
-         <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isLightTheme ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100" : "text-neutral-400 hover:text-white hover:bg-white/5"}`}>
-           <HelpCircle className="w-5 h-5" />
-           Help & Support
-         </button>
-        {/* Logout button - red styling to indicate destructive action */}
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200"
-        >
-          <LogOut className="w-5 h-5" />
-          Logout
-        </button>
-      </div>
-    </aside>
-  );
+        <div className={`mt-auto p-4 border-t ${isLightTheme ? "border-gray-200" : "border-white/5"}`}>
+          {/* User details display */}
+          <div className={`px-3 py-2.5 rounded-lg text-xs border mb-3 ${isLightTheme ? "bg-gray-50 border-gray-200 text-gray-600" : "bg-white/5 border border-white/5 text-neutral-400"}`}>
+            <p className="truncate">Dept: {currentUser?.department || "N/A"}</p>
+            <p className="truncate">Email: {currentUser?.email || "N/A"}</p>
+          </div>
+          
+          {/* Help & Support dropdown */}
+          <div className="space-y-1 mb-2">
+            <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isLightTheme ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100" : "text-neutral-400 hover:text-white hover:bg-white/5"}`}>
+              <HelpCircle className="w-5 h-5" />
+              Help Center
+            </button>
+            <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isLightTheme ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100" : "text-neutral-400 hover:text-white hover:bg-white/5"}`}>
+              <LifeBuoy className="w-5 h-5" />
+              Submit Ticket
+            </button>
+            <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isLightTheme ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100" : "text-neutral-400 hover:text-white hover:bg-white/5"}`}>
+              <Shield className="w-5 h-5" />
+              System Status
+            </button>
+          </div>
+          
+          {/* Logout button - red styling to indicate destructive action */}
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        </div>
+     </aside>
+   );
 }

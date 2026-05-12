@@ -57,6 +57,16 @@ const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
  */
 export async function POST(req: NextRequest) {
   try {
+    // Handle beacon logout for browser close (admins only)
+    const contentType = req.headers.get("content-type");
+    if (contentType === "application/json") {
+      const body = await req.json();
+      if (body.action === "logout" && body.token) {
+        await prisma.session.deleteMany({ where: { token: body.token } });
+        return new NextResponse(null, { status: 204 });
+      }
+    }
+
     // Step 1: Parse and validate request body using Zod schema
     const body = await req.json();
     const validationResult = loginSchema.safeParse(body);
@@ -158,6 +168,74 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     // Catch any unexpected errors and return generic error message
     console.error(`[AUTH POST] Error:`, error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+/**
+ * GET /api/auth/login - Validate session token
+ *
+ * @param req - Next.js request with Authorization header containing bearer token
+ * @returns User object if token is valid, or error if invalid
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get("Authorization");
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Missing authorization token" }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+
+    const session = await prisma.session.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!session) {
+      return NextResponse.json({ authenticated: false }, { status: 401 });
+    }
+
+    if (session.expiresAt < new Date()) {
+      await prisma.session.delete({ where: { token } });
+      return NextResponse.json({ authenticated: false }, { status: 401 });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _pw, ...safeUser } = session.user;
+
+    return NextResponse.json({
+      authenticated: true,
+      user: safeUser,
+    });
+  } catch (error) {
+    console.error(`[AUTH GET] Error:`, error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/auth/login - Invalidate session token (logout)
+ *
+ * @param req - Next.js request with Authorization header containing bearer token
+ * @returns Success confirmation
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get("Authorization");
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Missing authorization token" }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+
+    await prisma.session.deleteMany({ where: { token } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(`[AUTH DELETE] Error:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
