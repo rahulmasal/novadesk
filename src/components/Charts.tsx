@@ -109,43 +109,43 @@ export function Charts() {
         <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-gray-900" : "text-white"}`}>
           Category Distribution
         </h3>
-        <div className="flex-1 w-full flex items-center justify-center">
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-                stroke="none"
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: isLightTheme ? "#ffffff" : "#171717",
-                  border: isLightTheme ? "1px solid #e5e7eb" : "none",
-                  borderRadius: "8px",
-                  color: isLightTheme ? "#171717" : "#ffffff",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-            <span className={`text-3xl font-bold ${isLightTheme ? "text-gray-900" : "text-white"}`}>
-              {tickets.length}
-            </span>
-            <span className={`text-xs ${isLightTheme ? "text-gray-500" : "text-neutral-400"}`}>Total</span>
-          </div>
-        </div>
+<div className="flex-1 w-full flex items-center justify-center relative">
+           <ResponsiveContainer width="100%" height={250}>
+             <PieChart>
+               <Pie
+                 data={categoryData}
+                 cx="50%"
+                 cy="50%"
+                 innerRadius={60}
+                 outerRadius={80}
+                 paddingAngle={5}
+                 dataKey="value"
+                 stroke="none"
+               >
+                 {categoryData.map((entry, index) => (
+                   <Cell
+                     key={`cell-${index}`}
+                     fill={COLORS[index % COLORS.length]}
+                   />
+                 ))}
+               </Pie>
+               <Tooltip
+                 contentStyle={{
+                   backgroundColor: isLightTheme ? "#ffffff" : "#171717",
+                   border: isLightTheme ? "1px solid #e5e7eb" : "none",
+                   borderRadius: "8px",
+                   color: isLightTheme ? "#171717" : "#ffffff",
+                 }}
+               />
+             </PieChart>
+           </ResponsiveContainer>
+           <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+             <span className={`text-3xl font-bold ${isLightTheme ? "text-gray-900" : "text-white"}`}>
+               {tickets.length}
+             </span>
+             <span className={`text-xs ${isLightTheme ? "text-gray-500" : "text-neutral-400"}`}>Total</span>
+           </div>
+         </div>
       </div>
     </div>
   );
