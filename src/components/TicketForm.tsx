@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTicketStore, Priority, Category, User } from "@/lib/store";
+import { useSettings } from "@/contexts/SettingsContext";
 import { Paperclip, Send, X, Loader2 } from "lucide-react";
 
 /**
@@ -14,6 +15,8 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
    const authToken = useTicketStore((state) => state.authToken);
    const currentUser = useTicketStore((state) => state.currentUser);
    const setAllUsers = useTicketStore((state) => state.setAllUsers);
+   const { settings } = useSettings();
+   const isLightTheme = settings.appearance.theme === "light";
 
    const [title, setTitle] = useState("");
    const [description, setDescription] = useState("");
@@ -135,7 +138,7 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className={`rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 ${isLightTheme ? "bg-white border border-gray-200" : "bg-neutral-900 border border-white/10"}`}>
         <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
           <h2 className="text-xl font-semibold text-white">
             Create New Ticket

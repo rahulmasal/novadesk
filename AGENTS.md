@@ -25,7 +25,8 @@ Rules:
 - Added ticket assignment notification in API route
 - Added CSS `.dark` and `.light` class support for theme switching with proper background colors
 - Digital clock displayed in sidebar below NovaDesk logo with gradient styling
-- Updated seed-tickets.js to generate 1000 random end-users with sample tickets
+- Updated seed-tickets.js to generate 5000 end-users and 10000 tickets with unique hostnames and laptop serials
+- Fixed Settings component light theme styling with proper white backgrounds and dark text
 - Added page size selection (10/25/50/100/200/500/All) to UserManagement
 - Added row selection checkboxes and bulk delete for UserManagement
 - Added progress modal for bulk delete operations
@@ -33,6 +34,10 @@ Rules:
 - Added LDAP/Active Directory authentication support with ldapjs
 - LDAP users auto-created in DB with `source: "ldap"` flag
 - Login component has provider toggle (Local/LDAP) when LDAP enabled
+- Light theme now properly renders with light gray background (#f8fafc) and slate text colors
+- ThemeLoader component loads theme from DB before initial render
+- All settings cards now use proper white backgrounds with borders and shadows in light mode
+- Settings page uses proper padding with space-y-6 between sections
 
 ### In Progress
 - (none)
@@ -41,16 +46,11 @@ Rules:
 - (none)
 
 ## Key Decisions
-- Added `flex-shrink-0` class to prevent buttons from shrinking in flex containers when window width is large
-- Database backup uses `pg_dump` when available, falls back to Prisma JSON export for portability
-- Ticket search now searches across 6 fields for comprehensive results
-- Report type filters: status=NEW, priority=URGENT/HIGH, category=Hardware, department=IT
-- Default selected columns include: ID, Title, Status, Priority, Category, Department, Created At
-- SQL restore parser now properly handles multi-row INSERT statements with correct value parsing
-- UserManagement page size selection matches TicketTable format (10/25/50/100/200/500/All)
-- LDAP authentication uses ldapjs library with auto-create users feature
-- LDAP users get `source: "ldap"` flag in user object for identification
-- Login component shows provider toggle only when LDAP_ENABLED=true in environment
+- Light theme uses `#f8fafc` background (slate-50), `#1e293b` text (slate-800)
+- Components use solid white cards with `shadow-md` and `border-slate-200` for light theme
+- Settings cards use proper padding (p-6) and gap (space-y-6) for spacing
+- ThemeLoader component handles loading theme from DB before rendering
+- Background now properly shows light gray (#f8fafc) instead of black in light mode
 
 ## Next Steps
 - (none)
@@ -73,6 +73,7 @@ Rules:
 - Progress modal shows deletion progress for bulk user operations
 - LDAP authentication supports both LDAP and Active Directory servers
 - LDAP users are auto-created in local DB when `LDAP_AUTO_CREATE=true`
+- Settings component uses `glass-light` utility class for light theme with white backgrounds and dark text
 
 ## Relevant Files
 - `src/components/Settings.tsx`: Comprehensive Settings component with notifications, appearance, backup, and advanced settings

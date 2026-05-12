@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTicketStore } from "@/lib/store";
+import { useSettings } from "@/contexts/SettingsContext";
 import {
   Download,
   Calendar,
@@ -82,6 +83,8 @@ const AVAILABLE_COLUMNS: ColumnOption[] = [
  */
 export function Reports() {
   const { authToken, currentUserRole } = useTicketStore();
+  const { settings } = useSettings();
+  const isLightTheme = settings.appearance.theme === "light";
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [reportData, setReportData] = useState<ReportData | null>(null);
@@ -196,7 +199,7 @@ export function Reports() {
   if (!isAdmin) {
     return (
       <div className="p-8">
-        <div className="glass-dark p-6 rounded-2xl text-center">
+        <div className={`${isLightTheme ? "glass-card" : "glass-dark"} p-6 rounded-2xl text-center`}>
           <p className="text-red-400">
             Access denied. Administrator privileges required.
           </p>
@@ -208,7 +211,7 @@ export function Reports() {
   return (
     <div className="w-full">
       {/* Date Range Selector */}
-      <div className="glass-dark rounded-2xl p-6 mb-8">
+      <div className={`${isLightTheme ? "glass-card" : "glass-dark"} rounded-2xl p-6 mb-8`}>
         <h3 className="text-lg font-semibold text-white mb-4">
           Generate Report
         </h3>
@@ -269,55 +272,55 @@ export function Reports() {
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="glass-dark rounded-2xl p-6">
+            <div className={`${isLightTheme ? "glass-card" : "glass-dark"} p-6 rounded-2xl`}>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-blue-400" />
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isLightTheme ? "bg-blue-100" : "bg-blue-500/20"}`}>
+                  <BarChart3 className={`w-6 h-6 ${isLightTheme ? "text-blue-600" : "text-blue-400"}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">
+                  <p className={`text-2xl font-bold ${isLightTheme ? "text-heading" : "text-white"}`}>
                     {reportData.summary.totalTickets}
                   </p>
-                  <p className="text-sm text-neutral-400">Total Tickets</p>
+                  <p className={`text-sm ${isLightTheme ? "text-body" : "text-neutral-400"}`}>Total Tickets</p>
                 </div>
               </div>
             </div>
-            <div className="glass-dark rounded-2xl p-6">
+            <div className={`${isLightTheme ? "glass-card" : "glass-dark"} p-6 rounded-2xl`}>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-emerald-400" />
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isLightTheme ? "bg-emerald-100" : "bg-emerald-500/20"}`}>
+                  <Users className={`w-6 h-6 ${isLightTheme ? "text-emerald-600" : "text-emerald-400"}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">
+                  <p className={`text-2xl font-bold ${isLightTheme ? "text-heading" : "text-white"}`}>
                     {Object.keys(reportData.summary.byDepartment).length}
                   </p>
-                  <p className="text-sm text-neutral-400">Departments</p>
+                  <p className={`text-sm ${isLightTheme ? "text-body" : "text-neutral-400"}`}>Departments</p>
                 </div>
               </div>
             </div>
-            <div className="glass-dark rounded-2xl p-6">
+            <div className={`${isLightTheme ? "glass-card" : "glass-dark"} p-6 rounded-2xl`}>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <Laptop className="w-6 h-6 text-purple-400" />
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isLightTheme ? "bg-purple-100" : "bg-purple-500/20"}`}>
+                  <Laptop className={`w-6 h-6 ${isLightTheme ? "text-purple-600" : "text-purple-400"}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">
+                  <p className={`text-2xl font-bold ${isLightTheme ? "text-heading" : "text-white"}`}>
                     {reportData.summary.byCategory.Hardware || 0}
                   </p>
-                  <p className="text-sm text-neutral-400">Hardware Issues</p>
+                  <p className={`text-sm ${isLightTheme ? "text-body" : "text-neutral-400"}`}>Hardware Issues</p>
                 </div>
               </div>
             </div>
-            <div className="glass-dark rounded-2xl p-6">
+            <div className={`${isLightTheme ? "glass-card" : "glass-dark"} p-6 rounded-2xl`}>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-amber-400" />
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isLightTheme ? "bg-amber-100" : "bg-amber-500/20"}`}>
+                  <Calendar className={`w-6 h-6 ${isLightTheme ? "text-amber-600" : "text-amber-400"}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">
+                  <p className={`text-2xl font-bold ${isLightTheme ? "text-heading" : "text-white"}`}>
                     {reportData.summary.byStatus.New || 0}
                   </p>
-                  <p className="text-sm text-neutral-400">New Tickets</p>
+                  <p className={`text-sm ${isLightTheme ? "text-body" : "text-neutral-400"}`}>New Tickets</p>
                 </div>
               </div>
             </div>
@@ -343,19 +346,19 @@ export function Reports() {
 
           {/* Column Selector Panel */}
           {showColumnSelector && (
-            <div className="glass-dark rounded-2xl p-4 mb-4">
-              <h4 className="text-white font-medium mb-3">Select Columns</h4>
+            <div className={`${isLightTheme ? "glass-card" : "glass-dark"} p-4 mb-4`}>
+              <h4 className={`font-medium mb-3 ${isLightTheme ? "text-heading" : "text-white"}`}>Select Columns</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {AVAILABLE_COLUMNS.map((column) => (
                   <label
                     key={column.id}
-                    className="flex items-center gap-2 text-sm text-neutral-300 cursor-pointer hover:text-white"
+                    className={`flex items-center gap-2 text-sm cursor-pointer ${isLightTheme ? "text-body hover:text-heading" : "text-neutral-300 hover:text-white"}`}
                   >
                     <input
                       type="checkbox"
                       checked={selectedColumns.includes(column.id)}
                       onChange={() => toggleColumn(column.id)}
-                      className="rounded border-white/20 bg-black/40"
+                      className={`rounded ${isLightTheme ? "border-slate-300 bg-white" : "border-white/20 bg-black/40"}`}
                     />
                     <span>{column.label}</span>
                   </label>
@@ -365,11 +368,11 @@ export function Reports() {
           )}
 
           {/* Tickets Table */}
-          <div className="glass-dark rounded-2xl overflow-hidden">
+          <div className={`${isLightTheme ? "glass-card" : "glass-dark"} overflow-hidden`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-white/[0.02] border-b border-white/5 text-neutral-400 text-sm">
+                  <tr className={`border-b text-sm ${isLightTheme ? "table-header bg-slate-50" : "bg-white/[0.02] border-white/5 text-neutral-400"}`}>
                     {selectedColumns.map((colId) => {
                       const col = AVAILABLE_COLUMNS.find((c) => c.id === colId);
                       return (
@@ -382,9 +385,9 @@ export function Reports() {
                 </thead>
                 <tbody>
                   {reportData.tickets.map((ticket) => (
-                    <tr key={ticket.id} className="border-b border-white/5">
+                    <tr key={ticket.id} className={`border-b ${isLightTheme ? "hover:bg-slate-50 border-slate-200" : "border-white/5"}`}>
                       {selectedColumns.map((colId) => (
-                        <td key={colId} className="p-4 text-neutral-300 text-sm">
+                        <td key={colId} className={`p-4 text-sm ${isLightTheme ? "text-body" : "text-neutral-300"}`}>
                           {getColumnValue(ticket, colId)}
                         </td>
                       ))}

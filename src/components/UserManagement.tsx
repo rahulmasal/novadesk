@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTicketStore, Role } from "@/lib/store";
+import { useSettings } from "@/contexts/SettingsContext";
 import { UserPlus, Upload, Trash2, Edit2, X, Check, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface UserData {
@@ -20,7 +21,7 @@ interface UserData {
  */
 export function UserManagement() {
   const { authToken, currentUserRole, currentUser } = useTicketStore();
-  
+
   // State
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +47,7 @@ export function UserManagement() {
 
   const [csvData, setCsvData] = useState("");
   const [importResult, setImportResult] = useState<{ success: boolean; summary: { total: number; imported: number; skipped: number }; errors?: string[] } | null>(null);
-  
+
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
   const [progressTotal, setProgressTotal] = useState(0);
@@ -67,7 +68,7 @@ export function UserManagement() {
     { id: "createdAt", label: "Created" },
   ];
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.department.toLowerCase().includes(searchQuery.toLowerCase())
@@ -83,6 +84,10 @@ export function UserManagement() {
   const canAccess = currentUserRole === "ADMINISTRATOR" || currentUserRole === "AGENT";
   // Only Administrators can create/edit/delete users
   const canModify = currentUserRole === "ADMINISTRATOR";
+
+  // Get theme from settings
+  const { settings } = useSettings();
+  const isLightTheme = settings.appearance.theme === "light";
 
   useEffect(() => {
     if (!canAccess || !authToken) return;
@@ -235,11 +240,11 @@ export function UserManagement() {
 
   const handleBulkDelete = async () => {
     if (!confirm(`Delete ${selectedUsers.size} user(s)? This cannot be undone.`)) return;
-    
+
     setShowProgressModal(true);
     setProgressTotal(selectedUsers.size);
     setProgressStep(0);
-    
+
     try {
       const userIds = Array.from(selectedUsers);
       const deletePromises = userIds.map(async (id) => {
@@ -254,7 +259,7 @@ export function UserManagement() {
         });
         return res.ok;
       });
-      
+
       await Promise.all(deletePromises);
       setUsers(users.filter((u) => !selectedUsers.has(u.id)));
       setSelectedUsers(new Set());
@@ -268,7 +273,7 @@ export function UserManagement() {
   if (!canAccess) {
     return (
       <div className="p-8">
-        <div className="glass-dark p-6 rounded-2xl text-center">
+        <div className={`rounded-2xl p-6 text-center ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"}`}>
           <p className="text-red-400">
             Access denied. Administrator or Agent privileges required.
           </p>
@@ -286,26 +291,32 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
     <div className="w-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div className="flex flex-1 max-w-lg relative">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+          <Search className={`w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 ${isLightTheme ? "text-gray-400" : "text-neutral-500"}`} />
           <input
             type="text"
             placeholder="Search by name, email or department..."
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            className={`w-full rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
+              isLightTheme ? "bg-white border border-gray-300 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border border-white/10 text-white placeholder-neutral-500"
+            }`}
           />
         </div>
         <select
           value={itemsPerPage}
           onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-          className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          className={`rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
+            isLightTheme
+              ? "bg-white border border-gray-300 text-gray-900"
+              : "bg-white/5 border border-white/10 text-white"
+          }`}
         >
           {PAGE_SIZE_OPTIONS.map(size => (
-            <option key={size} value={size} className="bg-neutral-800">
+            <option key={size} value={size} className={isLightTheme ? "bg-white" : "bg-neutral-800"}>
               {size} per page
             </option>
           ))}
-          <option value={users.length || 999999} className="bg-neutral-800">
+          <option value={users.length || 999999} className={isLightTheme ? "bg-white" : "bg-neutral-800"}>
             All ({users.length})
           </option>
         </select>
@@ -313,7 +324,11 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
           <>
             <button
               onClick={() => setShowImportModal(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-xl font-medium transition-colors"
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-colors ${
+                isLightTheme
+                  ? "bg-purple-500/10 hover:bg-purple-500/20 text-purple-700"
+                  : "bg-purple-500/20 hover:bg-purple-500/30 text-purple-400"
+              }`}
             >
               <Upload className="w-5 h-5" />
               Bulk Import
@@ -331,8 +346,8 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
 
       {/* Bulk Actions */}
       {selectedUsers.size > 0 && canModify && (
-        <div className="flex items-center gap-3 mb-4 p-4 glass-dark rounded-xl">
-          <span className="text-sm text-neutral-300">{selectedUsers.size} selected</span>
+        <div className={`flex items-center gap-3 mb-4 p-4 rounded-xl ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"}`}>
+          <span className={`text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-300"}`}>{selectedUsers.size} selected</span>
           <button
             onClick={handleBulkDelete}
             className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
@@ -342,7 +357,7 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
           </button>
           <button
             onClick={() => setSelectedUsers(new Set())}
-            className="px-3 py-1.5 text-xs text-neutral-400 hover:text-white"
+            className={`px-3 py-1.5 text-xs ${isLightTheme ? "text-gray-600 hover:text-gray-900" : "text-neutral-400 hover:text-white"}`}
           >
             Clear
           </button>
@@ -361,19 +376,19 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
 
       {/* Column Selector Panel */}
       {showColumnSelector && (
-        <div className="glass-dark rounded-2xl p-4 mb-4">
-          <h4 className="text-white font-medium mb-3">Select Columns</h4>
+        <div className={`rounded-2xl p-4 mb-4 ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"}`}>
+          <h4 className={`font-medium mb-3 ${isLightTheme ? "text-gray-900" : "text-white"}`}>Select Columns</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {availableColumns.map((column) => (
               <label
                 key={column.id}
-                className="flex items-center gap-2 text-sm text-neutral-300 cursor-pointer hover:text-white"
+                className={`flex items-center gap-2 text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-300"} cursor-pointer ${isLightTheme ? "hover:text-gray-900" : "hover:text-white"}`}
               >
                 <input
                   type="checkbox"
                   checked={selectedColumns.includes(column.id)}
                   onChange={() => toggleColumn(column.id)}
-                  className="rounded border-white/20 bg-black/40"
+                  className={`rounded ${isLightTheme ? "border-gray-300 bg-white" : "border-white/20 bg-black/40"}`}
                 />
                 <span>{column.label}</span>
               </label>
@@ -383,11 +398,11 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
       )}
 
       {/* User List */}
-      <div className="glass-dark rounded-2xl overflow-hidden">
+      <div className={`rounded-2xl overflow-hidden ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-white/[0.02] border-b border-white/5 text-neutral-400 text-sm">
+              <tr className={`border-b text-sm ${isLightTheme ? "border-gray-200 bg-gray-50 text-gray-900" : "border-white/5 bg-white/[0.02] text-neutral-400"}`}>
                 <th className="p-4 font-medium w-12">
                   <input
                     type="checkbox"
@@ -399,7 +414,7 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                         setSelectedUsers(new Set());
                       }
                     }}
-                    className="w-4 h-4 rounded border-white/20 bg-white/5 checked:bg-blue-500 checked:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                    className={`w-4 h-4 rounded ${isLightTheme ? "border-gray-300 bg-white" : "border-white/20 bg-white/5"} checked:bg-blue-500 checked:border-blue-500 focus:ring-1 focus:ring-blue-500/50`}
                   />
                 </th>
                 <th className="p-4 font-medium">User</th>
@@ -414,15 +429,15 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-neutral-500">
+                  <td colSpan={8} className={`p-8 text-center ${isLightTheme ? "text-gray-500" : "text-neutral-500"}`}>
                     Loading...
                   </td>
                 </tr>
               ) : paginatedUsers.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="p-12 text-center">
-                    <p className="text-neutral-500 mb-2">No users found.</p>
-                    <button 
+                    <p className={`mb-2 ${isLightTheme ? "text-gray-500" : "text-neutral-500"}`}>No users found.</p>
+                    <button
                       onClick={() => setSearchQuery("")}
                       className="text-blue-400 hover:underline text-sm"
                     >
@@ -434,7 +449,9 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                 paginatedUsers.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
+                    className={`border-b hover:transition-colors ${
+                      isLightTheme ? "border-gray-100 hover:bg-gray-50" : "border-white/5 hover:bg-white/[0.02]"
+                    }`}
                   >
                     <td className="p-4 w-12">
                       <input
@@ -450,7 +467,7 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                           setSelectedUsers(newSelected);
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-4 h-4 rounded border-white/20 bg-white/5 checked:bg-blue-500 checked:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                        className={`w-4 h-4 rounded ${isLightTheme ? "border-gray-300 bg-white" : "border-white/20 bg-white/5"} checked:bg-blue-500 checked:border-blue-500 focus:ring-1 focus:ring-blue-500/50`}
                       />
                     </td>
                     <td className="p-4">
@@ -469,20 +486,20 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                                   name: e.target.value,
                                 })
                               }
-                              className="bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-sm w-32 mb-1"
+                              className={`rounded px-2 py-1 text-sm w-32 mb-1 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                             />
                           ) : (
-                            <p className="text-white font-medium">
+                            <p className={`font-medium ${isLightTheme ? "text-gray-900" : "text-white"}`}>
                               {user.name}
                             </p>
                           )}
-                          <p className="text-xs text-neutral-500">
+                          <p className={`text-xs ${isLightTheme ? "text-gray-500" : "text-neutral-500"}`}>
                             {user.email}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-neutral-400 text-sm">
+                    <td className={`p-4 text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-400"}`}>
                       {editingUser?.id === user.id ? (
                         <select
                           value={editingUser.role}
@@ -492,7 +509,7 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                               role: e.target.value as Role,
                             })
                           }
-                          className="bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-sm"
+                          className={`rounded px-2 py-1 text-sm ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                         >
                           <option value="ADMINISTRATOR">Administrator</option>
                           <option value="AGENT">Agent</option>
@@ -502,7 +519,7 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                         user.role
                       )}
                     </td>
-                    <td className="p-4 text-neutral-400 text-sm">
+                    <td className={`p-4 text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-400"}`}>
                       {editingUser?.id === user.id ? (
                         <input
                           type="text"
@@ -513,14 +530,14 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                               department: e.target.value,
                             })
                           }
-                          className="bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-sm w-32"
+                          className={`rounded px-2 py-1 text-sm w-32 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                         />
                       ) : (
                         user.department
                       )}
                     </td>
                     {selectedColumns.includes("hostname") && (
-                      <td className="p-4 text-neutral-500 text-sm">
+                      <td className={`p-4 text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-500"}`}>
                         {editingUser?.id === user.id ? (
                           <input
                             type="text"
@@ -531,16 +548,16 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                                 hostname: e.target.value,
                               })
                             }
-                            className="bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-sm w-28"
+                            className={`rounded px-2 py-1 text-sm w-28 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                             placeholder="LAPTOP-001"
                           />
                         ) : (
-                          user.hostname || <span className="text-neutral-700">—</span>
+                          user.hostname || <span className={isLightTheme ? "text-gray-400" : "text-neutral-700"}>—</span>
                         )}
                       </td>
                     )}
                     {selectedColumns.includes("laptopSerial") && (
-                      <td className="p-4 text-neutral-500 text-sm">
+                      <td className={`p-4 text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-500"}`}>
                         {editingUser?.id === user.id ? (
                           <input
                             type="text"
@@ -551,15 +568,15 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                                 laptopSerial: e.target.value,
                               })
                             }
-                            className="bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-sm w-28"
+                            className={`rounded px-2 py-1 text-sm w-28 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                             placeholder="SN12345678"
                           />
                         ) : (
-                          user.laptopSerial || <span className="text-neutral-700">—</span>
+                          user.laptopSerial || <span className={isLightTheme ? "text-gray-400" : "text-neutral-700"}>—</span>
                         )}
                       </td>
                     )}
-                    <td className="p-4 text-neutral-500 text-sm">
+                    <td className={`p-4 text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-500"}`}>
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-4">
@@ -612,25 +629,25 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
           </table>
         </div>
         {!loading && totalPages > 1 && (
-          <div className="p-4 border-t border-white/5 flex items-center justify-between">
-            <p className="text-sm text-neutral-500">
+          <div className={`p-4 border-t flex items-center justify-between ${isLightTheme ? "border-gray-200" : "border-white/5"}`}>
+            <p className={`text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-500"}`}>
               Showing {Math.min(filteredUsers.length, (currentPage - 1) * itemsPerPage + 1)} to {Math.min(filteredUsers.length, currentPage * itemsPerPage)} of {filteredUsers.length} entries
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 rounded hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-1.5 rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="text-sm text-neutral-400">
+              <span className={`text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-400"}`}>
                 Page {currentPage} of {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="p-1.5 rounded hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-1.5 rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -642,9 +659,9 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
       {/* Create/Edit User Modal */}
       {showCreateForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6">
+          <div className={`rounded-2xl w-full max-w-md shadow-2xl p-6 ${isLightTheme ? "bg-white border border-gray-200" : "bg-neutral-900 border border-white/10"}`}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-white">Add New User</h3>
+              <h3 className={`text-xl font-semibold ${isLightTheme ? "text-gray-900" : "text-white"}`}>Add New User</h3>
               <button onClick={() => setShowCreateForm(false)} className="p-1 hover:bg-white/10 rounded">
                 <X className="w-5 h-5" />
               </button>
@@ -652,7 +669,7 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
             <form onSubmit={handleCreateUser}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-neutral-300 mb-1">
+                  <label className={`block text-sm mb-1 ${isLightTheme ? "text-gray-600" : "text-neutral-300"}`}>
                     Email
                   </label>
                   <input
@@ -660,12 +677,12 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                     required
                     value={newUser.email}
                     onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                    className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                     placeholder="user@example.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-neutral-300 mb-1">
+                  <label className={`block text-sm mb-1 ${isLightTheme ? "text-gray-600" : "text-neutral-300"}`}>
                     Password
                   </label>
                   <input
@@ -673,12 +690,12 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                     required
                     value={newUser.password}
                     onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                    className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                     placeholder="Password"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-neutral-300 mb-1">
+                  <label className={`block text-sm mb-1 ${isLightTheme ? "text-gray-600" : "text-neutral-300"}`}>
                     Name
                   </label>
                   <input
@@ -686,18 +703,18 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                     required
                     value={newUser.name}
                     onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                    className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                     placeholder="Full Name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-neutral-300 mb-1">
+                  <label className={`block text-sm mb-1 ${isLightTheme ? "text-gray-600" : "text-neutral-300"}`}>
                     Role
                   </label>
                   <select
                     value={newUser.role}
                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value as Role })}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                    className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                   >
                     <option value="END_USER">End User</option>
                     <option value="AGENT">Agent</option>
@@ -705,14 +722,14 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-neutral-300 mb-1">
+                  <label className={`block text-sm mb-1 ${isLightTheme ? "text-gray-600" : "text-neutral-300"}`}>
                     Department
                   </label>
                   <input
                     type="text"
                     value={newUser.department}
                     onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                    className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                     placeholder="Department"
                   />
                 </div>
@@ -740,29 +757,29 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
       {/* Import Modal */}
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl p-6">
+          <div className={`rounded-2xl w-full max-w-2xl shadow-2xl p-6 ${isLightTheme ? "bg-white border border-gray-200" : "bg-neutral-900 border border-white/10"}`}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-white">Bulk Import Users</h3>
+              <h3 className={`text-xl font-semibold ${isLightTheme ? "text-gray-900" : "text-white"}`}>Bulk Import Users</h3>
               <button onClick={() => setShowImportModal(false)} className="p-1 hover:bg-white/10 rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-neutral-300 mb-2">
+                <label className={`block text-sm mb-2 ${isLightTheme ? "text-gray-600" : "text-neutral-300"}`}>
                   CSV Format (email,password,name,role,department,hostname,laptopSerial)
                 </label>
                 <textarea
                   value={csvData}
                   onChange={(e) => setCsvData(e.target.value)}
-                  className="w-full h-48 bg-black/40 border border-white/10 rounded-lg p-4 font-mono text-sm text-white"
+                  className={`w-full h-48 rounded-lg p-4 font-mono text-sm ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                   placeholder={`email,password,name,role,department,hostname,laptopSerial
 john.doe@company.com,pass123,John Doe,Agent,IT Support,LAPTOP-001,SN12345678`}
                 />
               </div>
               {importResult && (
-                <div className="p-4 bg-white/5 rounded-lg">
-                  <p className="text-sm text-neutral-300">
+                <div className={`p-4 rounded-lg ${isLightTheme ? "bg-white/50" : "bg-white/5"}`}>
+                  <p className={`text-sm ${isLightTheme ? "text-gray-700" : "text-neutral-300"}`}>
                     Imported: {importResult.summary.imported} | Skipped: {importResult.summary.skipped}
                   </p>
                   {importResult.errors && importResult.errors.length > 0 && (
@@ -802,15 +819,15 @@ john.doe@company.com,pass123,John Doe,Agent,IT Support,LAPTOP-001,SN12345678`}
       {/* Progress Modal */}
       {showProgressModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6">
+          <div className={`rounded-2xl w-full max-w-md shadow-2xl p-6 ${isLightTheme ? "bg-white border border-gray-200" : "bg-neutral-900 border border-white/10"}`}>
             <div className="text-center">
               <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-white mb-2">Deleting Users</h3>
-              <p className="text-neutral-400 mb-4">
+              <h3 className={`text-lg font-semibold mb-2 ${isLightTheme ? "text-gray-900" : "text-white"}`}>Deleting Users</h3>
+              <p className={`text-sm mb-4 ${isLightTheme ? "text-gray-500" : "text-neutral-400"}`}>
                 Processing {progressStep} of {progressTotal}
               </p>
-              <div className="w-full bg-white/10 rounded-full h-2">
-                <div 
+              <div className={`w-full rounded-full h-2 ${isLightTheme ? "bg-gray-200" : "bg-white/10"}`}>
+                <div
                   className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${(progressStep / progressTotal) * 100}%` }}
                 ></div>

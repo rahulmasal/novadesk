@@ -2,13 +2,45 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #171717;
+    --background: #f8fafc;
+    --foreground: #1e293b;
+    --card-bg: #ffffff;
+    --card-border: #e2e8f0;
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #e2e8f0;
+    --input-bg: #ffffff;
+    --input-border: #cbd5e1;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --accent-blue: #3b82f6;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-purple: #8b5cf6;
+    --accent-red: #ef4444;
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.1);
   }
 
   html.dark {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+    --card-bg: rgba(30, 41, 59, 0.8);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --sidebar-bg: rgba(15, 23, 42, 0.95);
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --input-bg: rgba(0, 0, 0, 0.4);
+    --input-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #3b82f6;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-purple: #8b5cf6;
+    --accent-red: #ef4444;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
   }
 
   body {
@@ -19,36 +51,98 @@
   }
 
   html.dark body {
-    background: #0a0a0a;
-    color: #ededed;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    color: #f1f5f9;
   }
 
-  html.light body, body:not(.dark) {
-    background: #ffffff;
-    color: #171717;
+  html.light body {
+    background: #f8fafc !important;
+    color: #1e293b;
   }
+}
+
+html.light body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+html.dark body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+html.light {
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
 @theme {
   --color-white-5: rgba(255, 255, 255, 0.05);
   --color-white-10: rgba(255, 255, 255, 0.1);
+  --color-white-15: rgba(255, 255, 255, 0.15);
+  --color-white-20: rgba(255, 255, 255, 0.2);
+  --color-white-80: rgba(255, 255, 255, 0.8);
+  --color-white-85: rgba(255, 255, 255, 0.85);
+  --color-black-5: rgba(0, 0, 0, 0.05);
+  --color-black-10: rgba(0, 0, 0, 0.1);
+  --color-black-15: rgba(0, 0, 0, 0.15);
+  --color-black-20: rgba(0, 0, 0, 0.2);
   --color-black-40: rgba(0, 0, 0, 0.4);
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
 }
 
 @utility glass {
-  background-color: var(--color-white-5);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--color-white-10);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
 }
 
 @utility glass-dark {
-  background-color: var(--color-black-40);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--color-white-5);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+@utility glass-light {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+@utility glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
 }
 
 @utility glow-urgent {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
   border-color: rgba(239, 68, 68, 0.5);
 }
 
@@ -56,4 +150,115 @@
   --tw-space-y-reverse: 0;
   margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+}
+
+html.light .glass {
+  background-color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .glass-dark {
+  background-color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+html.light .btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+html.light .btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+html.light .nav-item {
+  color: #475569;
+}
+
+html.light .nav-item:hover {
+  background: rgba(59, 130, 246, 0.08);
+  color: #1e293b;
+}
+
+html.light .nav-item.active {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+html.light .input-field {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+}
+
+html.light .input-field:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+html.light .table-header {
+  background: #f8fafc;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+html.light .table-row:hover {
+  background: #f8fafc;
+}
+
+html.light .card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+html.light .stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+html.light .badge {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+html.light .badge-blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+html.light .badge-emerald {
+  background: #d1fae5;
+  color: #047857;
+}
+
+html.light .badge-amber {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+html.light .badge-red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+html.light .badge-purple {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+html.light .text-heading {
+  color: #1e293b;
+}
+
+html.light .text-body {
+  color: #475569;
+}
+
+html.light .text-muted {
+  color: #94a3b8;
 }

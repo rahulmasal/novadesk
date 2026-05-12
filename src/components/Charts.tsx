@@ -1,6 +1,7 @@
 "use client";
 
 import { useTicketStore } from "@/lib/store";
+import { useSettings } from "@/contexts/SettingsContext";
 import { format, parseISO } from "date-fns";
 import {
   LineChart,
@@ -20,6 +21,8 @@ import {
  */
 export function Charts() {
   const tickets = useTicketStore((state) => state.tickets);
+  const { settings } = useSettings();
+  const isLightTheme = settings.appearance.theme === "light";
 
   // Group tickets by creation date for line chart
   const volumeData = tickets
@@ -53,34 +56,35 @@ export function Charts() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-      <div className="lg:col-span-2 p-5 rounded-2xl glass-dark flex flex-col min-w-0">
-        <h3 className="text-lg font-semibold text-white mb-4">Ticket Volume</h3>
+      <div className={`lg:col-span-2 p-5 rounded-2xl ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"} flex flex-col min-w-0`}>
+        <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-gray-900" : "text-white"}`}>Ticket Volume</h3>
         <div className="flex-1 min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={volumeData}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#333"
+                stroke={isLightTheme ? "#ccc" : "#333"}
                 vertical={false}
               />
               <XAxis
                 dataKey="date"
-                stroke="#888"
+                stroke={isLightTheme ? "#6b7280" : "#888"}
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="#888"
+                stroke={isLightTheme ? "#6b7280" : "#888"}
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#171717",
-                  border: "1px solid #333",
+                  backgroundColor: isLightTheme ? "#ffffff" : "#171717",
+                  border: isLightTheme ? "1px solid #e5e7eb" : "1px solid #333",
                   borderRadius: "8px",
+                  color: isLightTheme ? "#171717" : "#ffffff",
                 }}
               />
               <Line
@@ -92,7 +96,7 @@ export function Charts() {
                   r: 4,
                   fill: "#3b82f6",
                   strokeWidth: 2,
-                  stroke: "#171717",
+                  stroke: isLightTheme ? "#ffffff" : "#171717",
                 }}
                 activeDot={{ r: 6 }}
               />
@@ -101,8 +105,8 @@ export function Charts() {
         </div>
       </div>
 
-      <div className="p-5 rounded-2xl glass-dark flex flex-col min-w-0">
-        <h3 className="text-lg font-semibold text-white mb-4">
+      <div className={`p-5 rounded-2xl ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"} flex flex-col min-w-0`}>
+        <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-gray-900" : "text-white"}`}>
           Category Distribution
         </h3>
         <div className="flex-1 min-h-[250px] flex items-center justify-center relative min-w-0">
@@ -127,18 +131,19 @@ export function Charts() {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#171717",
-                  border: "none",
+                  backgroundColor: isLightTheme ? "#ffffff" : "#171717",
+                  border: isLightTheme ? "1px solid #e5e7eb" : "none",
                   borderRadius: "8px",
+                  color: isLightTheme ? "#171717" : "#ffffff",
                 }}
               />
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-            <span className="text-3xl font-bold text-white">
+            <span className={`text-3xl font-bold ${isLightTheme ? "text-gray-900" : "text-white"}`}>
               {tickets.length}
             </span>
-            <span className="text-xs text-neutral-400">Total</span>
+            <span className={`text-xs ${isLightTheme ? "text-gray-500" : "text-neutral-400"}`}>Total</span>
           </div>
         </div>
       </div>

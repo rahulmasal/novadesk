@@ -1,6 +1,3 @@
-// NovaDesk Prisma Schema
-// PostgreSQL database schema for Supabase integration
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,68 +7,182 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User model - represents system users
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  password    String
-  name        String
-  role        Role     @default(END_USER)
-  department  String   @default("General")
-  hostname    String?
-  laptopSerial String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  tickets         Ticket[]
-  comments       Comment[]
-  auditLogs      AuditLog[]
+  id              String           @id @default(cuid())
+  email           String           @unique
+  password        String
+  name            String
+  role            Role             @default(END_USER)
+  department      String           @default("General")
+  hostname        String?
+  laptopSerial    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  auditLogs       AuditLog[]
+  comments        Comment[]
   dashboardLayout DashboardLayout?
-  sessions       Session[]
+  sessions        Session[]
+  tickets         Ticket[]
 
   @@map("users")
+}
+
+model Ticket {
+  id            String         @id @default(cuid())
+  title         String
+  description   String
+  priority      Priority       @default(MEDIUM)
+  category      Category       @default(SOFTWARE)
+  status        Status         @default(NEW)
+  dueDate       DateTime
+  createdById   String
+  assignedTo    String?
+  username      String
+  hostname      String?
+  laptopSerial  String?
+  department    String         @default("General")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  attachments   Attachment[]
+  auditLogs     AuditLog[]
+  comments      Comment[]
+  slaEscalation SlaEscalation?
+  createdBy     User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([priority])
+  @@index([createdById])
+  @@map("tickets")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  ticketId  String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("comments")
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  filename   String
+  url        String
+  mimeType   String
+  size       Int
+  ticketId   String
+  uploadedBy String
+  createdAt  DateTime @default(now())
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("attachments")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  ticketId  String?
+  userId    String
+  action    String
+  oldValue  String?
+  newValue  String?
+  details   String?
+  createdAt DateTime @default(now())
+  ticket    Ticket?  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model KnowledgeBaseArticle {
+  id             String   @id @default(cuid())
+  title          String
+  content        String
+  category       String
+  tags           String[]
+  relatedTickets String[]
+  viewCount      Int      @default(0)
+  isPublished    Boolean  @default(false)
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([category])
+  @@index([isPublished])
+  @@map("knowledge_base_articles")
+}
+
+model SlaEscalation {
+  id          String    @id @default(cuid())
+  ticketId    String    @unique
+  breachLevel String    @default("NONE")
+  escalatedAt DateTime?
+  notifiedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("sla_escalations")
+}
+
+model DashboardLayout {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  layout    Json
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("dashboard_layouts")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  subject   String
+  body      String
+  sentAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_config")
 }
 
 enum Role {
   ADMINISTRATOR
   AGENT
   END_USER
-}
-
-// Ticket model - represents IT support tickets
-model Ticket {
-  id          String      @id @default(cuid())
-  title       String
-  description String
-  priority    Priority    @default(MEDIUM)
-  category    Category    @default(SOFTWARE)
-  status      Status      @default(NEW)
-  dueDate     DateTime
-
-  // User info
-  createdById String
-  createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  assignedTo  String?
-  username    String
-  hostname    String?
-  laptopSerial String?
-  department  String      @default("General")
-
-  // Timestamps
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  // Relations
-  comments    Comment[]
-  attachments Attachment[]
-  auditLogs   AuditLog[]
-  slaEscalation SlaEscalation?
-
-  @@index([status])
-  @@index([priority])
-  @@index([createdById])
-  @@map("tickets")
 }
 
 enum Priority {
@@ -96,130 +207,6 @@ enum Status {
   CLOSED
 }
 
-// Comment model - ticket comments/threading
-model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([ticketId])
-  @@map("comments")
-}
-
-// Attachment model - file attachments for tickets
-model Attachment {
-  id        String   @id @default(cuid())
-  filename  String
-  url       String
-  mimeType  String
-  size      Int
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  uploadedBy String
-  createdAt DateTime @default(now())
-
-  @@index([ticketId])
-  @@map("attachments")
-}
-
-// AuditLog model - tracks all ticket changes (ticketId is optional for system-level events)
-model AuditLog {
-  id         String   @id @default(cuid())
-  ticketId   String?
-  ticket     Ticket?  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  action     String
-  oldValue   String?
-  newValue   String?
-  details    String?
-  createdAt  DateTime @default(now())
-
-  @@index([ticketId])
-  @@index([userId])
-  @@index([createdAt])
-  @@map("audit_logs")
-}
-
-// KnowledgeBaseArticle model - knowledge base for self-service
-model KnowledgeBaseArticle {
-  id          String   @id @default(cuid())
-  title       String
-  content     String
-  category    String
-  tags        String[]
-  relatedTickets String[]
-  viewCount   Int      @default(0)
-  isPublished Boolean  @default(false)
-  createdBy   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([category])
-  @@index([isPublished])
-  @@map("knowledge_base_articles")
-}
-
-// SlaEscalation model - SLA breach tracking
-model SlaEscalation {
-  id          String   @id @default(cuid())
-  ticketId    String   @unique
-  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  breachLevel String   @default("NONE") // NONE, WARNING, BREACHED
-  escalatedAt DateTime?
-  notifiedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("sla_escalations")
-}
-
-// DashboardLayout model - user dashboard customization
-model DashboardLayout {
-  id       String @id @default(cuid())
-  userId   String @unique
-  user     User   @relation(fields: [userId], references: [id])
-  layout   Json   // Widget positions and visibility
-  updatedAt DateTime @updatedAt
-
-  @@map("dashboard_layouts")
-}
-
-// Session model - authentication sessions
-model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([token])
-  @@index([userId])
-  @@map("sessions")
-}
-
-// Notification model - email/notification queue
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  type      NotificationType
-  subject   String
-  body      String
-  sentAt    DateTime?
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@map("notifications")
-}
-
 enum NotificationType {
   TICKET_CREATED
   TICKET_UPDATED
@@ -227,15 +214,4 @@ enum NotificationType {
   SLA_WARNING
   SLA_BREACH
   COMMENT_ADDED
-}
-
-// SystemConfig model - stores system configuration and setup state
-model SystemConfig {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("system_config")
 }

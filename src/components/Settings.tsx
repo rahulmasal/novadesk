@@ -42,6 +42,7 @@ export function Settings() {
   const { currentUser, currentUserRole, authToken } = useTicketStore();
 
   const isAdmin = currentUserRole === "ADMINISTRATOR";
+  const isLightTheme = settings.appearance.theme === "light";
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -129,58 +130,58 @@ export function Settings() {
     }
   };
 
-  return (
-    <div className="p-8 pl-6 pr-6 max-w-5xl">
+return (
+    <div className="p-8 pl-6 pr-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-white tracking-tight">
+        <h2 className={`text-3xl font-bold tracking-tight ${isLightTheme ? "text-slate-800" : "text-white"}`}>
           Settings
         </h2>
       </div>
 
       <div className="space-y-6">
         {/* Profile Settings - Available to all users */}
-        <div className="glass-dark rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <User className="w-5 h-5 text-blue-400" />
+        <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-slate-800" : "text-white"}`}>
+            <User className={`w-5 h-5 ${isLightTheme ? "text-blue-600" : "text-blue-400"}`} />
             My Profile
           </h3>
           <form onSubmit={handleProfileUpdate} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">Hostname</label>
+                <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Hostname</label>
                 <input
                   type="text"
                   value={profileForm.hostname}
                   onChange={(e) => setProfileForm({ ...profileForm, hostname: e.target.value })}
                   placeholder="LAPTOP-001"
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white"
+                  className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" : "bg-black/40 border border-white/10 text-white"}`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">Laptop Serial</label>
+                <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Laptop Serial</label>
                 <input
                   type="text"
                   value={profileForm.laptopSerial}
                   onChange={(e) => setProfileForm({ ...profileForm, laptopSerial: e.target.value })}
                   placeholder="SN12345678"
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white"
+                  className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" : "bg-black/40 border border-white/10 text-white"}`}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm text-neutral-400 mb-2">Department</label>
+              <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Department</label>
               <input
                 type="text"
                 value={profileForm.department}
                 onChange={(e) => setProfileForm({ ...profileForm, department: e.target.value })}
                 placeholder="Department"
-                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white"
+                className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" : "bg-black/40 border border-white/10 text-white"}`}
               />
             </div>
             <button
               type="submit"
               disabled={isUpdatingProfile}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${isLightTheme ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
             >
               {isUpdatingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Save Changes
@@ -189,49 +190,49 @@ export function Settings() {
         </div>
 
         {/* Password Change - Available to all users */}
-        <div className="glass-dark rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Key className="w-5 h-5 text-amber-400" />
+        <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-slate-800" : "text-white"}`}>
+            <Key className={`w-5 h-5 ${isLightTheme ? "text-amber-600" : "text-amber-400"}`} />
             Change Password
           </h3>
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div>
-              <label className="block text-sm text-neutral-400 mb-2">Current Password</label>
+              <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Current Password</label>
               <input
                 type="password"
                 value={passwordForm.currentPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white"
+                className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" : "bg-black/40 border border-white/10 text-white"}`}
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">New Password</label>
+                <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>New Password</label>
                 <input
                   type="password"
                   value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white"
+                  className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" : "bg-black/40 border border-white/10 text-white"}`}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">Confirm New Password</label>
+                <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordForm.confirmPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white"
+                  className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" : "bg-black/40 border border-white/10 text-white"}`}
                   required
                 />
               </div>
             </div>
-            <p className="text-xs text-neutral-500">Password must be at least 8 characters with uppercase, lowercase, and number.</p>
+            <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Password must be at least 8 characters with uppercase, lowercase, and number.</p>
             <button
               type="submit"
               disabled={isChangingPassword}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${isLightTheme ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
             >
               {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Update Password
@@ -240,16 +241,16 @@ export function Settings() {
         </div>
 
         {/* Notifications - Available to all users */}
-        <div className="glass-dark rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Bell className="w-5 h-5 text-blue-400" />
+        <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-slate-800" : "text-white"}`}>
+            <Bell className={`w-5 h-5 ${isLightTheme ? "text-blue-600" : "text-blue-400"}`} />
             Notifications
           </h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white">Email Notifications</p>
-                <p className="text-xs text-neutral-500">Receive updates via email</p>
+                <p className={isLightTheme ? "text-slate-700" : "text-white"}>Email Notifications</p>
+                <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Receive updates via email</p>
               </div>
               <label className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 <input
@@ -267,8 +268,8 @@ export function Settings() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white">Push Notifications</p>
-                <p className="text-xs text-neutral-500">Browser push notifications</p>
+                <p className={isLightTheme ? "text-slate-700" : "text-white"}>Push Notifications</p>
+                <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Browser push notifications</p>
               </div>
               <label className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 <input
@@ -286,8 +287,8 @@ export function Settings() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white">Ticket Assignment Alerts</p>
-                <p className="text-xs text-neutral-500">Notify when assigned to tickets</p>
+                <p className={isLightTheme ? "text-slate-700" : "text-white"}>Ticket Assignment Alerts</p>
+                <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Notify when assigned to tickets</p>
               </div>
               <label className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 <input
@@ -307,14 +308,14 @@ export function Settings() {
         </div>
 
         {/* Appearance - Available to all users */}
-        <div className="glass-dark rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Sun className="w-5 h-5 text-amber-400" />
+        <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-slate-800" : "text-white"}`}>
+            <Sun className={`w-5 h-5 ${isLightTheme ? "text-amber-600" : "text-amber-400"}`} />
             Appearance
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-neutral-400 mb-2">Theme</label>
+              <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Theme</label>
               <div className="flex gap-2">
                 {(["dark", "light", "system"] as const).map((theme) => (
                   <button
@@ -323,7 +324,9 @@ export function Settings() {
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                       settings.appearance.theme === theme
                         ? "bg-blue-500 text-white"
-                        : "bg-black/40 text-neutral-400 hover:bg-black/60"
+                        : isLightTheme
+                          ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300"
+                          : "bg-black/40 text-neutral-400 hover:bg-black/60"
                     }`}
                   >
                     {theme.charAt(0).toUpperCase() + theme.slice(1)}
@@ -333,8 +336,8 @@ export function Settings() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white">Compact View</p>
-                <p className="text-xs text-neutral-500">Reduced spacing in tables</p>
+                <p className={isLightTheme ? "text-slate-700" : "text-white"}>Compact View</p>
+                <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Reduced spacing in tables</p>
               </div>
               <label className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 <input
@@ -354,19 +357,19 @@ export function Settings() {
         </div>
 
         {/* Timezone & Language - Available to all users */}
-        <div className="glass-dark rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-purple-400" />
+        <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-slate-800" : "text-white"}`}>
+            <Shield className={`w-5 h-5 ${isLightTheme ? "text-purple-600" : "text-purple-400"}`} />
             Regional Settings
           </h3>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">Timezone</label>
+                <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Timezone</label>
                 <select
                   value={settings.advanced.timezone}
                   onChange={(e) => updateSettings("advanced", "timezone", e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white"
+                  className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
                 >
                   {TIMEZONES.map((tz) => (
                     <option key={tz} value={tz}>{tz}</option>
@@ -374,11 +377,11 @@ export function Settings() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">Language</label>
+                <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Language</label>
                 <select
                   value={settings.advanced.language}
                   onChange={(e) => updateSettings("advanced", "language", e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white"
+                  className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>{lang.name}</option>
@@ -391,18 +394,18 @@ export function Settings() {
 
         {/* Backup Settings (Admin only) */}
         {isAdmin && (
-          <div className="glass-dark rounded-2xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Database className="w-5 h-5 text-emerald-400" />
+          <div className="glass-card">
+            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-heading" : "text-white"}`}>
+              <Database className={`w-5 h-5 ${isLightTheme ? "text-emerald-600" : "text-emerald-400"}`} />
               Backup Configuration
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">Backup Schedule</label>
+                <label className={`block text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-400"} mb-2`}>Backup Schedule</label>
                 <select
                   value={settings.backup.schedule}
                   onChange={(e) => updateSettings("backup", "schedule", e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                  className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -410,14 +413,14 @@ export function Settings() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">
+                <label className={`block text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-400"} mb-2`}>
                   Retention Period (days)
                 </label>
                 <input
                   type="number"
                   value={settings.backup.retentionDays}
                   onChange={(e) => updateSettings("backup", "retentionDays", parseInt(e.target.value))}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                  className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                   min="1"
                   max="365"
                 />
@@ -428,30 +431,30 @@ export function Settings() {
 
         {/* SLA Configuration (Admin only) */}
         {isAdmin && (
-          <div className="glass-dark rounded-2xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-purple-400" />
+          <div className="glass-card">
+            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-heading" : "text-white"}`}>
+              <Shield className={`w-5 h-5 ${isLightTheme ? "text-purple-600" : "text-purple-400"}`} />
               SLA Configuration
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">SLA Response (hours)</label>
+                <label className={`block text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-400"} mb-2`}>SLA Response (hours)</label>
                 <input
                   type="number"
                   value={settings.advanced.slaResponseHours}
                   onChange={(e) => updateSettings("advanced", "slaResponseHours", parseInt(e.target.value))}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                  className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                   min="1"
                   max="72"
                 />
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-2">SLA Resolution (hours)</label>
+                <label className={`block text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-400"} mb-2`}>SLA Resolution (hours)</label>
                 <input
                   type="number"
                   value={settings.advanced.slaResolutionHours}
                   onChange={(e) => updateSettings("advanced", "slaResolutionHours", parseInt(e.target.value))}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-white"
+                  className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
                   min="1"
                   max="168"
                 />
@@ -461,17 +464,17 @@ export function Settings() {
         )}
 
         {/* Account Info */}
-        <div className="glass-dark rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Account Information</h3>
+        <div className="glass-card">
+          <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-heading" : "text-white"}`}>Account Information</h3>
           <div className="space-y-2">
-            <p className="text-neutral-400">
-              Name: <span className="text-white font-medium">{currentUser?.name}</span>
+            <p className={isLightTheme ? "text-gray-600" : "text-neutral-400"}>
+              Name: <span className={`font-medium ${isLightTheme ? "text-gray-900" : "text-white"}`}>{currentUser?.name}</span>
             </p>
-            <p className="text-neutral-400">
-              Email: <span className="text-white font-medium">{currentUser?.email}</span>
+            <p className={isLightTheme ? "text-gray-600" : "text-neutral-400"}>
+              Email: <span className={`font-medium ${isLightTheme ? "text-gray-900" : "text-white"}`}>{currentUser?.email}</span>
             </p>
-            <p className="text-neutral-400">
-              Role: <span className="text-blue-400 font-medium">{currentUserRole}</span>
+            <p className={isLightTheme ? "text-gray-600" : "text-neutral-400"}>
+              Role: <span className={`font-medium ${isLightTheme ? "text-blue-600" : "text-blue-400"}`}>{currentUserRole}</span>
             </p>
           </div>
         </div>

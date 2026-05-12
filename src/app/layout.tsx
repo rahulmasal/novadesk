@@ -3,20 +3,19 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { Toaster } from "react-hot-toast";
+import { ThemeLoader } from "@/components/ThemeLoader";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "NovaDesk IT Ticket Management",
-  description: "Modern IT Support Ticket Dashboard with real-time updates, SLA tracking, and knowledge base",
+  description: "Modern IT Support Ticket Dashboard",
   manifest: "/manifest.json",
   applicationName: "NovaDesk",
-  keywords: ["IT", "helpdesk", "tickets", "support", "service desk"],
-  authors: [{ name: "NovaDesk Team" }],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#0f172a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -25,15 +24,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} antialiased transition-colors duration-200`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
         <Toaster position="top-right" />
         <SettingsProvider>
-          {children}
+          <ThemeLoader>{children}</ThemeLoader>
         </SettingsProvider>
         <ServiceWorkerRegistration />
       </body>
