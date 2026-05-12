@@ -56,10 +56,10 @@ export function Charts() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-      <div className={`lg:col-span-2 p-5 rounded-2xl ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"} flex flex-col min-w-0`}>
+      <div className={`lg:col-span-2 p-5 rounded-2xl ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"} flex flex-col h-[300px] min-w-0`}>
         <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-gray-900" : "text-white"}`}>Ticket Volume</h3>
-        <div className="flex-1 min-h-[250px] min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="flex-1 w-full">
+          <ResponsiveContainer width="100%" height={250}>
             <LineChart data={volumeData}>
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -100,17 +100,17 @@ export function Charts() {
                 }}
                 activeDot={{ r: 6 }}
               />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+</LineChart>
+           </ResponsiveContainer>
+         </div>
+       </div>
 
-      <div className={`p-5 rounded-2xl ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"} flex flex-col min-w-0`}>
+      <div className={`p-5 rounded-2xl ${isLightTheme ? "bg-white/70 border border-gray-200" : "glass-dark"} flex flex-col h-[300px] min-w-0`}>
         <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-gray-900" : "text-white"}`}>
           Category Distribution
         </h3>
-        <div className="flex-1 min-h-[250px] flex items-center justify-center relative min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="flex-1 w-full flex items-center justify-center">
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={categoryData}
