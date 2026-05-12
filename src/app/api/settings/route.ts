@@ -1,24 +1,69 @@
+/**
+ * ============================================================================
+ * SETTINGS API ROUTE - Save and Retrieve Application Settings
+ * ============================================================================
+ *
+ * This API route handles persisting user preferences like theme, notifications,
+ * and backup configuration to the database instead of localStorage.
+ *
+ * WHAT IT DOES:
+ * - GET: Retrieves settings from systemConfig table in database
+ * - POST: Saves settings to systemConfig table using upsert (create or update)
+ *
+ * SETTINGS STRUCTURE:
+ * {
+ *   notifications: { email: boolean, push: boolean, ticketAssignment: boolean },
+ *   appearance: { theme: "dark" | "light" | "system", compactView: boolean },
+ *   backup: { schedule: "daily" | "weekly" | "monthly", retentionDays: number },
+ *   advanced: { timezone: string, language: string, slaResponseHours: number, slaResolutionHours: number }
+ * }
+ *
+ * BEGINNER NOTES:
+ * - systemConfig is a simple key-value table for storing app settings
+ * - upsert() is like "insert or update" - creates if not exists, updates if exists
+ * - Settings are stored as JSON string in the database
+ *
+ * @module /api/settings
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Force dynamic rendering - no static generation for this API
 export const dynamic = 'force-dynamic';
 
-// Save settings to DB
+/**
+ * POST /api/settings - Save settings to database
+ *
+ * @param request - JSON body with { settings: { ... } }
+ * @returns Success message
+ *
+ * @example
+ * // Request body:
+ * {
+ *   "settings": {
+ *     "appearance": { "theme": "dark", "compactView": false },
+ *     "notifications": { "email": true, "push": true }
+ *   }
+ * }
+ */
 export async function POST(request: NextRequest) {
   try {
     const { settings } = await request.json();
-    
-    // Save user settings to system_config
+
+    // Serialize settings object to JSON string for storage
     const settingsJson = JSON.stringify(settings);
-    
+
+    // Use upsert to either create new or update existing settings
+    // This ensures we don't lose settings on first save
     await prisma.systemConfig.upsert({
       where: { key: "user-settings" },
       update: { value: settingsJson },
       create: { key: "user-settings", value: settingsJson },
     });
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to save settings:", error);
@@ -26,17 +71,32 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Get settings from DB
+/**
+ * GET /api/settings - Retrieve settings from database
+ *
+ * @returns Settings object or null if not found
+ *
+ * @example
+ * // Response:
+ * {
+ *   "settings": {
+ *     "appearance": { "theme": "dark", "compactView": false },
+ *     "notifications": { "email": true, "push": true }
+ *   }
+ * }
+ */
 export async function GET() {
   try {
+    // Look up settings by unique key
     const config = await prisma.systemConfig.findUnique({
       where: { key: "user-settings" },
     });
-    
+
+    // If settings exist, parse JSON and return; otherwise return null
     if (config) {
       return NextResponse.json({ settings: JSON.parse(config.value) });
     }
-    
+
     return NextResponse.json({ settings: null });
   } catch (error) {
     console.error("Failed to get settings:", error);

@@ -1,3 +1,39 @@
+/**
+ * ============================================================================
+ * AUTH LOGIN API - User Authentication Endpoint
+ * ============================================================================
+ *
+ * This API route handles user login for both local and LDAP authentication.
+ * It validates credentials, creates a session, and returns user info + token.
+ *
+ * WHAT IT DOES:
+ * 1. Validates request body using Zod schema
+ * 2. Checks if LDAP auth is enabled and attempts LDAP login first
+ * 3. Falls back to local database authentication
+ * 4. Creates a session token valid for 24 hours
+ * 5. Logs the login event for audit trail
+ *
+ * REQUEST FORMAT:
+ * {
+ *   "email": "user@company.com",
+ *   "password": "securePassword",
+ *   "provider": "local" | "ldap"  (optional, defaults to local)
+ * }
+ *
+ * RESPONSE FORMAT (success):
+ * {
+ *   "user": { id, email, name, role, department, ... },
+ *   "token": "uuid-session-token"
+ * }
+ *
+ * BEGINNER NOTES:
+ * - bcrypt is used for password hashing (one-way encryption)
+ * - Sessions are stored in the database, not JWT tokens
+ * - The token is passed in Authorization header for subsequent API calls
+ *
+ * @module /api/auth/login
+ */
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
@@ -7,13 +43,25 @@ import { loginSchema } from "@/lib/schemas";
 import { logAuditEvent } from "@/lib/audit";
 import { authenticateWithLdap } from "@/lib/ldap-auth";
 
+/**
+ * Session expiry time in milliseconds = 24 hours
+ * This determines how long a user stays logged in
+ */
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * POST /api/auth/login - Authenticate user and create session
+ *
+ * @param req - Next.js request with JSON body containing email, password, provider
+ * @returns User object and session token on success
+ */
 export async function POST(req: NextRequest) {
   try {
+    // Step 1: Parse and validate request body using Zod schema
     const body = await req.json();
     const validationResult = loginSchema.safeParse(body);
 
+    // Return validation errors if any
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0]?.message || "Validation failed";
       return NextResponse.json({ error: firstError }, { status: 400 });
@@ -23,14 +71,21 @@ export async function POST(req: NextRequest) {
 
     console.log(`[AUTH POST] Login attempt`, { email, provider });
 
+    // Step 2: Check if LDAP authentication should be used
+    // LDAP is used if explicitly requested OR if LDAP_ENABLED env var is set
     const useLdap = provider === "ldap" || process.env.LDAP_ENABLED === "true";
 
+    // Step 3: Try LDAP authentication first if enabled
     if (useLdap) {
+      // Extract username from email (e.g., "john@company.com" -> "john")
       const ldapUsername = email.split("@")[0];
       const ldapResult = await authenticateWithLdap(ldapUsername, password);
 
+      // If LDAP login successful, return user with session token
       if (ldapResult.success && ldapResult.user) {
         console.log(`[AUTH POST] LDAP login successful`, { email: ldapUsername });
+
+        // Log the successful LDAP login for audit trail
         await logAuditEvent({
           userId: (ldapResult.user as { id: string }).id,
           action: "LOGIN",
@@ -44,26 +99,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Step 4: Fall back to local database authentication
+    // Look up user by email (stored lowercase for consistency)
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
+    // If no user found or wrong password, return generic error (security best practice)
     if (!user) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
+    // Check if this account uses LDAP (stored as special marker)
+    // If so, they must use LDAP to log in, not local password
     if (user.password === "LDAP_AUTH") {
       return NextResponse.json({ error: "This account uses LDAP authentication" }, { status: 401 });
     }
 
+    // Step 5: Verify password using bcrypt
+    // bcrypt.compare() hashes the input and compares to stored hash
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    const sessionToken = uuidv4();
-    const expiresAt = new Date(Date.now() + SESSION_EXPIRY_MS);
+    // Step 6: Create session token and store in database
+    const sessionToken = uuidv4(); // Generate unique token
+    const expiresAt = new Date(Date.now() + SESSION_EXPIRY_MS); // Set expiry 24h from now
 
     await prisma.session.create({
       data: {
@@ -73,22 +136,27 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Step 7: Remove password from user object before sending to frontend
+    // This is a security measure - never send password hash to client
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _pw, ...safeUser } = user;
 
     console.log(`[AUTH POST] Login successful`, { userId: user.id, email: user.email });
 
+    // Step 8: Log the login event for audit trail
     await logAuditEvent({
       userId: user.id,
       action: "LOGIN",
       details: `User ${user.email} logged in`,
     }).catch(() => {});
 
+    // Return user data and session token
     return NextResponse.json({
       user: { ...safeUser, source: "local" },
       token: sessionToken,
     });
   } catch (error) {
+    // Catch any unexpected errors and return generic error message
     console.error(`[AUTH POST] Error:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

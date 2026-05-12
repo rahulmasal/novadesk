@@ -1,3 +1,35 @@
+/**
+ * ============================================================================
+ * LOGIN COMPONENT - User Authentication Form
+ * ============================================================================
+ *
+ * This is the main login page component that handles user authentication.
+ * It supports both local database authentication and LDAP/Active Directory.
+ *
+ * KEY FEATURES:
+ * - Email/password form with validation
+ * - Optional LDAP/AD authentication toggle
+ * - Brute-force protection with account lockout
+ * - Password visibility toggle
+ * - Security question challenge (not fully implemented)
+ * - Login attempt tracking stored in localStorage
+ *
+ * BEGINNER NOTES:
+ * - "use client" means this runs in the browser (not server-side)
+ * - useState manages component state (like form inputs)
+ * - useEffect runs code when component mounts or state changes
+ * - useRef gives us a persistent reference (for timers)
+ * - The component uses Zustand store via useTicketStore for auth
+ *
+ * SECURITY FEATURES:
+ * - Max 5 login attempts before 60-second lockout
+ * - Attempts and lockout stored in localStorage (persists refresh)
+ * - Client-side validation before sending to server
+ * - Password visibility toggle prevents shoulder-surfing
+ *
+ * @module /components/Login
+ */
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -13,42 +45,71 @@ import {
   Clock,
 } from "lucide-react";
 
+/**
+ * Security state interface (for future security question feature)
+ */
 interface SecurityState {
   question: string;
   answer: string;
 }
 
+/**
+ * Login component - Main authentication form
+ *
+ * @param onLogin - Callback function called on successful login
+ *
+ * @example
+ * // In a page:
+ * <Login onLogin={() => router.push('/dashboard')} />
+ */
 export function Login({ onLogin }: { onLogin: () => void }) {
+  // Get login function from Zustand store
   const { login } = useTicketStore();
+
+  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Security state - brute force protection
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [lockoutTime, setLockoutTime] = useState<number | null>(null);
   const [remainingTime, setRemainingTime] = useState(0);
+
+  // Security question (future feature)
   const [security, setSecurity] = useState<SecurityState | null>(null);
   const [userSecurityAnswer, setUserSecurityAnswer] = useState("");
+
+  // Auth provider toggle (local vs LDAP)
   const [authProvider, setAuthProvider] = useState<"local" | "ldap">("local");
 
+  // Security constants
   const MAX_ATTEMPTS = 5;
-  const LOCKOUT_DURATION = 60;
+  const LOCKOUT_DURATION = 60; // seconds
 
+  // Refs for timers (needed to avoid stale closures in useEffect)
   const lockoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   const remainingTimeRef = useRef(remainingTime);
 
+  // Check if LDAP is enabled (from environment variable)
   const ldapEnabled = typeof window !== "undefined" && process.env.NEXT_PUBLIC_LDAP_ENABLED === "true";
 
+  // Sync remainingTime ref for timer callback
   useEffect(() => {
     remainingTimeRef.current = remainingTime;
   }, [remainingTime]);
 
+  // Countdown timer for account lockout
   useEffect(() => {
     if (lockoutTime && remainingTime > 0) {
       lockoutTimerRef.current = setTimeout(() => {
         const newTime = remainingTimeRef.current - 1;
         if (newTime <= 0) {
+          // Lockout expired - reset everything
           setLockoutTime(null);
           setLoginAttempts(0);
           setSecurity(null);
@@ -64,28 +125,35 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     }
   }, [lockoutTime, remainingTime]);
 
+  // Load persisted login attempts and lockout on mount
   useEffect(() => {
     const storedAttempts = localStorage.getItem("loginAttempts");
     const storedLockout = localStorage.getItem("lockoutTime");
+
     if (storedAttempts) {
       const attempts = parseInt(storedAttempts, 10);
       setLoginAttempts(attempts);
     }
+
     if (storedLockout) {
       const storedTime = parseInt(storedLockout, 10);
       if (storedTime > Date.now()) {
+        // Still in lockout period
         setLockoutTime(storedTime);
         setRemainingTime(Math.ceil((storedTime - Date.now()) / 1000));
       } else {
+        // Lockout expired - clean up
         localStorage.removeItem("lockoutTime");
       }
     }
   }, []);
 
+  // Persist login attempts to localStorage
   useEffect(() => {
     localStorage.setItem("loginAttempts", loginAttempts.toString());
   }, [loginAttempts]);
 
+  // Persist lockout time to localStorage
   useEffect(() => {
     if (lockoutTime) {
       localStorage.setItem("lockoutTime", lockoutTime.toString());
@@ -96,10 +164,10 @@ export function Login({ onLogin }: { onLogin: () => void }) {
 
   /**
    * validateInput - Checks email and password for basic validity
-   * 
+   *
    * WHAT: Prevents obviously invalid inputs from being submitted
    * WHY: Better UX than server-side errors, reduces unnecessary requests
-   * 
+   *
    * @param email - User's email input
    * @param password - User's password input
    * @returns Error message string if invalid, null if valid
@@ -114,7 +182,7 @@ export function Login({ onLogin }: { onLogin: () => void }) {
 
   /**
    * handleSubmit - Main form submission handler
-   * 
+   *
    * FLOW:
    * 1. Prevent default form behavior
    * 2. Check if account is locked (show remaining time)
@@ -127,34 +195,42 @@ export function Login({ onLogin }: { onLogin: () => void }) {
     e.preventDefault();
     setError("");
 
+    // Check if account is locked
     if (lockoutTime && Date.now() < lockoutTime) {
       setError(`Account locked. Try again in ${remainingTime}s`);
       return;
     }
 
+    // Validate inputs before sending to server
     const validationError = validateInput(email, password);
     if (validationError) {
       setError(validationError);
       return;
     }
 
+    // Verify security question if active
     if (security && userSecurityAnswer !== security.answer) {
       setError("Security verification failed");
       setLoginAttempts(prev => prev + 1);
       return;
     }
 
+    // Attempt login
     setIsLoading(true);
     const result = await login(email, password, authProvider);
 
     if (result.success) {
+      // Success - reset security state and redirect
       setLoginAttempts(0);
       setSecurity(null);
       setUserSecurityAnswer("");
       onLogin();
     } else {
+      // Failure - increment attempts and possibly lock out
       setLoginAttempts(prev => prev + 1);
       setError(result.error || "Login failed");
+
+      // Lock out after max attempts
       if (loginAttempts + 1 >= MAX_ATTEMPTS) {
         setLockoutTime(Date.now() + LOCKOUT_DURATION * 1000);
         setRemainingTime(LOCKOUT_DURATION);
@@ -166,7 +242,7 @@ export function Login({ onLogin }: { onLogin: () => void }) {
 
   /**
    * formatTime - Converts seconds to MM:SS display format
-   * 
+   *
    * @param seconds - Total seconds remaining
    * @returns Formatted string like "1:30" for 90 seconds
    */
