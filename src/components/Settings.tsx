@@ -394,18 +394,18 @@ return (
 
         {/* Backup Settings (Admin only) */}
         {isAdmin && (
-          <div className="glass-card">
-            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-heading" : "text-white"}`}>
+          <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-slate-800" : "text-white"}`}>
               <Database className={`w-5 h-5 ${isLightTheme ? "text-emerald-600" : "text-emerald-400"}`} />
               Backup Configuration
             </h3>
             <div className="space-y-4">
               <div>
-                <label className={`block text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-400"} mb-2`}>Backup Schedule</label>
+                <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Backup Schedule</label>
                 <select
                   value={settings.backup.schedule}
                   onChange={(e) => updateSettings("backup", "schedule", e.target.value)}
-                  className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
+                  className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" : "bg-black/40 border border-white/10 text-white"}`}
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -413,14 +413,14 @@ return (
                 </select>
               </div>
               <div>
-                <label className={`block text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-400"} mb-2`}>
+                <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>
                   Retention Period (days)
                 </label>
                 <input
                   type="number"
                   value={settings.backup.retentionDays}
                   onChange={(e) => updateSettings("backup", "retentionDays", parseInt(e.target.value))}
-                  className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
+className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" : "bg-black/40 border border-white/10 text-white"}`}
                   min="1"
                   max="365"
                 />
@@ -429,51 +429,17 @@ return (
           </div>
         )}
 
-        {/* SLA Configuration (Admin only) */}
-        {isAdmin && (
-          <div className="glass-card">
-            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-heading" : "text-white"}`}>
-              <Shield className={`w-5 h-5 ${isLightTheme ? "text-purple-600" : "text-purple-400"}`} />
-              SLA Configuration
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-400"} mb-2`}>SLA Response (hours)</label>
-                <input
-                  type="number"
-                  value={settings.advanced.slaResponseHours}
-                  onChange={(e) => updateSettings("advanced", "slaResponseHours", parseInt(e.target.value))}
-                  className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
-                  min="1"
-                  max="72"
-                />
-              </div>
-              <div>
-                <label className={`block text-sm ${isLightTheme ? "text-gray-600" : "text-neutral-400"} mb-2`}>SLA Resolution (hours)</label>
-                <input
-                  type="number"
-                  value={settings.advanced.slaResolutionHours}
-                  onChange={(e) => updateSettings("advanced", "slaResolutionHours", parseInt(e.target.value))}
-                  className={`w-full rounded-lg px-4 py-2 ${isLightTheme ? "bg-white/60 border border-gray-300 text-gray-900" : "bg-black/40 border border-white/10 text-white"}`}
-                  min="1"
-                  max="168"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Account Info */}
-        <div className="glass-card">
-          <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-heading" : "text-white"}`}>Account Information</h3>
+        <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-slate-800" : "text-white"}`}>Account Information</h3>
           <div className="space-y-2">
-            <p className={isLightTheme ? "text-gray-600" : "text-neutral-400"}>
-              Name: <span className={`font-medium ${isLightTheme ? "text-gray-900" : "text-white"}`}>{currentUser?.name}</span>
+            <p className={isLightTheme ? "text-slate-600" : "text-neutral-400"}>
+              Name: <span className={`font-medium ${isLightTheme ? "text-slate-800" : "text-white"}`}>{currentUser?.name}</span>
             </p>
-            <p className={isLightTheme ? "text-gray-600" : "text-neutral-400"}>
-              Email: <span className={`font-medium ${isLightTheme ? "text-gray-900" : "text-white"}`}>{currentUser?.email}</span>
+            <p className={isLightTheme ? "text-slate-600" : "text-neutral-400"}>
+              Email: <span className={`font-medium ${isLightTheme ? "text-slate-800" : "text-white"}`}>{currentUser?.email}</span>
             </p>
-            <p className={isLightTheme ? "text-gray-600" : "text-neutral-400"}>
+            <p className={isLightTheme ? "text-slate-600" : "text-neutral-400"}>
               Role: <span className={`font-medium ${isLightTheme ? "text-blue-600" : "text-blue-400"}`}>{currentUserRole}</span>
             </p>
           </div>
