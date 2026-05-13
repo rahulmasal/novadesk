@@ -6,7 +6,7 @@
  * @module /api/backup/route
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export const dynamic = 'force-dynamic';
@@ -16,11 +16,25 @@ export const dynamic = 'force-dynamic';
  * 
  * @returns JSON file with users, tickets, and config data
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   console.log(`[BACKUP GET] Generating system backup`);
 
   try {
-    // Basic auth check would go here in production
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const session = await prisma.session.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+    if (!session || session.expiresAt < new Date()) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMINISTRATOR") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     
     // Fetch all data from major tables
     const users = await prisma.user.findMany({

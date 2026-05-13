@@ -7,6 +7,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { z } from "zod";
 import { useTicketStore } from "@/lib/store";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -155,19 +156,19 @@ const handleAssignToAgent = async (agentId: string) => {
     const startY = e.clientY;
     const startWidth = windowSize.width;
     const startHeight = windowSize.height;
-    
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       setWindowSize({
         width: Math.max(320, startWidth + moveEvent.clientX - startX),
         height: Math.max(400, startHeight + moveEvent.clientY - startY)
       });
     };
-    
+
     const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
@@ -252,7 +253,7 @@ return (
                      rel="noopener noreferrer"
                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors border ${isLightTheme ? "bg-gray-50 border-gray-200 text-slate-700 hover:bg-gray-100" : "bg-white/5 border-white/10 text-neutral-300 hover:bg-white/10"}`}
                    >
-                     <img src={att.url} alt={att.filename} className="w-8 h-8 object-cover rounded" />
+                     <Image src={att.url} alt={att.filename} width={32} height={32} className="w-8 h-8 object-cover rounded" />
                      <span className="truncate max-w-32">{att.filename}</span>
                    </a>
                  ))}

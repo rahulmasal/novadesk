@@ -239,7 +239,6 @@ export function UserManagement() {
   };
 
   const handleBulkDelete = async () => {
-    // Filter out current user to prevent self-deletion
     const userIds = Array.from(selectedUsers).filter(id => id !== currentUser?.id);
     if (userIds.length === 0) {
       alert("Cannot delete your own account.");
@@ -251,9 +250,9 @@ export function UserManagement() {
     setProgressTotal(userIds.length);
     setProgressStep(0);
 
+    let completed = 0;
     try {
-      const deletePromises = userIds.map(async (id) => {
-        setProgressStep(prev => prev + 1);
+      for (const id of userIds) {
         const res = await fetch("/api/users", {
           method: "DELETE",
           headers: {
@@ -262,10 +261,12 @@ export function UserManagement() {
           },
           body: JSON.stringify({ id }),
         });
-        return res.ok;
-      });
-
-      await Promise.all(deletePromises);
+        completed++;
+        setProgressStep(completed);
+        if (!res.ok) {
+          console.error(`Failed to delete user ${id}:`, res.status);
+        }
+      }
       setUsers(users.filter((u) => !userIds.includes(u.id)));
       setSelectedUsers(new Set());
     } catch (e) {

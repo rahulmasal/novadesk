@@ -386,7 +386,6 @@ export const useTicketStore = create<TicketStore>()(
         const { authToken } = get();
         if (authToken) {
           try {
-            // Call logout API to invalidate session on server
             await fetch("/api/auth/login", {
               method: "DELETE",
               headers: {
@@ -394,8 +393,8 @@ export const useTicketStore = create<TicketStore>()(
                 "Content-Type": "application/json",
               },
             });
-          } catch {
-            // Ignore errors - we still want to clear local state
+          } catch (error) {
+            console.error("Logout API call failed:", error);
           }
         }
 

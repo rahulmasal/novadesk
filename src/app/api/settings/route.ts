@@ -34,6 +34,24 @@ const prisma = new PrismaClient();
 // Force dynamic rendering - no static generation for this API
 export const dynamic = 'force-dynamic';
 
+async function getAuthUser(req: NextRequest) {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  if (!token) return null;
+  try {
+    const session = await prisma.session.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+    if (!session || session.expiresAt < new Date()) {
+      return null;
+    }
+    return { role: session.user.role, userId: session.userId, email: session.user.email };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * POST /api/settings - Save settings to database
  *
@@ -49,9 +67,14 @@ export const dynamic = 'force-dynamic';
  *   }
  * }
  */
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
+  const auth = await getAuthUser(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const { settings } = await request.json();
+    const { settings } = await req.json();
 
     // Serialize settings object to JSON string for storage
     const settingsJson = JSON.stringify(settings);
@@ -85,7 +108,12 @@ export async function POST(request: NextRequest) {
  *   }
  * }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await getAuthUser(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     // Look up settings by unique key
     const config = await prisma.systemConfig.findUnique({

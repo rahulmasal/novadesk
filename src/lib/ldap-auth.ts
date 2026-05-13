@@ -133,10 +133,19 @@ function getLdapConfig(): LdapConfig {
  *   console.log("Logged in as:", result.user.name);
  * }
  */
+export interface LdapUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  department: string;
+  source: string;
+}
+
 export async function authenticateWithLdap(
   username: string,
   password: string
-): Promise<{ success: boolean; user?: unknown; error?: string }> {
+): Promise<{ success: boolean; user?: LdapUser; error?: string }> {
   // Get configuration from env or defaults
   const config = getLdapConfig();
 

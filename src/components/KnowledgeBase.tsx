@@ -5,6 +5,17 @@ import { Search, Book, ChevronRight, Clock, Eye, Tag } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
+function sanitizeHtml(text: string): string {
+  const htmlEntities: Record<string, string> = {
+    "&": "\u0026amp;",
+    "<": "\u0026lt;",
+    ">": "\u0026gt;",
+    '"': "\u0026quot;",
+    "'": "\u0026#039;",
+  };
+  return text.replace(/[&<>"']/g, (char) => htmlEntities[char] || char);
+}
+
 interface KnowledgeArticle {
   id: string;
   title: string;
@@ -22,12 +33,6 @@ interface KnowledgeBaseProps {
   onClose?: () => void;
 }
 
-/**
- * KnowledgeBase - Knowledge base article viewer with search filtering and category selection
- *
- * @param onArticleClick - Callback when an article is clicked
- * @param onClose - Callback to close the viewer
- */
 export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +74,6 @@ export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
-        {/* Header */}
         <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
           <div className="flex items-center gap-3">
             <Book className="w-5 h-5 text-blue-400" />
@@ -83,7 +87,6 @@ export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
           </button>
         </div>
 
-        {/* Search */}
         <div className="p-4 border-b border-white/5">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
@@ -96,7 +99,6 @@ export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
             />
           </div>
 
-          {/* Category filters */}
           <div className="flex gap-2 mt-3 flex-wrap">
             <button
               onClick={() => setSelectedCategory(null)}
@@ -126,7 +128,6 @@ export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
           </div>
         </div>
 
-        {/* Articles list */}
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="text-center text-neutral-500 py-8">Loading...</div>
@@ -185,7 +186,7 @@ export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
                         <div
                           className="text-sm text-neutral-300 whitespace-pre-wrap prose prose-invert max-w-none"
                           dangerouslySetInnerHTML={{
-                            __html: article.content.replace(/\n/g, "<br/>"),
+                            __html: sanitizeHtml(article.content).replace(/\n/g, "<br/>"),
                           }}
                         />
                         {article.tags.length > 0 && (

@@ -215,9 +215,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
    * updateSettings("notifications", "push", true);
    */
   const updateSettings = (section: keyof Settings, key: string, value: unknown) => {
-    // Update state with new value
     setSettings((prev) => {
-      const newSettings = {
+      const newSettings: Settings = {
         ...prev,
         [section]: {
           ...prev[section],
@@ -225,7 +224,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         },
       };
 
-      // Apply side effects based on what changed
       if (section === "appearance") {
         if (key === "theme") {
           applyTheme(value as "dark" | "light" | "system");
@@ -234,13 +232,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Request notification permission when push is enabled
       if (section === "notifications" && key === "push" && value === true) {
         requestNotificationPermission();
       }
 
-      // Auto-save to database whenever settings change
-      saveToDb(newSettings);
+      saveToDb(newSettings).catch((err) => console.error("Auto-save failed:", err));
 
       return newSettings;
     });

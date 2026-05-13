@@ -424,14 +424,14 @@ function formatTicket(ticket: {
     priority: ticket.priority,
     category: ticket.category,
     status: ticket.status,
-    dueDate: ticket.dueDate.toISOString(),
+    dueDate: ticket.dueDate?.toISOString() ?? new Date().toISOString(),
     createdBy: ticket.createdById,
     assignedTo: ticket.assignedTo,
     username: ticket.username,
     hostname: ticket.hostname,
     laptopSerial: ticket.laptopSerial,
     department: ticket.department,
-    createdAt: ticket.createdAt.toISOString(),
-    updatedAt: ticket.updatedAt.toISOString(),
+    createdAt: ticket.createdAt?.toISOString() ?? new Date().toISOString(),
+    updatedAt: ticket.updatedAt?.toISOString() ?? new Date().toISOString(),
   };
 }

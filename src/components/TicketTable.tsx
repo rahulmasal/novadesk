@@ -242,8 +242,10 @@ function TicketRow({
 
   const isUrgent = ticket.priority === "URGENT";
 
-  const createdTime = new Date(ticket.createdAt).getTime();
-  const dueTime = new Date(ticket.dueDate).getTime();
+  const createdDate = new Date(ticket.createdAt);
+  const dueDate = new Date(ticket.dueDate);
+  const createdTime = isNaN(createdDate.getTime()) ? 0 : createdDate.getTime();
+  const dueTime = isNaN(dueDate.getTime()) ? 0 : dueDate.getTime();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -253,9 +255,9 @@ function TicketRow({
 
   const totalDuration = dueTime - createdTime;
   const elapsed = now - createdTime;
-  const progressPercent = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+  const progressPercent = totalDuration > 0 ? Math.max(0, Math.min(100, (elapsed / totalDuration) * 100)) : 100;
 
-  const isBreached = now > dueTime;
+  const isBreached = now > dueTime && !isNaN(dueTime);
   const isWarning = progressPercent > 80 && !isBreached;
 
   const barColor = isBreached ? "bg-red-500" : isWarning ? "bg-amber-400" : "bg-emerald-400";

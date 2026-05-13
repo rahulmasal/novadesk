@@ -41,7 +41,7 @@ import { v4 as uuidv4 } from "uuid";
 import prisma from "@/lib/prisma";
 import { loginSchema } from "@/lib/schemas";
 import { logAuditEvent } from "@/lib/audit";
-import { authenticateWithLdap } from "@/lib/ldap-auth";
+import { authenticateWithLdap, LdapUser } from "@/lib/ldap-auth";
 
 /**
  * Session expiry time in milliseconds = 24 hours
@@ -92,15 +92,15 @@ export async function POST(req: NextRequest) {
         console.log(`[AUTH POST] LDAP login successful`, { email: ldapUsername });
 
         // Log the successful LDAP login for audit trail
-        await logAuditEvent({
-          userId: (ldapResult.user as { id: string }).id,
+        logAuditEvent({
+          userId: (ldapResult.user as LdapUser).id,
           action: "LOGIN",
           details: `User ${ldapUsername} logged in via LDAP`,
-        }).catch(() => {});
+        }).catch((err) => console.error("Audit log failed:", err));
 
         return NextResponse.json({
           user: ldapResult.user,
-          token: (ldapResult.user as { sessions?: Array<{ token: string }> }).sessions?.[0]?.token,
+          token: (ldapResult.user as LdapUser & { sessions?: Array<{ token: string }> }).sessions?.[0]?.token,
         });
       }
     }
@@ -150,11 +150,11 @@ export async function POST(req: NextRequest) {
     console.log(`[AUTH POST] Login successful`, { userId: user.id, email: user.email });
 
     // Step 8: Log the login event for audit trail
-    await logAuditEvent({
+    logAuditEvent({
       userId: user.id,
       action: "LOGIN",
       details: `User ${user.email} logged in`,
-    }).catch(() => {});
+    }).catch((err) => console.error("Audit log failed:", err));
 
     // Return user data and session token
     return NextResponse.json({
