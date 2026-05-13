@@ -12,7 +12,8 @@ export function Backup() {
   const { authToken, currentUserRole } = useTicketStore();
   const { settings } = useSettings();
   const isLightTheme = settings.appearance.theme === "light";
-  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isJsonBackingUp, setIsJsonBackingUp] = useState(false);
+  const [isSqlBackingUp, setIsSqlBackingUp] = useState(false);
   const [isJsonRestoring, setIsJsonRestoring] = useState(false);
   const [isSqlRestoring, setIsSqlRestoring] = useState(false);
   const [backupStatus, setBackupStatus] = useState<"idle" | "success" | "error">("idle");
@@ -25,7 +26,7 @@ export function Backup() {
 
   const handleCreateBackup = async () => {
     if (!isAdmin) return;
-    setIsBackingUp(true);
+    setIsJsonBackingUp(true);
     setBackupStatus("idle");
 
     try {
@@ -50,13 +51,13 @@ export function Backup() {
       console.error("Backup failed:", e);
       setBackupStatus("error");
     } finally {
-      setIsBackingUp(false);
+      setIsJsonBackingUp(false);
     }
   };
 
   const handleDbBackup = async () => {
     if (!isAdmin) return;
-    setIsBackingUp(true);
+    setIsSqlBackingUp(true);
     setDbBackupStatus("idle");
     setErrorMessage(null);
 
@@ -85,7 +86,7 @@ export function Backup() {
       setErrorMessage("Network error during backup");
       setDbBackupStatus("error");
     } finally {
-      setIsBackingUp(false);
+      setIsSqlBackingUp(false);
     }
   };
 
@@ -210,18 +211,18 @@ export function Backup() {
                 Recommended before major system updates.
               </p>
 
-              <button
-                onClick={handleCreateBackup}
-                disabled={isBackingUp}
-                className={`flex items-center gap-2 text-white px-6 py-3 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 ${isLightTheme ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg hover:shadow-blue-500/30" : "bg-blue-500 hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"}`}
-              >
-                {isBackingUp ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <Download className="w-5 h-5" />
-                )}
-                {isBackingUp ? "Processing..." : "Generate & Download Backup"}
-              </button>
+<button
+                 onClick={handleCreateBackup}
+                 disabled={isJsonBackingUp}
+                 className={`flex items-center gap-2 text-white px-6 py-3 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 ${isLightTheme ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg hover:shadow-blue-500/30" : "bg-blue-500 hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"}`}
+               >
+                 {isJsonBackingUp ? (
+                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                 ) : (
+                   <Download className="w-5 h-5" />
+                 )}
+                 {isJsonBackingUp ? "Processing..." : "Generate & Download Backup"}
+               </button>
 
               {backupStatus === "success" && (
                 <p className={`mt-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${isLightTheme ? "text-emerald-600" : "text-emerald-400"}`}>
@@ -248,18 +249,18 @@ export function Backup() {
                 Use this for full database recovery or migration to another server.
               </p>
 
-              <button
-                onClick={handleDbBackup}
-                disabled={isBackingUp}
-                className={`flex items-center gap-2 text-white px-6 py-3 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 ${isLightTheme ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-500/30" : "bg-emerald-500 hover:bg-emerald-600 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]"}`}
-              >
-                {isBackingUp ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <HardDrive className="w-5 h-5" />
-                )}
-                {isBackingUp ? "Processing..." : "Generate SQL Dump"}
-              </button>
+<button
+                 onClick={handleDbBackup}
+                 disabled={isSqlBackingUp}
+                 className={`flex items-center gap-2 text-white px-6 py-3 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 ${isLightTheme ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-lg hover:shadow-emerald-500/30" : "bg-emerald-500 hover:bg-emerald-600 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]"}`}
+               >
+                 {isSqlBackingUp ? (
+                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                 ) : (
+                   <HardDrive className="w-5 h-5" />
+                 )}
+                 {isSqlBackingUp ? "Processing..." : "Generate SQL Dump"}
+               </button>
 
               {dbBackupStatus === "success" && (
                 <p className={`mt-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${isLightTheme ? "text-emerald-600" : "text-emerald-400"}`}>
