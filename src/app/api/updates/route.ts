@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin, validateAuth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 
 interface UpdateInfo {
   version: string;
