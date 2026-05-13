@@ -13,9 +13,11 @@ export function Backup() {
   const { settings } = useSettings();
   const isLightTheme = settings.appearance.theme === "light";
   const [isBackingUp, setIsBackingUp] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
+  const [isJsonRestoring, setIsJsonRestoring] = useState(false);
+  const [isSqlRestoring, setIsSqlRestoring] = useState(false);
   const [backupStatus, setBackupStatus] = useState<"idle" | "success" | "error">("idle");
-  const [restoreStatus, setRestoreStatus] = useState<"idle" | "success" | "error">("idle");
+  const [jsonRestoreStatus, setJsonRestoreStatus] = useState<"idle" | "success" | "error">("idle");
+  const [sqlRestoreStatus, setSqlRestoreStatus] = useState<"idle" | "success" | "error">("idle");
   const [dbBackupStatus, setDbBackupStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -93,8 +95,8 @@ export function Backup() {
 
     if (!confirm("WARNING: This will overwrite ALL current data. Continue?")) return;
 
-    setIsRestoring(true);
-    setRestoreStatus("idle");
+    setIsJsonRestoring(true);
+    setJsonRestoreStatus("idle");
 
     try {
       const text = await file.text();
@@ -110,20 +112,20 @@ export function Backup() {
       });
 
       if (res.ok) {
-        setRestoreStatus("success");
+        setJsonRestoreStatus("success");
         alert("System restored successfully. Please refresh the page.");
         window.location.reload();
       } else {
-        setRestoreStatus("error");
+        setJsonRestoreStatus("error");
         const err = await res.json();
         setErrorMessage(err.error || "Restore failed");
       }
     } catch (e) {
       console.error("Restore failed:", e);
-      setRestoreStatus("error");
+      setJsonRestoreStatus("error");
       setErrorMessage("Failed to parse backup file");
     } finally {
-      setIsRestoring(false);
+      setIsJsonRestoring(false);
     }
   };
 
@@ -133,8 +135,8 @@ export function Backup() {
 
     if (!confirm("WARNING: This will overwrite ALL database data. Continue?")) return;
 
-    setIsRestoring(true);
-    setRestoreStatus("idle");
+    setIsSqlRestoring(true);
+    setSqlRestoreStatus("idle");
 
     try {
       const formData = new FormData();
@@ -149,20 +151,20 @@ export function Backup() {
       });
 
       if (res.ok) {
-        setRestoreStatus("success");
+        setSqlRestoreStatus("success");
         alert("Database restored successfully. Please refresh the page.");
         window.location.reload();
       } else {
-        setRestoreStatus("error");
+        setSqlRestoreStatus("error");
         const err = await res.json();
         setErrorMessage(err.error || "Restore failed");
       }
     } catch (e) {
       console.error("DB Restore failed:", e);
-      setRestoreStatus("error");
+      setSqlRestoreStatus("error");
       setErrorMessage("Failed to restore database");
     } finally {
-      setIsRestoring(false);
+      setIsSqlRestoring(false);
     }
   };
 
@@ -286,29 +288,29 @@ export function Backup() {
             </div>
 
             <div className="relative group">
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleRestore}
-                disabled={isRestoring}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              />
+<input
+                 type="file"
+                 accept=".json"
+                 onChange={handleRestore}
+                 disabled={isJsonRestoring}
+                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+               />
               <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${isLightTheme ? "border-slate-300 group-hover:border-purple-400" : "border-white/10 group-hover:border-purple-500/30"}`}>
                 <Upload className={`w-8 h-8 mx-auto mb-3 ${isLightTheme ? "text-slate-400 group-hover:text-purple-500" : "text-neutral-500 group-hover:text-purple-400"}`} />
-                <p className={`font-medium ${isLightTheme ? "text-heading" : "text-white"}`}>
-                  {isRestoring ? "Restoring System..." : "Click or drag JSON backup file here"}
-                </p>
+<p className={`font-medium ${isLightTheme ? "text-heading" : "text-white"}`}>
+                   {isJsonRestoring ? "Restoring System..." : "Click or drag JSON backup file here"}
+                 </p>
                 <p className={`text-xs mt-1 ${isLightTheme ? "text-muted" : "text-neutral-500"}`}>Accepts .json backup files</p>
               </div>
             </div>
 
-            {restoreStatus === "error" && (
-              <p className="mt-4 text-red-500 text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                Restore failed. Ensure the file is a valid NovaDesk backup.
-              </p>
-            )}
-          </div>
+{jsonRestoreStatus === "error" && (
+               <p className="mt-4 text-red-500 text-sm flex items-center gap-2">
+                 <AlertTriangle className="w-4 h-4" />
+                 Restore failed. Ensure the file is a valid NovaDesk backup.
+               </p>
+             )}
+           </div>
 
           {/* Database Restore Action */}
           <div className={`${isLightTheme ? "glass-card border-amber-200" : "glass-dark"} p-8 border border-amber-500/10`}>
@@ -323,29 +325,29 @@ export function Backup() {
             </div>
 
             <div className="relative group">
-              <input
-                type="file"
-                accept=".sql"
-                onChange={handleDbRestore}
-                disabled={isRestoring}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              />
+<input
+                 type="file"
+                 accept=".sql"
+                 onChange={handleDbRestore}
+                 disabled={isSqlRestoring}
+                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+               />
               <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${isLightTheme ? "border-slate-300 group-hover:border-amber-400" : "border-white/10 group-hover:border-amber-500/30"}`}>
                 <HardDrive className={`w-8 h-8 mx-auto mb-3 ${isLightTheme ? "text-slate-400 group-hover:text-amber-500" : "text-neutral-500 group-hover:text-amber-400"}`} />
-                <p className={`font-medium ${isLightTheme ? "text-heading" : "text-white"}`}>
-                  {isRestoring ? "Restoring Database..." : "Click or drag SQL backup file here"}
-                </p>
+<p className={`font-medium ${isLightTheme ? "text-heading" : "text-white"}`}>
+                   {isSqlRestoring ? "Restoring Database..." : "Click or drag SQL backup file here"}
+                 </p>
                 <p className={`text-xs mt-1 ${isLightTheme ? "text-muted" : "text-neutral-500"}`}>Accepts .sql database dump files</p>
               </div>
             </div>
 
-            {restoreStatus === "error" && (
-              <p className="mt-4 text-red-500 text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                Restore failed. Ensure the file is a valid PostgreSQL dump.
-              </p>
-            )}
-          </div>
+{sqlRestoreStatus === "error" && (
+               <p className="mt-4 text-red-500 text-sm flex items-center gap-2">
+                 <AlertTriangle className="w-4 h-4" />
+                 Restore failed. Ensure the file is a valid PostgreSQL dump.
+               </p>
+             )}
+           </div>
 
           {/* Backup Strategy Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
