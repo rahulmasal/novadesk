@@ -363,42 +363,6 @@ graph TB
 ---
 
 ## 🧑‍💻 For Contributors
-novadesk/
-├── prisma/
-│   ├── schema.prisma       # Database schema
-│   └── migrations/         # Database migrations
-├── public/
-│   └── manifest.json      # PWA manifest
-├── scheduler.mjs          # Cron job scheduler for reports
-├── src/
-│   ├── app/
-│   │   ├── api/           # API routes (auth, tickets, users, reports)
-│   │   ├── layout.tsx     # Root layout
-│   │   └── page.tsx       # Main dashboard
-│   ├── components/        # React components
-│   ├── hooks/             # Custom hooks (useRealtime)
-│   └── lib/               # Utilities (prisma, email, schemas)
-├── docker-compose.yml     # Docker production setup
-├── Dockerfile             # Multi-stage Docker build
-└── .env.example           # Environment template
-```
-
----
-
-## 📊 SLA Configuration
-
-SLA due dates are automatically calculated based on priority:
-
-| Priority   | Resolution Time | Use Case                     |
-| ---------- | --------------- | ---------------------------- |
-| **URGENT** | 2 hours         | Critical system down         |
-| **HIGH**   | 8 hours         | Major functionality impaired |
-| **MEDIUM** | 24 hours        | Minor functionality impacted |
-| **LOW**    | 72 hours        | General inquiries            |
-
----
-
-## 🧑‍💻 For Contributors
 
 We welcome contributions from developers of all skill levels!
 
