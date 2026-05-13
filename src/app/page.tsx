@@ -70,7 +70,7 @@ export default function Dashboard() {
         })
         .catch((e) => console.error("Failed to load users:", e));
 
-      fetch("/api/tickets", {
+      fetch("/api/tickets?limit=10000", {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },

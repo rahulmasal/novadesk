@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     offset: searchParams.get("offset"),
   });
 
-  const limit = paginationResult.success ? paginationResult.data.limit : 1000;
+  const limit = paginationResult.success ? paginationResult.data.limit : 100;
   const offset = paginationResult.success ? paginationResult.data.offset : 0;
 
   const status = searchParams.get("status");

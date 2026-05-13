@@ -293,7 +293,7 @@ export const slaQuerySchema = z.object({
 // ============================================================================
 
 export const paginationSchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+  limit: z.coerce.number().int().min(1).max(10000).optional().default(20),
   offset: z.coerce.number().int().min(0).optional().default(0),
 });
 

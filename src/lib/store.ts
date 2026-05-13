@@ -648,21 +648,21 @@ deleteTicket: async (id) => {
         }
       },
 
-      refreshTickets: async () => {
-        const { authToken } = get();
-        if (!authToken) return;
-        try {
-          const res = await fetch("/api/tickets", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            set({ tickets: data });
-          }
-        } catch (error) {
-          console.error("[STORE refreshTickets] Failed:", error);
-        }
-      },
+refreshTickets: async () => {
+         const { authToken } = get();
+         if (!authToken) return;
+         try {
+           const res = await fetch("/api/tickets?limit=10000", {
+             headers: { Authorization: `Bearer ${authToken}` },
+           });
+           if (res.ok) {
+             const data = await res.json();
+             set({ tickets: data });
+           }
+         } catch (error) {
+           console.error("[STORE refreshTickets] Failed:", error);
+         }
+       },
 
       // ========================================
       // DELETE TICKETS ACTION (Bulk)

@@ -8,7 +8,7 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TicketDetail } from "./TicketDetail";
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200, 500];
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200, 500, 1000];
 
 /**
  * TicketTable - Searchable, paginated table of tickets with status/priority indicators and row selection

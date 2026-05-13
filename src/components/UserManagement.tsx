@@ -239,14 +239,19 @@ export function UserManagement() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selectedUsers.size} user(s)? This cannot be undone.`)) return;
+    // Filter out current user to prevent self-deletion
+    const userIds = Array.from(selectedUsers).filter(id => id !== currentUser?.id);
+    if (userIds.length === 0) {
+      alert("Cannot delete your own account.");
+      return;
+    }
+    if (!confirm(`Delete ${userIds.length} user(s)? This cannot be undone.`)) return;
 
     setShowProgressModal(true);
-    setProgressTotal(selectedUsers.size);
+    setProgressTotal(userIds.length);
     setProgressStep(0);
 
     try {
-      const userIds = Array.from(selectedUsers);
       const deletePromises = userIds.map(async (id) => {
         setProgressStep(prev => prev + 1);
         const res = await fetch("/api/users", {
@@ -261,7 +266,7 @@ export function UserManagement() {
       });
 
       await Promise.all(deletePromises);
-      setUsers(users.filter((u) => !selectedUsers.has(u.id)));
+      setUsers(users.filter((u) => !userIds.includes(u.id)));
       setSelectedUsers(new Set());
     } catch (e) {
       console.error("Failed to bulk delete:", e);
