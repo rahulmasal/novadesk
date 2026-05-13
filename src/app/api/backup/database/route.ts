@@ -134,7 +134,7 @@ async function generatePrismaSql(outputPath: string) {
     if (settingsConfig) {
       sql += `\n-- Settings\n`;
       sql += `INSERT INTO system_config (id, key, value, created_at, updated_at) VALUES\n`;
-      sql += `  ('settings-backup', 'user-settings', '${settingsConfig.value.replace(/'/g, "''")}', '${settingsConfig.createdAt.toISOString()}', '${settingsConfig.updatedAt.toISOString()}');\n`;
+      sql += `  ('${settingsConfig.id}', 'user-settings', '${String(settingsConfig.value).replace(/'/g, "''")}', '${settingsConfig.createdAt.toISOString()}', '${settingsConfig.updatedAt.toISOString()}');\n`;
     }
 
     fs.writeFileSync(outputPath, sql);
@@ -154,15 +154,27 @@ interface BackupRow {
   [key: string]: unknown;
 }
 
+const columnMapping: Record<string, Record<string, string>> = {
+  users: { id: 'id', email: 'email', password: 'password', name: 'name', role: 'role', department: 'department', hostname: 'hostname', laptop_serial: 'laptop_serial', created_at: 'createdAt', updated_at: 'updatedAt' },
+  tickets: { id: 'id', title: 'title', description: 'description', priority: 'priority', category: 'category', status: 'status', due_date: 'dueDate', created_at: 'createdAt', updated_at: 'updatedAt', created_by_id: 'createdById', assigned_to: 'assignedTo', username: 'username', hostname: 'hostname', laptop_serial: 'laptopSerial', department: 'department' },
+  knowledge_base_articles: { id: 'id', title: 'title', content: 'content', category: 'category', created_at: 'createdAt', updated_at: 'updatedAt' },
+  system_config: { id: 'id', key: 'key', value: 'value', created_at: 'createdAt', updated_at: 'updatedAt' },
+};
+
+function toSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
 function generateInserts(table: string, rows: BackupRow[]): string {
   if (rows.length === 0) return "";
-
-  const columns = Object.keys(rows[0]);
+  
+  const mapping = columnMapping[table] || {};
+  const columns = Object.keys(rows[0]).map(k => mapping[k] ? toSnakeCase(k) : toSnakeCase(k));
   let sql = `\n-- Table: ${table}\n`;
   sql += `INSERT INTO ${table} (${columns.join(", ")}) VALUES\n`;
 
   sql += rows.map(row => {
-    const values = columns.map(col => {
+    const values = Object.keys(row).map(col => {
       const val = row[col];
       if (val === null) return "NULL";
       if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
@@ -193,7 +205,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No SQL file provided" }, { status: 400 });
     }
 
-    const sql = await file.text();
+    const content = await file.text();
+    
+    // Detect if this is a JSON backup (wrong format for SQL restore)
+    const trimmed = content.trim();
+    if (trimmed.startsWith('{') && trimmed.includes('"data"')) {
+      return NextResponse.json({ 
+        error: "Invalid format. This appears to be a JSON backup file. Use 'Restore JSON Backup' instead of 'Restore SQL Backup'." 
+      }, { status: 400 });
+    }
+
+    const sql = content;
     const url = new URL(dbUrl);
     const host = url.hostname;
     const port = url.port || "5432";
@@ -254,7 +276,7 @@ async function restoreViaPsql(
         resolve(NextResponse.json({ message: "Database restored successfully" }));
       } else {
         console.error(`[DB RESTORE POST] psql failed:`, stderr);
-        resolve(NextResponse.json({ error: "Failed to restore database" }, { status: 500 }));
+        resolve(NextResponse.json({ error: `Failed to restore database: ${stderr || "Unknown psql error"}` }, { status: 500 }));
       }
     });
 
@@ -266,12 +288,28 @@ async function restoreViaPsql(
 async function restoreViaPrisma(lines: string[]) {
   const prisma = (await import("@/lib/prisma")).default;
 
+  function filterFields(data: Record<string, unknown>, required: string[], optional: string[]): Record<string, unknown> {
+    const filtered: Record<string, unknown> = {};
+    for (const field of required) {
+      if (data[field] !== undefined && data[field] !== null && data[field] !== '') {
+        filtered[field] = data[field];
+      } else {
+        if (field === 'dueDate') filtered[field] = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        else if (field === 'createdAt' || field === 'updatedAt') filtered[field] = new Date();
+      }
+    }
+    for (const field of optional) {
+      if (data[field] !== undefined && data[field] !== null) {
+        filtered[field] = data[field];
+      }
+    }
+    return filtered;
+  }
+
   try {
-    // Parse INSERT statements and restore via Prisma
     const statements = parseSqlInserts(lines);
 
     await prisma.$transaction(async (tx) => {
-      // Clear existing data first
       await tx.comment.deleteMany();
       await tx.auditLog.deleteMany();
       await tx.attachment.deleteMany();
@@ -280,42 +318,65 @@ async function restoreViaPrisma(lines: string[]) {
       await tx.systemConfig.deleteMany();
       await tx.user.deleteMany();
 
-      // Restore users
       for (const stmt of statements.users) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = stmt as any;
-        data.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
-        data.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
-        await tx.user.create({ data });
+        const data = filterFields(stmt, ['id', 'email', 'password', 'name', 'role', 'department'], ['hostname', 'laptopSerial', 'createdAt', 'updatedAt']);
+        if (data.createdAt) data.createdAt = new Date(data.createdAt as string);
+        if (data.updatedAt) data.updatedAt = new Date(data.updatedAt as string);
+        await tx.user.create({ data: data as Parameters<typeof tx.user.create>[0]['data'] });
       }
 
-      // Restore tickets
+      const adminUserId = statements.users.find(u => u.role === 'ADMINISTRATOR')?.id || statements.users[0]?.id;
+      if (!adminUserId) {
+        const fallback = await tx.user.create({
+          data: { id: 'fallback-admin', email: 'admin@novadesk.local', password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqM5F5L4W6', name: 'System Admin', role: 'ADMINISTRATOR', department: 'IT' }
+        });
+        statements.tickets.forEach(t => { t.createdById = fallback.id; });
+      }
+
+      const existingUserIds = new Set((await tx.user.findMany({ select: { id: true } })).map(u => u.id));
+      
       for (const stmt of statements.tickets) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = stmt as any;
-        data.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
-        data.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
-        data.dueDate = data.dueDate ? new Date(data.dueDate) : null;
-        await tx.ticket.create({ data });
+        const createdById = String(stmt.createdById);
+        const finalCreatedById = existingUserIds.has(createdById) ? createdById : adminUserId;
+        
+        const data = filterFields(stmt, ['id', 'title', 'description', 'priority', 'category', 'status', 'dueDate', 'createdById', 'username', 'department'], ['createdAt', 'updatedAt', 'assignedTo', 'hostname', 'laptopSerial']);
+        if (data.createdAt) data.createdAt = new Date(data.createdAt as string);
+        if (data.updatedAt) data.updatedAt = new Date(data.updatedAt as string);
+        if (data.dueDate) data.dueDate = new Date(data.dueDate as string);
+        
+        const ticketData = {
+          id: String(data.id),
+          title: String(data.title),
+          description: String(data.description),
+          priority: String(data.priority),
+          category: String(data.category),
+          status: String(data.status),
+          dueDate: data.dueDate as Date,
+          createdById: finalCreatedById,
+          username: String(data.username),
+          department: String(data.department),
+          assignedTo: data.assignedTo ? String(data.assignedTo) : null,
+          hostname: data.hostname ? String(data.hostname) : null,
+          laptopSerial: data.laptopSerial ? String(data.laptopSerial) : null,
+          createdAt: data.createdAt as Date || new Date(),
+          updatedAt: data.updatedAt as Date || new Date(),
+        };
+        await tx.ticket.create({ data: ticketData as Parameters<typeof tx.ticket.create>[0]['data'] });
       }
 
-      // Restore knowledge base articles
       for (const stmt of statements.articles) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = stmt as any;
-        data.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
-        data.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
-        await tx.knowledgeBaseArticle.create({ data });
+        const data = filterFields(stmt, ['id', 'title', 'content', 'category'], ['createdAt', 'updatedAt']);
+        if (data.createdAt) data.createdAt = new Date(data.createdAt as string);
+        if (data.updatedAt) data.updatedAt = new Date(data.updatedAt as string);
+        await tx.knowledgeBaseArticle.create({ data: data as Parameters<typeof tx.knowledgeBaseArticle.create>[0]['data'] });
       }
 
-      // Restore config
       for (const stmt of statements.config) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = stmt as any;
+        const data = filterFields(stmt, ['key', 'value'], ['id', 'createdAt', 'updatedAt']);
         await tx.systemConfig.upsert({
-          where: { key: data.key },
-          update: { value: data.value },
-          create: { key: data.key, value: data.value },
+          where: { key: data.key as string },
+          update: { value: data.value as string },
+          create: { key: data.key as string, value: data.value as string },
         });
       }
     });
@@ -323,8 +384,9 @@ async function restoreViaPrisma(lines: string[]) {
     console.log(`[DB RESTORE POST] Restored ${statements.users.length} users, ${statements.tickets.length} tickets`);
     return NextResponse.json({ message: "Database restored successfully" });
   } catch (error) {
-    console.error("[DB RESTORE POST] Prisma restore failed:", error);
-    return NextResponse.json({ error: "Failed to restore database" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[DB RESTORE POST] Prisma restore failed:", message);
+    return NextResponse.json({ error: `Failed to restore database: ${message}` }, { status: 500 });
   }
 }
 
@@ -419,7 +481,7 @@ function parseValues(valuesStr: string): unknown[] {
   }
 
   // Don't forget the last value
-  if (current.trim() && !current.trim().endsWith(')')) {
+  if (current.trim()) {
     values.push(parseValue(current.trim()));
   }
 

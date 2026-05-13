@@ -21,7 +21,9 @@ export async function POST(req: Request) {
 
     if (!data || !data.users || !data.tickets) {
       console.log(`[BACKUP RESTORE POST] Invalid backup format`);
-      return NextResponse.json({ error: "Invalid backup format" }, { status: 400 });
+      return NextResponse.json({ 
+        error: "Invalid backup format. Ensure the file is a valid NovaDesk JSON backup with users and tickets data." 
+      }, { status: 400 });
     }
 
     // Hash the default password once before the transaction

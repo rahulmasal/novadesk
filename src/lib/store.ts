@@ -257,6 +257,9 @@ checkAuth: () => Promise<boolean>;
 /** Deletes a ticket by ID (admin only, calls API) */
    deleteTicket: (id: string) => Promise<boolean>;
 
+   /** Refreshes tickets from API to ensure state is synced */
+   refreshTickets: () => Promise<void>;
+
    /** Bulk deletes multiple tickets by IDs */
    deleteTickets: (ids: string[]) => Promise<void>;
 
@@ -592,8 +595,10 @@ updateTicketStatus: async (id, status) => {
        * @param id - ID of ticket to delete
        * @returns Promise<boolean> - true if deleted, false otherwise
        */
-      deleteTicket: async (id) => {
-        const { authToken } = get();
+deleteTicket: async (id) => {
+        const { authToken, tickets } = get();
+        const ticket = tickets.find((t) => t.id === id);
+        const ticketTitle = ticket?.title || id;
         console.log("[STORE deleteTicket] Attempting to delete ticket:", id, "with token:", authToken ? "present" : "missing");
         try {
           const res = await fetch("/api/tickets", {
@@ -609,25 +614,43 @@ updateTicketStatus: async (id, status) => {
             console.error("[STORE deleteTicket] Failed with status:", res.status);
             return false;
           }
-set((state) => ({
-             tickets: state.tickets.filter((t) => t.id !== id),
-             activities: [
-               {
-                 id: Math.random().toString(36).substring(2, 9),
-                 ticketId: id,
-                 message: `Ticket #${id} deleted`,
-                 timestamp: new Date().toISOString(),
-               },
-               ...state.activities,
-             ],
-           }));
-console.log("[STORE deleteTicket] Successfully removed ticket from state");
-           return true;
-         } catch (error) {
-           console.error("[STORE deleteTicket] Exception:", error);
-           return false;
-         }
-       },
+          set((state) => ({
+            tickets: state.tickets.filter((t) => t.id !== id),
+            activities: [
+              {
+                id: Math.random().toString(36).substring(2, 9),
+                ticketId: id,
+                message: `Ticket "${ticketTitle}" deleted`,
+                timestamp: new Date().toISOString(),
+              },
+              ...state.activities,
+            ],
+          }));
+          console.log("[STORE deleteTicket] Successfully removed ticket from state");
+          const { refreshTickets } = get();
+          await refreshTickets();
+          return true;
+        } catch (error) {
+          console.error("[STORE deleteTicket] Exception:", error);
+          return false;
+        }
+      },
+
+      refreshTickets: async () => {
+        const { authToken } = get();
+        if (!authToken) return;
+        try {
+          const res = await fetch("/api/tickets", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ tickets: data });
+          }
+        } catch (error) {
+          console.error("[STORE refreshTickets] Failed:", error);
+        }
+      },
 
       // ========================================
       // DELETE TICKETS ACTION (Bulk)

@@ -11,6 +11,10 @@ import {
   Key,
   User,
   Loader2,
+  Download,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -56,6 +60,41 @@ export function Settings() {
     department: currentUser?.department || "",
   });
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  const [updateStatus, setUpdateStatus] = useState({
+    checking: false,
+    hasUpdate: false,
+    currentVersion: "0.1.0",
+    latestVersion: "",
+    releaseNotes: "",
+    releaseDate: "",
+    error: null as string | null,
+  });
+
+  const checkForUpdates = async () => {
+    if (!authToken || !isAdmin) return;
+    setUpdateStatus(prev => ({ ...prev, checking: true, error: null }));
+    try {
+      const res = await fetch("/api/updates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ action: "check" }),
+      });
+      const data = await res.json();
+      setUpdateStatus(prev => ({
+        ...prev,
+        checking: false,
+        hasUpdate: data.hasUpdate || false,
+        currentVersion: data.currentVersion || "0.1.0",
+        latestVersion: data.update?.version || "",
+        releaseNotes: data.update?.releaseNotes || "",
+        releaseDate: data.update?.releaseDate || "",
+        error: data.error || null,
+      }));
+    } catch {
+      setUpdateStatus(prev => ({ ...prev, checking: false, error: "Failed to check for updates" }));
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -425,6 +464,53 @@ className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border b
                   max="365"
                 />
               </div>
+            </div>
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-slate-800" : "text-white"}`}>
+              <Download className={`w-5 h-5 ${isLightTheme ? "text-purple-600" : "text-purple-400"}`} />
+              Software Updates
+            </h3>
+            <div className="space-y-4">
+              <div className={`p-4 rounded-xl ${isLightTheme ? "bg-slate-50 border border-slate-200" : "bg-black/20 border border-white/10"}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className={`text-sm font-medium ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>Current Version</p>
+                    <p className={`text-2xl font-bold ${isLightTheme ? "text-slate-800" : "text-white"}`}>{updateStatus.currentVersion}</p>
+                  </div>
+                  <button onClick={checkForUpdates} disabled={updateStatus.checking} className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-all disabled:opacity-50">
+                    {updateStatus.checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    {updateStatus.checking ? "Checking..." : "Check Updates"}
+                  </button>
+                </div>
+                {updateStatus.error && (
+                  <div className={`flex items-center gap-2 p-3 rounded-lg ${isLightTheme ? "bg-red-50 text-red-700" : "bg-red-500/10 text-red-400"}`}>
+                    <AlertCircle className="w-4 h-4" /><span className="text-sm">{updateStatus.error}</span>
+                  </div>
+                )}
+                {updateStatus.hasUpdate && !updateStatus.error && (
+                  <div className={`space-y-3 p-4 rounded-lg ${isLightTheme ? "bg-blue-50 border border-blue-200" : "bg-blue-500/10 border border-blue-500/20"}`}>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-blue-500" />
+                      <span className={`font-medium ${isLightTheme ? "text-blue-800" : "text-blue-400"}`}>Update Available: {updateStatus.latestVersion}</span>
+                    </div>
+                    {updateStatus.releaseDate && <p className={`text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"}`}>Released: {new Date(updateStatus.releaseDate).toLocaleDateString()}</p>}
+                    {updateStatus.releaseNotes && <p className={`text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} whitespace-pre-wrap`}>{updateStatus.releaseNotes}</p>}
+                    <button onClick={() => toast.success("Contact support for manual update")} className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium">
+                      <Download className="w-4 h-4" /> Download Update
+                    </button>
+                  </div>
+                )}
+                {!updateStatus.hasUpdate && !updateStatus.error && !updateStatus.checking && (
+                  <div className={`flex items-center gap-2 p-3 rounded-lg ${isLightTheme ? "bg-green-50 text-green-700" : "bg-green-500/10 text-green-400"}`}>
+                    <CheckCircle className="w-4 h-4" /><span className="text-sm">You are on the latest version</span>
+                  </div>
+                )}
+              </div>
+              <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Set UPDATE_SERVER_URL env variable to enable remote update checking.</p>
             </div>
           </div>
         )}

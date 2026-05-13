@@ -57,18 +57,14 @@ const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
  */
 export async function POST(req: NextRequest) {
   try {
-    // Handle beacon logout for browser close (admins only)
-    const contentType = req.headers.get("content-type");
-    if (contentType === "application/json") {
-      const body = await req.json();
-      if (body.action === "logout" && body.token) {
-        await prisma.session.deleteMany({ where: { token: body.token } });
-        return new NextResponse(null, { status: 204 });
-      }
-    }
-
     // Step 1: Parse and validate request body using Zod schema
     const body = await req.json();
+
+    // Handle beacon logout for browser close (admins only)
+    if (body.action === "logout" && body.token) {
+      await prisma.session.deleteMany({ where: { token: body.token } });
+      return new NextResponse(null, { status: 204 });
+    }
     const validationResult = loginSchema.safeParse(body);
 
     // Return validation errors if any

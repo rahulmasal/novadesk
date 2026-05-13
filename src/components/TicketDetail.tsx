@@ -17,7 +17,7 @@ const STATUS_OPTIONS: { value: StatusType; label: string; color: string }[] = [
 ];
 
 export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
-   const { tickets, activities, currentUserRole, updateTicketStatus, addActivity, deleteTicket, allUsers } = useTicketStore();
+   const { tickets, activities, currentUserRole, currentUser, updateTicketStatus, addActivity, deleteTicket, allUsers } = useTicketStore();
    const { settings } = useSettings();
    const isLightTheme = settings.appearance.theme === "light";
     const [comment, setComment] = useState("");
@@ -29,14 +29,16 @@ export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose:
     
     const dragRef = useRef<HTMLDivElement>(null);
     const isDragging = useRef(false);
-    const dragStart = useRef({ x: 0, y: 0 });
+    const dragStartPos = useRef({ mouseX: 0, mouseY: 0, winX: 0, winY: 0 });
 
     useEffect(() => {
       const handleMouseMove = (e: MouseEvent) => {
         if (!isDragging.current) return;
+        const dx = e.clientX - dragStartPos.current.mouseX;
+        const dy = e.clientY - dragStartPos.current.mouseY;
         setWindowPos({
-          x: e.clientX - dragStart.current.x,
-          y: e.clientY - dragStart.current.y
+          x: dragStartPos.current.winX + dx,
+          y: dragStartPos.current.winY + dy
         });
       };
       const handleMouseUp = () => {
@@ -53,11 +55,13 @@ export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose:
     }, []);
 
     const startDrag = (e: React.MouseEvent) => {
+      e.preventDefault();
       isDragging.current = true;
-      const rect = dragRef.current?.getBoundingClientRect();
-      dragStart.current = {
-        x: e.clientX - (rect?.left || 0),
-        y: e.clientY - (rect?.top || 0)
+      dragStartPos.current = {
+        mouseX: e.clientX,
+        mouseY: e.clientY,
+        winX: windowPos.x,
+        winY: windowPos.y
       };
     };
 
@@ -70,12 +74,14 @@ export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose:
     e.preventDefault();
     if (!comment.trim()) return;
     const isAgentOrAdmin = currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR";
-    addActivity(ticket.id, `${isAgentOrAdmin ? "Agent" : "User"} commented: ${comment}`);
+    const userName = currentUser?.name || currentUser?.email?.split("@")[0] || (isAgentOrAdmin ? "Agent" : "User");
+    addActivity(ticket.id, `${userName} (${isAgentOrAdmin ? "Agent" : "User"}) commented: ${comment}`);
     setComment("");
   };
 
 const handleAssignToMe = async () => {
-      addActivity(ticket.id, `Ticket assigned to Agent.`);
+      const userName = currentUser?.name || currentUser?.email?.split("@")[0] || "Agent";
+      addActivity(ticket.id, `Ticket assigned to ${userName}.`);
       await updateTicketStatus(ticket.id, "IN_PROGRESS");
     };
 
@@ -269,25 +275,25 @@ return (
             <h3 className={`text-sm font-medium mb-3 ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Activity & Notes</h3>
             <div className="space-y-3">
               {ticketActivities.length === 0 ? (
-                <p className="text-xs text-neutral-500 italic">No activity yet.</p>
+                <p className={`text-xs italic ${isLightTheme ? "text-gray-500" : "text-neutral-500"}`}>No activity yet.</p>
               ) : (
                 ticketActivities.map((activity) => (
                   <div key={activity.id} className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center shrink-0 border border-white/10">
-                      <span className="text-[10px] font-medium text-neutral-400">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border ${isLightTheme ? "bg-blue-100 border-blue-200" : "bg-neutral-800 border-white/10"}`}>
+                      <span className={`text-[10px] font-medium ${isLightTheme ? "text-blue-700" : "text-neutral-400"}`}>
                         {activity.message.includes("Agent") ? "AG" : "US"}
                       </span>
                     </div>
-                    <div className="flex-1 bg-white/[0.03] border border-white/5 rounded-xl rounded-tl-none p-2">
+                    <div className={`flex-1 border rounded-xl rounded-tl-none p-2 ${isLightTheme ? "bg-gray-50 border-gray-200" : "bg-white/[0.03] border-white/5"}`}>
                       <div className="flex justify-between items-start mb-0.5">
-                        <span className="text-[10px] font-medium text-neutral-300">
+                        <span className={`text-[10px] font-medium ${isLightTheme ? "text-slate-600" : "text-neutral-300"}`}>
                           {activity.message.split(' ')[0]}
                         </span>
-                        <span className="text-[9px] text-neutral-500">
+                        <span className={`text-[9px] ${isLightTheme ? "text-gray-400" : "text-neutral-500"}`}>
                           {formatDistanceToNow(parseISO(activity.timestamp))} ago
                         </span>
                       </div>
-                      <p className="text-xs text-neutral-300">
+                      <p className={`text-xs ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
                         {activity.message.includes("commented:") ? activity.message.split("commented:")[1].trim() : activity.message}
                       </p>
                     </div>
@@ -300,14 +306,14 @@ return (
         </div>
 
         {/* Comment Input */}
-        <div className="p-3 border-t border-white/10 bg-neutral-950/50">
+        <div className={`p-3 border-t ${isLightTheme ? "border-gray-200 bg-gray-50" : "border-white/10 bg-neutral-950/50"}`}>
           <form onSubmit={handleAddComment} className="flex gap-2">
             <input
               type="text"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Add a public note..."
-              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className={`flex-1 border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:border-blue-500 transition-all ${isLightTheme ? "bg-white border-gray-300 text-slate-800 placeholder-gray-400" : "bg-white/5 border-white/10 text-white placeholder-neutral-500"}`}
             />
             <button
               type="submit"
@@ -324,7 +330,7 @@ return (
           className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize opacity-30 hover:opacity-60"
           onMouseDown={handleResize}
         >
-          <GripHorizontal className="w-3 h-3 text-neutral-400" />
+          <GripHorizontal className={`w-3 h-3 ${isLightTheme ? "text-gray-400" : "text-neutral-400"}`} />
         </div>
       </div>
     </div>

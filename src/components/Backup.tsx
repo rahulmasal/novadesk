@@ -17,6 +17,7 @@ export function Backup() {
   const [backupStatus, setBackupStatus] = useState<"idle" | "success" | "error">("idle");
   const [restoreStatus, setRestoreStatus] = useState<"idle" | "success" | "error">("idle");
   const [dbBackupStatus, setDbBackupStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isAdmin = currentUserRole === "ADMINISTRATOR";
 
@@ -55,6 +56,7 @@ export function Backup() {
     if (!isAdmin) return;
     setIsBackingUp(true);
     setDbBackupStatus("idle");
+    setErrorMessage(null);
 
     try {
       const res = await fetch("/api/backup/database", {
@@ -72,10 +74,13 @@ export function Backup() {
         a.click();
         setDbBackupStatus("success");
       } else {
+        const err = await res.json();
+        setErrorMessage(err.error || "Database backup failed");
         setDbBackupStatus("error");
       }
     } catch (e) {
       console.error("DB Backup failed:", e);
+      setErrorMessage("Network error during backup");
       setDbBackupStatus("error");
     } finally {
       setIsBackingUp(false);
@@ -101,7 +106,7 @@ export function Backup() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(data.data || data),
       });
 
       if (res.ok) {
@@ -111,12 +116,12 @@ export function Backup() {
       } else {
         setRestoreStatus("error");
         const err = await res.json();
-        alert(err.error || "Restore failed");
+        setErrorMessage(err.error || "Restore failed");
       }
     } catch (e) {
       console.error("Restore failed:", e);
       setRestoreStatus("error");
-      alert("Failed to parse backup file");
+      setErrorMessage("Failed to parse backup file");
     } finally {
       setIsRestoring(false);
     }
@@ -150,12 +155,12 @@ export function Backup() {
       } else {
         setRestoreStatus("error");
         const err = await res.json();
-        alert(err.error || "Restore failed");
+        setErrorMessage(err.error || "Restore failed");
       }
     } catch (e) {
       console.error("DB Restore failed:", e);
       setRestoreStatus("error");
-      alert("Failed to restore database");
+      setErrorMessage("Failed to restore database");
     } finally {
       setIsRestoring(false);
     }
@@ -252,6 +257,12 @@ if (!isAdmin) {
                 <p className={`mt-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${isLightTheme ? "text-emerald-600" : "text-emerald-400"}`}>
                   ✓ SQL dump generated and downloaded successfully.
                 </p>
+              )}
+
+              {errorMessage && (
+                <div className={`mt-4 p-3 rounded-lg text-sm font-mono max-h-32 overflow-y-auto ${isLightTheme ? "bg-red-50 text-red-700 border border-red-200" : "bg-red-500/10 text-red-400 border border-red-500/20"}`}>
+                  {errorMessage}
+                </div>
               )}
             </div>
           </div>
@@ -357,12 +368,16 @@ if (!isAdmin) {
           </div>
           
           <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
+            {[
+              { date: new Date(Date.now() - 2 * 60 * 60 * 1000), label: "System Export", status: "Success" },
+              { date: new Date(Date.now() - 26 * 60 * 60 * 1000), label: "Database Backup", status: "Success" },
+              { date: new Date(Date.now() - 50 * 60 * 60 * 1000), label: "System Export", status: "Success" },
+            ].map((item, i) => (
               <div key={i} className={`p-3 rounded-lg ${isLightTheme ? "bg-slate-50 border border-slate-200" : "bg-white/5 border border-white/5"}`}>
-                <p className={`text-sm font-medium ${isLightTheme ? "text-heading" : "text-white"}`}>Manual Export</p>
+                <p className={`text-sm font-medium ${isLightTheme ? "text-heading" : "text-white"}`}>{item.label}</p>
                 <div className="flex justify-between items-center mt-1">
-                  <span className={`text-[10px] ${isLightTheme ? "text-slate-400" : "text-neutral-500"}`}>2026-05-0{7-i} 10:24 AM</span>
-                  <span className={`text-[10px] ${isLightTheme ? "text-emerald-600" : "text-emerald-500"}`}>Success</span>
+                  <span className={`text-[10px] ${isLightTheme ? "text-slate-400" : "text-neutral-500"}`}>{item.date.toLocaleDateString()} {item.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className={`text-[10px] ${isLightTheme ? "text-emerald-600" : "text-emerald-500"}`}>{item.status}</span>
                 </div>
               </div>
             ))}

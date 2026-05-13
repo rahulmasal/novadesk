@@ -139,13 +139,13 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className={`rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 ${isLightTheme ? "bg-white border border-gray-200" : "bg-neutral-900 border border-white/10"}`}>
-        <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
-          <h2 className="text-xl font-semibold text-white">
+        <div className={`p-5 border-b flex justify-between items-center ${isLightTheme ? "border-gray-200 bg-gray-50" : "border-white/10 bg-white/[0.02]"}`}>
+          <h2 className={`text-xl font-semibold ${isLightTheme ? "text-slate-800" : "text-white"}`}>
             Create New Ticket
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors text-neutral-400 hover:text-white"
+            className={`p-2 rounded-full transition-colors ${isLightTheme ? "text-gray-500 hover:bg-gray-100" : "hover:bg-white/10 text-neutral-400 hover:text-white"}`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -154,7 +154,7 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
         <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5">
           {isAdminOrAgent && (
             <div className="relative">
-              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+              <label className={`block text-sm font-medium mb-1.5 ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
                 On Behalf Of (User)
               </label>
               <input
@@ -166,10 +166,10 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
                   setShowUserDropdown(true);
                 }}
                 onFocus={() => setShowUserDropdown(true)}
-                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-1 transition-all ${isLightTheme ? "bg-gray-50 border-gray-300 text-slate-800 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500" : "bg-black/40 border-white/10 text-white placeholder-neutral-500 focus:border-blue-500 focus:ring-blue-500"}`}
               />
               {showUserDropdown && userSearch && (
-                <div className="absolute z-10 w-full mt-1 bg-neutral-800 border border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                <div className={`absolute z-10 w-full mt-1 border rounded-lg shadow-xl max-h-48 overflow-y-auto ${isLightTheme ? "bg-white border-gray-200" : "bg-neutral-800 border-white/10"}`}>
                   {allUsers
                     .filter(u => u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
                     .slice(0, 10)
@@ -177,10 +177,10 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
                       <div
                         key={u.id}
                         onClick={() => handleUserSelect(u)}
-                        className="px-4 py-2 hover:bg-blue-500/20 cursor-pointer text-white text-sm border-b border-white/5 last:border-0"
+                        className={`px-4 py-2 cursor-pointer text-sm border-b last:border-0 ${isLightTheme ? "hover:bg-blue-50 text-slate-800 border-gray-100" : "hover:bg-blue-500/20 text-white border-white/5"}`}
                       >
                         <p className="font-medium">{u.name}</p>
-                        <p className="text-xs text-neutral-400">{u.email}</p>
+                        <p className={`text-xs ${isLightTheme ? "text-gray-500" : "text-neutral-400"}`}>{u.email}</p>
                       </div>
                     ))}
                 </div>
@@ -189,7 +189,7 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+            <label className={`block text-sm font-medium mb-1.5 ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
               Subject
             </label>
             <input
@@ -198,22 +198,22 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Brief description of the issue"
-              className={`w-full bg-black/40 border rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:ring-1 transition-all ${errors.title ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-white/10 focus:border-blue-500 focus:ring-blue-500"}`}
+              className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-1 transition-all ${isLightTheme ? "bg-gray-50 border-gray-300 text-slate-800 placeholder-gray-400" : "bg-black/40 border-white/10 text-white placeholder-neutral-500"} ${errors.title ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "focus:border-blue-500 focus:ring-blue-500"}`}
             />
             {errors.title && (
-              <p className="text-xs text-red-400 mt-1">{errors.title}</p>
+              <p className={`text-xs mt-1 ${isLightTheme ? "text-red-600" : "text-red-400"}`}>{errors.title}</p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+              <label className={`block text-sm font-medium mb-1.5 ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as Category)}
-                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none"
+                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-1 focus:border-blue-500 focus:ring-blue-500 transition-all appearance-none ${isLightTheme ? "bg-white border-gray-300 text-slate-800" : "bg-black/40 border-white/10 text-white"}`}
               >
                 <option value="HARDWARE">Hardware</option>
                 <option value="SOFTWARE">Software</option>
@@ -222,13 +222,13 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+              <label className={`block text-sm font-medium mb-1.5 ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
                 Priority
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Priority)}
-                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none"
+                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-1 focus:border-blue-500 focus:ring-blue-500 transition-all appearance-none ${isLightTheme ? "bg-white border-gray-300 text-slate-800" : "bg-black/40 border-white/10 text-white"}`}
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -240,31 +240,31 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+              <label className={`block text-sm font-medium mb-1.5 ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
                 Hostname
               </label>
               <input
                 type="text"
                 readOnly
                 value={hostname}
-                className="w-full bg-white/5 border border-white/5 rounded-lg px-4 py-2.5 text-neutral-400 cursor-not-allowed text-sm"
+                className={`w-full border rounded-lg px-4 py-2.5 cursor-not-allowed text-sm ${isLightTheme ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/5 border-white/5 text-neutral-400"}`}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+              <label className={`block text-sm font-medium mb-1.5 ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
                 Serial Number
               </label>
               <input
                 type="text"
                 readOnly
                 value={laptopSerial}
-                className="w-full bg-white/5 border border-white/5 rounded-lg px-4 py-2.5 text-neutral-400 cursor-not-allowed text-sm"
+                className={`w-full border rounded-lg px-4 py-2.5 cursor-not-allowed text-sm ${isLightTheme ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/5 border-white/5 text-neutral-400"}`}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+            <label className={`block text-sm font-medium mb-1.5 ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
               Description
             </label>
             <textarea
@@ -273,15 +273,15 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Provide detailed information about the issue..."
               rows={4}
-              className={`w-full bg-black/40 border rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:ring-1 transition-all resize-none ${errors.description ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-white/10 focus:border-blue-500 focus:ring-blue-500"}`}
+              className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-1 transition-all resize-none ${isLightTheme ? "bg-gray-50 border-gray-300 text-slate-800 placeholder-gray-400" : "bg-black/40 border-white/10 text-white placeholder-neutral-500"} ${errors.description ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "focus:border-blue-500 focus:ring-blue-500"}`}
             />
             {errors.description && (
-              <p className="text-xs text-red-400 mt-1">{errors.description}</p>
+              <p className={`text-xs mt-1 ${isLightTheme ? "text-red-600" : "text-red-400"}`}>{errors.description}</p>
             )}
           </div>
 
           {errors.submit && (
-            <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
+            <p className={`text-sm border rounded-lg px-4 py-2 ${isLightTheme ? "text-red-600 bg-red-50 border-red-200" : "text-red-400 bg-red-500/10 border-red-500/20"}`}>
               {errors.submit}
             </p>
           )}
@@ -289,7 +289,7 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
           <div className="pt-2 flex items-center justify-between">
             <button
               type="button"
-              className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors"
+              className={`flex items-center gap-2 text-sm transition-colors ${isLightTheme ? "text-gray-500 hover:text-slate-700" : "text-neutral-400 hover:text-white"}`}
             >
               <Paperclip className="w-4 h-4" />
               Attach file

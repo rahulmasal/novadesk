@@ -409,7 +409,8 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                     checked={selectedUsers.size === paginatedUsers.length && paginatedUsers.length > 0}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setSelectedUsers(new Set(paginatedUsers.map(u => u.id)));
+                        const currentUserId = currentUser?.id;
+                        setSelectedUsers(new Set(paginatedUsers.filter(u => u.id !== currentUserId).map(u => u.id)));
                       } else {
                         setSelectedUsers(new Set());
                       }
@@ -457,7 +458,9 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                       <input
                         type="checkbox"
                         checked={selectedUsers.has(user.id)}
+                        disabled={user.id === currentUser?.id}
                         onChange={(e) => {
+                          if (user.id === currentUser?.id) return;
                           const newSelected = new Set(selectedUsers);
                           if (e.target.checked) {
                             newSelected.add(user.id);
@@ -467,7 +470,7 @@ bob.wilson@company.com,pass123,Bob Wilson,Agent,Network Team,WORKSTATION-01,SN11
                           setSelectedUsers(newSelected);
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        className={`w-4 h-4 rounded ${isLightTheme ? "border-gray-300 bg-white" : "border-white/20 bg-white/5"} checked:bg-blue-500 checked:border-blue-500 focus:ring-1 focus:ring-blue-500/50`}
+                        className={`w-4 h-4 rounded ${isLightTheme ? "border-gray-300 bg-white" : "border-white/20 bg-white/5"} checked:bg-blue-500 checked:border-blue-500 focus:ring-1 focus:ring-blue-500/50 ${user.id === currentUser?.id ? "cursor-not-allowed opacity-50" : ""}`}
                       />
                     </td>
                     <td className="p-4">
