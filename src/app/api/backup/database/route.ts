@@ -345,78 +345,96 @@ async function restoreViaPrisma(lines: string[]) {
   try {
     const statements = parseSqlInserts(lines);
 
-    await prisma.$transaction(async (tx) => {
-      await tx.comment.deleteMany();
-      await tx.auditLog.deleteMany();
-      await tx.attachment.deleteMany();
-      await tx.ticket.deleteMany();
-      await tx.knowledgeBaseArticle.deleteMany();
-      await tx.systemConfig.deleteMany();
-      await tx.user.deleteMany();
+    // Clear existing data
+    await prisma.comment.deleteMany();
+    await prisma.auditLog.deleteMany();
+    await prisma.attachment.deleteMany();
+    await prisma.ticket.deleteMany();
+    await prisma.knowledgeBaseArticle.deleteMany();
+    await prisma.systemConfig.deleteMany();
+    await prisma.user.deleteMany();
 
-      for (const stmt of statements.users) {
-        const data = filterFields(stmt, ['id', 'email', 'password', 'name', 'role', 'department'], ['hostname', 'laptopSerial', 'createdAt', 'updatedAt']);
-        if (data.createdAt) data.createdAt = new Date(data.createdAt as string);
-        if (data.updatedAt) data.updatedAt = new Date(data.updatedAt as string);
-        await tx.user.create({ data: data as Parameters<typeof tx.user.create>[0]['data'] });
-      }
-
-      const adminUserId = statements.users.find(u => u.role === 'ADMINISTRATOR')?.id || statements.users[0]?.id;
-      if (!adminUserId) {
-        const fallback = await tx.user.create({
-          data: { id: 'fallback-admin', email: 'admin@novadesk.local', password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqM5F5L4W6', name: 'System Admin', role: 'ADMINISTRATOR', department: 'IT' }
-        });
-        statements.tickets.forEach(t => { t.createdById = fallback.id; });
-      }
-
-      const existingUserIds = new Set((await tx.user.findMany({ select: { id: true } })).map(u => u.id));
-      
-      for (const stmt of statements.tickets) {
-        const createdById = String(stmt.createdById);
-        const finalCreatedById = existingUserIds.has(createdById) ? createdById : adminUserId;
-        
-        const data = filterFields(stmt, ['id', 'title', 'description', 'priority', 'category', 'status', 'dueDate', 'createdById', 'username', 'department'], ['createdAt', 'updatedAt', 'assignedTo', 'hostname', 'laptopSerial']);
-        if (data.createdAt) data.createdAt = new Date(data.createdAt as string);
-        if (data.updatedAt) data.updatedAt = new Date(data.updatedAt as string);
-        if (data.dueDate) data.dueDate = new Date(data.dueDate as string);
-        
-        const ticketData = {
-          id: String(data.id),
-          title: String(data.title),
-          description: String(data.description),
-          priority: String(data.priority),
-          category: String(data.category),
-          status: String(data.status),
-          dueDate: data.dueDate as Date,
-          createdById: finalCreatedById,
-          username: String(data.username),
-          department: String(data.department),
-          assignedTo: data.assignedTo ? String(data.assignedTo) : null,
-          hostname: data.hostname ? String(data.hostname) : null,
-          laptopSerial: data.laptopSerial ? String(data.laptopSerial) : null,
-          createdAt: data.createdAt as Date || new Date(),
-          updatedAt: data.updatedAt as Date || new Date(),
-        };
-        await tx.ticket.create({ data: ticketData as Parameters<typeof tx.ticket.create>[0]['data'] });
-      }
-
-      for (const stmt of statements.articles) {
-        const data = filterFields(stmt, ['id', 'title', 'content', 'category'], ['createdAt', 'updatedAt']);
-        if (data.createdAt) data.createdAt = new Date(data.createdAt as string);
-        if (data.updatedAt) data.updatedAt = new Date(data.updatedAt as string);
-        await tx.knowledgeBaseArticle.create({ data: data as Parameters<typeof tx.knowledgeBaseArticle.create>[0]['data'] });
-      }
-
-      for (const stmt of statements.config) {
-        const data = filterFields(stmt, ['key', 'value'], ['id', 'createdAt', 'updatedAt']);
-        await tx.systemConfig.upsert({
-          where: { key: data.key as string },
-          update: { value: data.value as string },
-          create: { key: data.key as string, value: data.value as string },
-        });
-      }
+    // Restore users in batches
+    const userData = statements.users.map((stmt) => {
+      const d: Record<string, unknown> = filterFields(stmt, ['id', 'email', 'password', 'name', 'role', 'department'], ['hostname', 'laptopSerial', 'createdAt', 'updatedAt']);
+      if (d.createdAt) d.createdAt = new Date(d.createdAt as string);
+      if (d.updatedAt) d.updatedAt = new Date(d.updatedAt as string);
+      return {
+        id: String(d.id),
+        email: String(d.email),
+        password: String(d.password),
+        name: String(d.name),
+        role: String(d.role),
+        department: String(d.department),
+        hostname: d.hostname ? String(d.hostname) : null,
+        laptopSerial: d.laptopSerial ? String(d.laptopSerial) : null,
+        createdAt: d.createdAt as Date || new Date(),
+        updatedAt: d.updatedAt as Date || new Date(),
+      };
     });
+    await prisma.user.createMany({ data: userData as any });
 
+    // Get admin user id for ticket assignment
+    const adminUserId = statements.users.find(u => u.role === 'ADMINISTRATOR')?.id || statements.users[0]?.id;
+    const existingUserIds = new Set((await prisma.user.findMany({ select: { id: true } })).map(u => u.id));
+
+    // Restore tickets in batches
+    const ticketData = statements.tickets.map((stmt) => {
+      const d: Record<string, unknown> = filterFields(stmt, ['id', 'title', 'description', 'priority', 'category', 'status', 'dueDate', 'createdById', 'username', 'department'], ['createdAt', 'updatedAt', 'assignedTo', 'hostname', 'laptopSerial']);
+      if (d.createdAt) d.createdAt = new Date(d.createdAt as string);
+      if (d.updatedAt) d.updatedAt = new Date(d.updatedAt as string);
+      if (d.dueDate) d.dueDate = new Date(d.dueDate as string);
+      
+      const createdById = String(stmt.createdById);
+      const finalCreatedById = existingUserIds.has(createdById) ? createdById : (adminUserId as string);
+      
+      return {
+        id: String(d.id),
+        title: String(d.title),
+        description: String(d.description),
+        priority: d.priority as "LOW" | "MEDIUM" | "HIGH" | "URGENT",
+        category: d.category as "HARDWARE" | "SOFTWARE" | "NETWORK" | "ACCESS",
+        status: d.status as "NEW" | "IN_PROGRESS" | "PENDING_VENDOR" | "RESOLVED" | "CLOSED",
+        dueDate: d.dueDate as Date,
+        createdById: finalCreatedById,
+        username: String(d.username),
+        department: String(d.department),
+        assignedTo: d.assignedTo ? String(d.assignedTo) : null,
+        hostname: d.hostname ? String(d.hostname) : null,
+        laptopSerial: d.laptopSerial ? String(d.laptopSerial) : null,
+        createdAt: d.createdAt as Date || new Date(),
+        updatedAt: d.updatedAt as Date || new Date(),
+      };
+    });
+    await prisma.ticket.createMany({ data: ticketData as any });
+
+    // Restore articles in batches
+    const userId = adminUserId || 'system';
+    const articleData = statements.articles.map((stmt) => {
+      const d: Record<string, unknown> = filterFields(stmt, ['id', 'title', 'content', 'category', 'createdBy'], ['createdAt', 'updatedAt']);
+      if (d.createdAt) d.createdAt = new Date(d.createdAt as string);
+      if (d.updatedAt) d.updatedAt = new Date(d.updatedAt as string);
+      return {
+        id: String(d.id),
+        title: String(d.title),
+        content: String(d.content),
+        category: String(d.category),
+        createdBy: d.createdBy ? String(d.createdBy) : userId,
+        createdAt: d.createdAt as Date || new Date(),
+        updatedAt: d.updatedAt as Date || new Date(),
+      };
+    });
+    await prisma.knowledgeBaseArticle.createMany({ data: articleData as any });
+
+    // Restore config
+    for (const stmt of statements.config) {
+      const d = filterFields(stmt, ['key', 'value'], ['id', 'createdAt', 'updatedAt']);
+      await prisma.systemConfig.upsert({
+        where: { key: d.key as string },
+        update: { value: d.value as string },
+        create: { key: d.key as string, value: d.value as string },
+      });
+    }
     console.log(`[DB RESTORE POST] Restored ${statements.users.length} users, ${statements.tickets.length} tickets`);
     return NextResponse.json({ message: "Database restored successfully" });
   } catch (error) {
