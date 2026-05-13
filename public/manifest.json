@@ -8,6 +8,20 @@
   "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
   "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "1024x1024",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
   "screenshots": [],
   "related_applications": [],
   "prefer_related_applications": false

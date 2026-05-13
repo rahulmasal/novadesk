@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   description: "Modern IT Support Ticket Dashboard",
   manifest: "/manifest.json",
   applicationName: "NovaDesk",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
