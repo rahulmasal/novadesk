@@ -26,6 +26,8 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=prisma-generator /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=prisma-generator /app/node_modules/@prisma ./node_modules/@prisma
+COPY package.json ./
 COPY . .
 
 RUN npm run build
@@ -39,10 +41,14 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
+# Copy standalone build output
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+
+# Copy package.json for production deps
+COPY --from=builder /app/node_modules ./node_modules
 
 USER nextjs
 
