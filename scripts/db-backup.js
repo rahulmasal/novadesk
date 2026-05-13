@@ -81,8 +81,12 @@ async function generatePrismaBackup() {
       select: { id: true, email: true, name: true, role: true, department: true, hostname: true, laptopSerial: true, createdAt: true, updatedAt: true }
     });
     
-    const tickets = await prisma.ticket.findMany({
-      include: { comments: true, attachments: true, auditLogs: true }
+const tickets = await prisma.ticket.findMany({
+      include: {
+        comments: true,
+        attachments: true,
+        auditLogs: true
+      }
     });
     
     const knowledgeBase = await prisma.knowledgeBaseArticle.findMany();

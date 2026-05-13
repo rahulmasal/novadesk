@@ -52,59 +52,86 @@ export async function POST(req: Request) {
       password: (user.password as string) || defaultPassword,
       name: user.name,
       role: user.role,
-      department: user.department,
-      hostname: user.hostname,
-      laptopSerial: user.laptopSerial,
+      department: user.department || "General",
+      hostname: user.hostname || null,
+      laptopSerial: user.laptopSerial || null,
       createdAt: new Date(user.createdAt as string),
       updatedAt: user.updatedAt ? new Date(user.updatedAt as string) : new Date(),
     }));
     await prisma.user.createMany({ data: userData });
 
-    // Restore Tickets in batches
-    const ticketData = data.tickets.map((ticket: Record<string, unknown>) => ({
-      id: ticket.id,
-      title: ticket.title,
-      description: ticket.description,
-      priority: ticket.priority,
-      category: ticket.category,
-      status: ticket.status,
-      dueDate: new Date(ticket.dueDate as string),
-      createdAt: new Date(ticket.createdAt as string),
-      createdById: ticket.createdById,
-      assignedTo: ticket.assignedTo,
-      username: ticket.username,
-      hostname: ticket.hostname,
-      laptopSerial: ticket.laptopSerial,
-      department: ticket.department,
-    }));
-    await prisma.ticket.createMany({ data: ticketData });
+// Restore Tickets in batches
+     for (const ticket of data.tickets) {
+       const ticketData = {
+         id: ticket.id,
+         title: ticket.title,
+         description: ticket.description,
+         priority: ticket.priority,
+         category: ticket.category,
+         status: ticket.status,
+         dueDate: new Date(ticket.dueDate as string),
+         createdAt: new Date(ticket.createdAt as string),
+         updatedAt: ticket.updatedAt ? new Date(ticket.updatedAt as string) : new Date(),
+         createdById: ticket.createdById,
+         assignedTo: ticket.assignedTo || null,
+         username: ticket.username,
+         hostname: ticket.hostname || null,
+         laptopSerial: ticket.laptopSerial || null,
+         department: ticket.department || "General",
+       };
+       await prisma.ticket.create({ data: ticketData });
 
-    // Restore Comments if present
-    if (data.comments?.length) {
-      const commentData = data.comments.map((comment: Record<string, unknown>) => ({
-        id: comment.id,
-        content: comment.content,
-        ticketId: comment.ticketId,
-        authorId: comment.authorId,
-        createdAt: new Date(comment.createdAt as string),
-      }));
-      await prisma.comment.createMany({ data: commentData });
-    }
+       // Restore nested comments if present
+       if (ticket.comments?.length) {
+         for (const comment of ticket.comments) {
+           await prisma.comment.create({
+             data: {
+               id: comment.id,
+               content: comment.content,
+               ticketId: ticket.id,
+               authorId: comment.authorId,
+               createdAt: new Date(comment.createdAt as string),
+             }
+           });
+         }
+       }
 
-    // Restore Audit Logs if present
-    if (data.auditLogs?.length) {
-      const auditLogData = data.auditLogs.map((log: Record<string, unknown>) => ({
-        id: log.id,
-        ticketId: log.ticketId,
-        userId: log.userId,
-        action: log.action,
-        oldValue: log.oldValue,
-        newValue: log.newValue,
-        details: log.details,
-        createdAt: new Date(log.createdAt as string),
-      }));
-      await prisma.auditLog.createMany({ data: auditLogData });
-    }
+       // Restore nested audit logs if present
+       if (ticket.auditLogs?.length) {
+         for (const log of ticket.auditLogs) {
+           await prisma.auditLog.create({
+             data: {
+               id: log.id,
+               ticketId: ticket.id,
+               userId: log.userId,
+               action: log.action,
+               oldValue: log.oldValue,
+               newValue: log.newValue,
+               details: log.details,
+               createdAt: new Date(log.createdAt as string),
+             }
+           });
+         }
+       }
+
+       // Restore nested attachments if present
+       if (ticket.attachments?.length) {
+         for (const att of ticket.attachments) {
+           await prisma.attachment.create({
+             data: {
+               id: att.id,
+               filename: att.filename,
+               url: att.url,
+               mimeType: att.mimeType,
+               size: att.size,
+               ticketId: ticket.id,
+               uploadedBy: att.uploadedBy,
+               createdAt: new Date(att.createdAt as string),
+             }
+           });
+         }
+       }
+     }
 
     // Restore Config
     if (data.config?.length) {

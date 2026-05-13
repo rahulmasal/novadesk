@@ -16,6 +16,13 @@ Rules:
 
 ## Progress
 ### Done
+- Added file attachment support to TicketForm for creating tickets with initial files
+- Fixed JSON backup/restore format mismatch - backup now includes all required user/ticket fields
+- Fixed JSON backup restore to handle nested comments and auditLogs from ticket objects
+- Fixed backup API to include password, hostname, laptopSerial, updatedAt for users
+- Fixed backup API to include createdById, assignedTo, username, department for tickets
+- Fixed Backup component to properly wrap restored data in { data: ... } format
+- Fixed `any` types in database backup route by using Prisma generics
 - Added custom column selection for reports with 14 available columns
 - Added report type filtering (All, By Status, By Priority, By Category, By Department)
 - Fixed SQL restore parser to handle multi-row INSERT statements
@@ -86,3 +93,6 @@ Rules:
 - `src/lib/ldap-auth.ts`: LDAP authentication module with config and user sync
 - `src/app/api/auth/login/route.ts`: Login route with LDAP provider support
 - `src/components/Login.tsx`: Login component with auth provider toggle
+- `src/app/api/backup/route.ts`: Backup API with complete user/ticket fields
+- `src/app/api/backup/restore/route.ts`: Restore API handling nested comments/auditLogs
+- `src/components/Backup.tsx`: Backup component with proper data wrapping

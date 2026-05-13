@@ -1,7 +1,5 @@
 /**
- * ============================================================================
  * ATTACHMENTS API ROUTE - File Upload Management
- * ============================================================================
  *
  * @module /api/attachments/route
  */
@@ -11,17 +9,16 @@ import type { NextRequest } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
-import { supabaseAdmin, STORAGE_BUCKETS, getAttachmentUrl } from "@/lib/supabase";
+import { supabaseAdmin, STORAGE_BUCKETS, getAttachmentUrl, getLocalAttachmentUrl, isSupabaseConfigured } from "@/lib/supabase";
+import { writeFile, mkdir, unlink } from "fs/promises";
+import { join, dirname } from "path";
 
 export const dynamic = 'force-dynamic';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 const ALLOWED_MIME_TYPES = [
-  "image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf",
-  "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/plain", "text/csv", "application/zip",
+  "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml",
 ];
 
 /**
@@ -102,18 +99,34 @@ export async function POST(req: NextRequest) {
     const uniqueFilename = `${ticketId}/${uuidv4()}.${fileExt}`;
 
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from(STORAGE_BUCKETS.ATTACHMENTS)
-      .upload(uniqueFilename, buffer, { contentType: file.type, upsert: false });
+    let fileUrl: string;
 
-    if (uploadError) {
-      console.error("Storage upload error:", uploadError);
-      return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    if (isSupabaseConfigured()) {
+      const buffer = Buffer.from(arrayBuffer);
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from(STORAGE_BUCKETS.ATTACHMENTS)
+        .upload(uniqueFilename, buffer, { contentType: file.type, upsert: false });
+
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+      }
+      fileUrl = getAttachmentUrl(uniqueFilename);
+    } else {
+      // Local file storage for non-Supabase setups
+      try {
+        const uploadDir = join(process.cwd(), "uploads", uniqueFilename);
+        const dirPath = dirname(uploadDir);
+        await mkdir(dirPath, { recursive: true });
+        await writeFile(uploadDir, new Uint8Array(arrayBuffer));
+        fileUrl = getLocalAttachmentUrl(uniqueFilename);
+      } catch (writeErr: unknown) {
+        const errMsg = writeErr instanceof Error ? writeErr.message : String(writeErr);
+        console.error("[ATTACHMENTS] Local file write error:", writeErr);
+        return NextResponse.json({ error: `Failed to save file locally: ${errMsg}` }, { status: 500 });
+      }
     }
-
-    const fileUrl = getAttachmentUrl(uniqueFilename);
 
     const attachment = await prisma.attachment.create({
       data: {
@@ -238,9 +251,19 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const urlPath = attachment.url.split(`${STORAGE_BUCKETS.ATTACHMENTS}/`)[1];
-    if (urlPath) {
-      await supabaseAdmin.storage.from(STORAGE_BUCKETS.ATTACHMENTS).remove([urlPath]);
+    if (isSupabaseConfigured()) {
+      const urlPath = attachment.url.split(`${STORAGE_BUCKETS.ATTACHMENTS}/`)[1];
+      if (urlPath) {
+        await supabaseAdmin.storage.from(STORAGE_BUCKETS.ATTACHMENTS).remove([urlPath]);
+      }
+    } else {
+      // Delete local file
+      const filePath = join(process.cwd(), "uploads", attachment.url.split("/api/attachments/file/")[1]);
+      try {
+        await unlink(filePath);
+      } catch (err) {
+        console.error("Failed to delete local file:", err);
+      }
     }
 
     await prisma.attachment.delete({ where: { id } });

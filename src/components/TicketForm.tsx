@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTicketStore, Priority, Category, User } from "@/lib/store";
 import { useSettings } from "@/contexts/SettingsContext";
-import { Paperclip, Send, X, Loader2 } from "lucide-react";
+import { Send, X, Loader2, Upload } from "lucide-react";
 
 /**
  * TicketForm - Modal form for creating new tickets with priority, category, and advanced user fields
@@ -24,13 +24,15 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
    const [category, setCategory] = useState<Category>("SOFTWARE");
    const [isSubmitting, setIsSubmitting] = useState(false);
 
-   const [targetUser, setTargetUser] = useState<User | null>(null);
-   const [hostname, setHostname] = useState("");
-   const [laptopSerial, setLaptopSerial] = useState("");
-   const [department, setDepartment] = useState("");
-   const [allUsers, setLocalAllUsers] = useState<User[]>([]);
-   const [showUserDropdown, setShowUserDropdown] = useState(false);
-   const [userSearch, setUserSearch] = useState("");
+const [targetUser, setTargetUser] = useState<User | null>(null);
+    const [hostname, setHostname] = useState("");
+    const [laptopSerial, setLaptopSerial] = useState("");
+    const [department, setDepartment] = useState("");
+    const [allUsers, setLocalAllUsers] = useState<User[]>([]);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [userSearch, setUserSearch] = useState("");
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
    useEffect(() => {
      if (currentUser) {
@@ -49,6 +51,29 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
    }>({});
 
    const isAdminOrAgent = currentUser?.role === "ADMINISTRATOR" || currentUser?.role === "AGENT";
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      setSelectedFiles(prev => [...prev, ...files]);
+    };
+
+const uploadAttachments = async (ticketId: string) => {
+        for (const file of selectedFiles) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("ticketId", ticketId);
+
+          const res = await fetch("/api/attachments", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${authToken}` },
+            body: formData,
+          });
+          if (!res.ok) {
+            console.error("[TicketForm] Failed to upload attachment:", file.name, res.status);
+          }
+        }
+        setSelectedFiles([]);
+      };
 
    useEffect(() => {
      if (isAdminOrAgent && authToken) {
@@ -116,11 +141,13 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
           body: JSON.stringify(ticketData),
         });
 
-        if (res.ok) {
-          const ticket = await res.json();
-          addTicket(ticket);
-          onClose();
-        } else {
+if (res.ok) {
+           const ticket = await res.json();
+           // Upload attachments after ticket is created
+           await uploadAttachments(ticket.id);
+           addTicket(ticket);
+           onClose();
+         } else {
           const data = await res.json().catch(() => ({}));
           console.error("[TicketForm] Server error:", res.status, data);
           setErrors({ submit: data.error || "Failed to create ticket. Please check your input." });
@@ -286,27 +313,52 @@ export function TicketForm({ onClose }: { onClose: () => void }) {
             </p>
           )}
 
-          <div className="pt-2 flex items-center justify-between">
-            <button
-              type="button"
-              className={`flex items-center gap-2 text-sm transition-colors ${isLightTheme ? "text-gray-500 hover:text-slate-700" : "text-neutral-400 hover:text-white"}`}
-            >
-              <Paperclip className="w-4 h-4" />
-              Attach file
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white px-5 py-2.5 rounded-lg font-medium transition-all hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] disabled:shadow-none"
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-              {isSubmitting ? "Submitting..." : "Submit Ticket"}
-            </button>
-          </div>
+<div className="pt-2 flex items-center justify-between">
+             <div className="flex items-center gap-2">
+               <input
+                 type="file"
+                 ref={fileInputRef}
+                 onChange={handleFileSelect}
+                 multiple
+                 className="hidden"
+                 accept="image/*"
+               />
+               <button
+                 type="button"
+                 onClick={() => fileInputRef.current?.click()}
+                 className={`flex items-center gap-2 text-sm transition-colors ${isLightTheme ? "text-gray-500 hover:text-slate-700" : "text-neutral-400 hover:text-white"}`}
+               >
+                 <Upload className="w-4 h-4" />
+                 Attach file
+                 {selectedFiles.length > 0 && (
+                   <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${isLightTheme ? "bg-blue-100 text-blue-700" : "bg-blue-500/20 text-blue-400"}`}>
+                     {selectedFiles.length}
+                   </span>
+                 )}
+               </button>
+               {selectedFiles.length > 0 && (
+                 <div className={`flex flex-wrap gap-1 mt-1 ${isLightTheme ? "text-slate-600" : "text-neutral-400"}`}>
+                   {selectedFiles.map((f, i) => (
+                     <span key={i} className={`text-xs truncate max-w-32 ${isLightTheme ? "bg-gray-100 px-1.5 py-0.5 rounded" : "bg-white/10 px-1.5 py-0.5 rounded"}`}>
+                       {f.name}
+                     </span>
+                   ))}
+                 </div>
+               )}
+             </div>
+             <button
+               type="submit"
+               disabled={isSubmitting}
+               className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white px-5 py-2.5 rounded-lg font-medium transition-all hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] disabled:shadow-none"
+             >
+               {isSubmitting ? (
+                 <Loader2 className="w-4 h-4 animate-spin" />
+               ) : (
+                 <Send className="w-4 h-4" />
+               )}
+               {isSubmitting ? "Submitting..." : "Submit Ticket"}
+             </button>
+           </div>
         </form>
       </div>
     </div>

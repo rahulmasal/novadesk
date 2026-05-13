@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 export const dynamic = 'force-dynamic';
 
@@ -372,7 +372,7 @@ async function restoreViaPrisma(lines: string[]) {
         updatedAt: d.updatedAt as Date || new Date(),
       };
     });
-    await prisma.user.createMany({ data: userData as any });
+    await prisma.user.createMany({ data: userData as Prisma.UserCreateManyInput[] });
 
     // Get admin user id for ticket assignment
     const adminUserId = statements.users.find(u => u.role === 'ADMINISTRATOR')?.id || statements.users[0]?.id;
@@ -406,7 +406,7 @@ async function restoreViaPrisma(lines: string[]) {
         updatedAt: d.updatedAt as Date || new Date(),
       };
     });
-    await prisma.ticket.createMany({ data: ticketData as any });
+    await prisma.ticket.createMany({ data: ticketData as Prisma.TicketCreateManyInput[] });
 
     // Restore articles in batches
     const userId = adminUserId || 'system';
@@ -424,7 +424,7 @@ async function restoreViaPrisma(lines: string[]) {
         updatedAt: d.updatedAt as Date || new Date(),
       };
     });
-    await prisma.knowledgeBaseArticle.createMany({ data: articleData as any });
+    await prisma.knowledgeBaseArticle.createMany({ data: articleData as Prisma.KnowledgeBaseArticleCreateManyInput[] });
 
     // Restore config
     for (const stmt of statements.config) {

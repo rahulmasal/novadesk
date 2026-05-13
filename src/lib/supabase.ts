@@ -36,6 +36,16 @@ export function getAttachmentUrl(filename: string): string {
 }
 
 /**
+ * Gets a local file URL for attachments stored on disk
+ *
+ * @param filename - The name of the file stored locally
+ * @returns URL path for the local attachment
+ */
+export function getLocalAttachmentUrl(filename: string): string {
+  return `/api/attachments/file/${filename}`;
+}
+
+/**
  * Creates a signed upload URL for a file attachment
  *
  * @param filename - The name of the file to upload

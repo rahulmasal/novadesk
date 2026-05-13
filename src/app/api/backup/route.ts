@@ -27,10 +27,14 @@ export async function GET() {
       select: {
         id: true,
         email: true,
+        password: true,
         name: true,
         role: true,
         department: true,
+        hostname: true,
+        laptopSerial: true,
         createdAt: true,
+        updatedAt: true,
       }
     });
 
@@ -38,6 +42,7 @@ export async function GET() {
       include: {
         comments: true,
         auditLogs: true,
+        attachments: true,
       }
     });
 

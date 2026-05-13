@@ -10,7 +10,7 @@ import { useState, useRef, useEffect } from "react";
 import { z } from "zod";
 import { useTicketStore } from "@/lib/store";
 import { useSettings } from "@/contexts/SettingsContext";
-import { X, Send, UserCheck, Clock, Trash2, ChevronDown, GripHorizontal } from "lucide-react";
+import { X, Send, UserCheck, Clock, Trash2, ChevronDown, GripHorizontal, Paperclip } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { StatusEnum } from "@/lib/schemas";
 
@@ -25,7 +25,7 @@ const STATUS_OPTIONS: { value: StatusType; label: string; color: string }[] = [
 ];
 
 export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
-   const { tickets, activities, currentUserRole, currentUser, updateTicketStatus, addActivity, deleteTicket, allUsers } = useTicketStore();
+   const { tickets, activities, currentUserRole, currentUser, updateTicketStatus, addActivity, deleteTicket, allUsers, authToken } = useTicketStore();
    const { settings } = useSettings();
    const isLightTheme = settings.appearance.theme === "light";
     const [comment, setComment] = useState("");
@@ -34,10 +34,43 @@ export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose:
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [windowSize, setWindowSize] = useState({ width: 480, height: 600 });
     const [windowPos, setWindowPos] = useState({ x: window.innerWidth / 2 - 240, y: window.innerHeight / 4 });
+    const [attachments, setAttachments] = useState<Array<{ id: string; filename: string; url: string; mimeType: string; size: number; createdAt: string }>>([]);
+    const [loadingAttachments, setLoadingAttachments] = useState(false);
     
     const dragRef = useRef<HTMLDivElement>(null);
     const isDragging = useRef(false);
     const dragStartPos = useRef({ mouseX: 0, mouseY: 0, winX: 0, winY: 0 });
+
+useEffect(() => {
+      if (!authToken || !ticketId) {
+        console.log("[TicketDetail] Skipping attachment fetch - missing token or ticketId", { hasToken: !!authToken, ticketId });
+        return;
+      }
+      
+      const fetchAttachments = async () => {
+        setLoadingAttachments(true);
+        try {
+          const res = await fetch(`/api/attachments?ticketId=${ticketId}`, {
+            headers: { Authorization: `Bearer ${authToken}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            console.log("[TicketDetail] Attachments fetched:", data.length);
+            setAttachments(data);
+          } else {
+            console.error("[TicketDetail] Attachments fetch failed:", res.status, await res.text());
+            setAttachments([]);
+          }
+        } catch (err) {
+          console.error("Failed to fetch attachments:", err);
+          setAttachments([]);
+        } finally {
+          setLoadingAttachments(false);
+        }
+      };
+      
+      fetchAttachments();
+    }, [ticketId, authToken]);
 
     useEffect(() => {
       const handleMouseMove = (e: MouseEvent) => {
@@ -198,6 +231,34 @@ return (
               {ticket.description}
             </div>
           </div>
+
+           {/* Attachments */}
+           <div>
+             <h3 className={`text-sm font-medium mb-2 flex items-center gap-1.5 ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>
+               <Paperclip className="w-3.5 h-3.5" />
+               Attachments
+             </h3>
+             {loadingAttachments ? (
+               <p className={`text-xs ${isLightTheme ? "text-gray-500" : "text-neutral-500"}`}>Loading attachments...</p>
+             ) : attachments.length === 0 ? (
+               <p className={`text-xs ${isLightTheme ? "text-gray-500" : "text-neutral-500"}`}>No attachments</p>
+             ) : (
+               <div className="flex flex-wrap gap-2">
+                 {attachments.map((att) => (
+                   <a
+                     key={att.id}
+                     href={att.url}
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors border ${isLightTheme ? "bg-gray-50 border-gray-200 text-slate-700 hover:bg-gray-100" : "bg-white/5 border-white/10 text-neutral-300 hover:bg-white/10"}`}
+                   >
+                     <img src={att.url} alt={att.filename} className="w-8 h-8 object-cover rounded" />
+                     <span className="truncate max-w-32">{att.filename}</span>
+                   </a>
+                 ))}
+               </div>
+             )}
+           </div>
 
            {/* Quick Actions (Agent/Admin) */}
            {(currentUserRole === "AGENT" || currentUserRole === "ADMINISTRATOR") && (

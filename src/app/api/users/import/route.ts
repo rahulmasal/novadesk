@@ -101,6 +101,9 @@ export async function POST(req: NextRequest) {
     }
 
     const validRoles = ["ADMINISTRATOR", "AGENT", "END_USER"];
+    const roleAliases: Record<string, string> = {
+      "ADMIN": "ADMINISTRATOR",
+    };
     const results = {
       imported: 0,
       skipped: 0,
@@ -127,7 +130,9 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      if (!validRoles.includes(role.toUpperCase())) {
+      const upperRole = role.toUpperCase().replace(/\s+/g, "_");
+      const normalizedRole = roleAliases[upperRole] || (validRoles.includes(upperRole) ? upperRole : null);
+      if (!normalizedRole) {
         results.errors.push(
           `Row ${rowNumber}: Invalid role "${role}" (must be: ${validRoles.join(", ")})`,
         );
@@ -154,7 +159,7 @@ export async function POST(req: NextRequest) {
           email: email.toLowerCase(),
           password: hashedPassword,
           name,
-          role: role.toUpperCase() as "ADMINISTRATOR" | "AGENT" | "END_USER",
+          role: normalizedRole as "ADMINISTRATOR" | "AGENT" | "END_USER",
           department,
         },
       });

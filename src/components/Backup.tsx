@@ -109,7 +109,7 @@ export function Backup() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(data.data || data),
+        body: JSON.stringify({ data: data.data || data }),
       });
 
       if (res.ok) {
@@ -119,6 +119,7 @@ export function Backup() {
       } else {
         setJsonRestoreStatus("error");
         const err = await res.json();
+        console.error("[BACKUP RESTORE] API error response:", err);
         setErrorMessage(err.error || "Restore failed");
       }
     } catch (e) {
