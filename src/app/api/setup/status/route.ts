@@ -11,6 +11,11 @@
 
 import { NextResponse } from "next/server";
 
+/**
+ * GET /api/setup/status - Check if initial setup is completed
+ * 
+ * @returns Setup status with needsSetup flag
+ */
 export async function GET() {
   console.log(`[SETUP STATUS GET] Checking setup status`);
 

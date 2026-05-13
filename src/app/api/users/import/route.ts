@@ -25,6 +25,10 @@ export const dynamic = 'force-dynamic';
 
 const BCRYPT_SALT_ROUNDS = 12;
 
+/**
+ * Parses CSV text into a 2D array of strings
+ * Handles quoted fields and escaped quotes
+ */
 function parseCSV(csvText: string): string[][] {
   const lines = csvText.trim().split("\n");
   const result: string[][] = [];

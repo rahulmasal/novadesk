@@ -12,6 +12,12 @@ import bcrypt from "bcryptjs";
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * POST /api/backup/restore - Restore system from JSON backup
+ * 
+ * @param req - JSON body with backup data
+ * @returns Success message
+ */
 export async function POST(req: Request) {
   console.log(`[BACKUP RESTORE POST] Starting data restore`);
 

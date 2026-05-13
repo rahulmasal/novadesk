@@ -11,6 +11,11 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/backup - Generate system backup (JSON export)
+ * 
+ * @returns JSON file with users, tickets, and config data
+ */
 export async function GET() {
   console.log(`[BACKUP GET] Generating system backup`);
 

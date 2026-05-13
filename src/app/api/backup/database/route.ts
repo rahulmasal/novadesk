@@ -16,6 +16,12 @@ export const dynamic = 'force-dynamic';
 
 const prisma = new PrismaClient();
 
+/**
+ * GET /api/backup/database - Generate PostgreSQL database backup
+ * Uses pg_dump if available, falls back to Prisma JSON export
+ * 
+ * @returns SQL dump file for download
+ */
 export async function GET() {
   console.log(`[DB BACKUP GET] Generating PostgreSQL SQL dump`);
 
@@ -54,6 +60,11 @@ export async function GET() {
   }
 }
 
+/**
+ * Checks if pg_dump command is available on the system
+ * 
+ * @returns true if pg_dump is available, false otherwise
+ */
 async function checkPgDump(): Promise<boolean> {
   return new Promise((resolve) => {
     const child = spawn("pg_dump", ["--version"]);
@@ -114,6 +125,10 @@ async function generateSqlDump(
   });
 }
 
+/**
+ * Generates SQL backup using Prisma queries as fallback
+ * When pg_dump is not available
+ */
 async function generatePrismaSql(outputPath: string) {
   try {
     const users = await prisma.user.findMany();
@@ -161,10 +176,16 @@ const columnMapping: Record<string, Record<string, string>> = {
   system_config: { id: 'id', key: 'key', value: 'value', created_at: 'createdAt', updated_at: 'updatedAt' },
 };
 
+/**
+ * Converts camelCase string to snake_case
+ */
 function toSnakeCase(str: string): string {
   return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
 
+/**
+ * Generates SQL INSERT statements for a table
+ */
 function generateInserts(table: string, rows: BackupRow[]): string {
   if (rows.length === 0) return "";
   
@@ -189,6 +210,12 @@ function generateInserts(table: string, rows: BackupRow[]): string {
   return sql;
 }
 
+/**
+ * POST /api/backup/database - Restore database from SQL backup
+ * 
+ * @param req - FormData containing SQL file
+ * @returns Success message or error
+ */
 export async function POST(req: Request) {
   console.log(`[DB RESTORE POST] Starting database restore`);
 
@@ -236,6 +263,9 @@ export async function POST(req: Request) {
   }
 }
 
+/**
+ * Checks if psql command is available on the system
+ */
 async function checkPsql(): Promise<boolean> {
   return new Promise((resolve) => {
     const child = spawn("psql", ["--version"]);
@@ -244,6 +274,9 @@ async function checkPsql(): Promise<boolean> {
   });
 }
 
+/**
+ * Restores database using psql command
+ */
 async function restoreViaPsql(
   sql: string,
   host: string,
@@ -285,6 +318,9 @@ async function restoreViaPsql(
   });
 }
 
+/**
+ * Restores database using Prisma as fallback when psql unavailable
+ */
 async function restoreViaPrisma(lines: string[]) {
   const prisma = (await import("@/lib/prisma")).default;
 
@@ -401,6 +437,9 @@ interface ParsedSql {
   config: SqlRow[];
 }
 
+/**
+ * Parses SQL INSERT statements into structured data
+ */
 function parseSqlInserts(lines: string[]): ParsedSql {
   const result: ParsedSql = {
     users: [],
@@ -454,6 +493,9 @@ function parseSqlInserts(lines: string[]): ParsedSql {
   return result;
 }
 
+/**
+ * Parses a single row of SQL values into an array
+ */
 function parseValues(valuesStr: string): unknown[] {
   const values: unknown[] = [];
   let current = '';

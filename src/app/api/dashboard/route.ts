@@ -13,6 +13,12 @@ import { updateDashboardLayoutSchema } from "@/lib/schemas";
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Extracts and validates authenticated user from request header
+ * 
+ * @param req - Next.js request with Authorization header containing Bearer token
+ * @returns User object with role, userId, email or null if not authenticated
+ */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -46,6 +52,12 @@ const defaultLayout = {
   ],
 };
 
+/**
+ * GET /api/dashboard - Fetch user's dashboard layout
+ * 
+ * @param req - Next.js request with Authorization header
+ * @returns Dashboard layout configuration
+ */
 export async function GET(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -79,6 +91,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * PUT /api/dashboard - Save user's dashboard layout
+ * 
+ * @param req - Request containing layout configuration in JSON body
+ * @returns Updated dashboard layout
+ */
 export async function PUT(req: NextRequest) {
   const auth = await getAuthUser(req);
 

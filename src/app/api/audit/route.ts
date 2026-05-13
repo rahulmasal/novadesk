@@ -13,6 +13,12 @@ import { getAuditLogs, exportAuditLogs } from "@/lib/audit";
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Extracts and validates authenticated user from request header
+ * 
+ * @param req - Next.js request with Authorization header containing Bearer token
+ * @returns User object with role, userId, email or null if not authenticated
+ */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -35,6 +41,12 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
   }
 }
 
+/**
+ * GET /api/audit - Fetch audit logs (Admin only, supports CSV export)
+ * 
+ * @param req - Next.js request with optional filters and format=csv param
+ * @returns JSON array of audit logs or CSV file download
+ */
 export async function GET(req: NextRequest) {
   const auth = await getAuthUser(req);
 

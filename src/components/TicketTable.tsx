@@ -223,6 +223,9 @@ export function TicketTable() {
   );
 }
 
+/**
+ * TicketRow - Renders a single ticket row with status, priority, and SLA progress
+ */
 function TicketRow({
   ticket,
   onClick,

@@ -13,6 +13,12 @@ import { createKnowledgeArticleSchema, updateKnowledgeArticleSchema } from "@/li
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Extracts and validates authenticated user from request header
+ * 
+ * @param req - Next.js request with Authorization header containing Bearer token
+ * @returns User object with role, userId, email or null if not authenticated
+ */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -35,6 +41,12 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
   }
 }
 
+/**
+ * GET /api/knowledge - Fetch knowledge base articles
+ * 
+ * @param req - Next.js request with optional query, category, limit, offset params
+ * @returns Array of articles with total count
+ */
 export async function GET(req: NextRequest) {
   const auth = await getAuthUser(req);
   const { searchParams } = new URL(req.url);
@@ -83,6 +95,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * POST /api/knowledge - Create a new knowledge article (Admin only)
+ * 
+ * @param req - Request containing article data in JSON body
+ * @returns Created article
+ */
 export async function POST(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -123,6 +141,12 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * PATCH /api/knowledge - Update an existing article (Admin only)
+ * 
+ * @param req - Request containing article ID and fields to update
+ * @returns Updated article
+ */
 export async function PATCH(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -157,6 +181,12 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+/**
+ * DELETE /api/knowledge - Delete an article (Admin only)
+ * 
+ * @param req - Request containing article ID in JSON body
+ * @returns Success confirmation
+ */
 export async function DELETE(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -185,6 +215,12 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
+/**
+ * Formats knowledge article for API response
+ * 
+ * @param article - Raw article from database
+ * @returns Formatted article with ISO date strings
+ */
 function formatArticle(article: {
   id: string; title: string; content: string; category: string; tags: string[];
   relatedTickets: string[]; viewCount: number; isPublished: boolean;

@@ -1,3 +1,11 @@
+/**
+ * ============================================================================
+ * TICKET DETAIL COMPONENT - Modal View for Ticket Details
+ * ============================================================================
+ *
+ * @module /components/TicketDetail
+ */
+
 import { useState, useRef, useEffect } from "react";
 import { z } from "zod";
 import { useTicketStore } from "@/lib/store";

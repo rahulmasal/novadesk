@@ -24,6 +24,12 @@ const ALLOWED_MIME_TYPES = [
   "text/plain", "text/csv", "application/zip",
 ];
 
+/**
+ * Extracts and validates authenticated user from request header
+ * 
+ * @param req - Next.js request with Authorization header containing Bearer token
+ * @returns User object with role, userId, email or null if not authenticated
+ */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -46,6 +52,12 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
   }
 }
 
+/**
+ * POST /api/attachments - Upload a file attachment to a ticket
+ * 
+ * @param req - FormData containing file and ticketId
+ * @returns Created attachment object
+ */
 export async function POST(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -138,6 +150,12 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * GET /api/attachments - Fetch attachments for a specific ticket
+ * 
+ * @param req - Next.js request with ticketId query parameter
+ * @returns Array of attachment objects
+ */
 export async function GET(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -181,6 +199,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * DELETE /api/attachments - Delete an attachment
+ * 
+ * @param req - Request containing attachment ID in JSON body
+ * @returns Success confirmation
+ */
 export async function DELETE(req: NextRequest) {
   const auth = await getAuthUser(req);
 

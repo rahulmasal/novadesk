@@ -1,3 +1,11 @@
+/**
+ * ============================================================================
+ * PASSWORD API ROUTE - Change and Reset Passwords
+ * ============================================================================
+ *
+ * @module /api/auth/password/route
+ */
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
@@ -9,6 +17,9 @@ export const dynamic = 'force-dynamic';
 
 const BCRYPT_SALT_ROUNDS = 12;
 
+/**
+ * Extracts and validates authenticated user from request header
+ */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -25,6 +36,12 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
   }
 }
 
+/**
+ * POST /api/auth/password - Change own password or admin reset another user's password
+ * 
+ * @param req - Request with oldPassword/newPassword (self) or userId/newPassword (admin)
+ * @returns Success message
+ */
 export async function POST(req: NextRequest) {
   const auth = await getAuthUser(req);
   if (!auth) {

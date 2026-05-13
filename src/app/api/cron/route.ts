@@ -14,6 +14,12 @@ import { logAuditEvent } from "@/lib/audit";
 const SLA_WARNING_THRESHOLD = 0.8;
 const SLA_BREACH_THRESHOLD = 1.0;
 
+/**
+ * Processes SLA escalation for all open tickets
+ * Checks ticket progress against due date and creates warnings/breach records
+ * 
+ * @returns Object with warnings count, breached count, and any errors encountered
+ */
 async function runSlaEscalation(): Promise<{ warnings: number; breached: number; errors: string[] }> {
   const result = { warnings: 0, breached: 0, errors: [] as string[] };
 
@@ -95,6 +101,12 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
   return result;
 }
 
+/**
+ * Generates daily report with ticket statistics
+ * Counts created, resolved, open, and breached tickets
+ * 
+ * @returns Object indicating if report was sent successfully
+ */
 async function runDailyReport(): Promise<{ sent: boolean; error?: string }> {
   try {
     const today = new Date();
@@ -117,6 +129,12 @@ async function runDailyReport(): Promise<{ sent: boolean; error?: string }> {
   }
 }
 
+/**
+ * GET /api/cron - Run scheduled tasks (requires CRON_SECRET auth)
+ * 
+ * @param req - Next.js request with optional 'action' query param
+ * @returns Results of scheduled tasks (SLA escalation, daily report)
+ */
 export async function GET(req: NextRequest) {
   console.log(`[CRON GET] Running scheduled tasks`);
 
@@ -153,6 +171,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * POST /api/cron - Run scheduled tasks (alias for GET)
+ * 
+ * @param req - Next.js request
+ * @returns Results of scheduled tasks
+ */
 export async function POST(req: NextRequest) {
   console.log(`[CRON POST] Running scheduled tasks`);
   return GET(req);

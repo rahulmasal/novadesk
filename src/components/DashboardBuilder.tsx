@@ -45,6 +45,9 @@ const WIDGET_CONFIG: Record<string, { name: string; description: string; icon: s
   "quick-actions": { name: "Quick Actions", description: "Common actions", icon: "⚡" },
 };
 
+/**
+ * SortableWidget - Draggable widget component for dashboard layout
+ */
 function SortableWidget({ widget, onRemove }: { widget: Widget; onRemove: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };

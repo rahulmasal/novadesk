@@ -12,6 +12,9 @@ import prisma from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { createCommentSchema, updateCommentSchema } from "@/lib/schemas";
 
+/**
+ * Extracts and validates authenticated user from request header
+ */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");

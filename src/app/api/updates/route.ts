@@ -1,3 +1,11 @@
+/**
+ * ============================================================================
+ * UPDATES API ROUTE - Check for Application Updates
+ * ============================================================================
+ *
+ * @module /api/updates/route
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, validateAuth } from "@/lib/auth";
 
@@ -13,6 +21,11 @@ const CURRENT_VERSION = "0.1.0";
 
 const UPDATE_SERVER_URL = process.env.UPDATE_SERVER_URL;
 
+/**
+ * Fetches remote version info from update server
+ * 
+ * @returns Update info object or null if fetch fails
+ */
 async function fetchRemoteVersion(): Promise<UpdateInfo | null> {
   if (!UPDATE_SERVER_URL) {
     return null;
@@ -31,6 +44,13 @@ async function fetchRemoteVersion(): Promise<UpdateInfo | null> {
   return null;
 }
 
+/**
+ * Compares two semantic version strings
+ * 
+ * @param v1 - First version string
+ * @param v2 - Second version string
+ * @returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal
+ */
 function compareVersions(v1: string, v2: string): number {
   const parts1 = v1.split(".").map(Number);
   const parts2 = v2.split(".").map(Number);
@@ -43,6 +63,12 @@ function compareVersions(v1: string, v2: string): number {
   return 0;
 }
 
+/**
+ * GET /api/updates - Check for available updates (Admin only)
+ * 
+ * @param req - Next.js request with Authorization header
+ * @returns Current version and update availability info
+ */
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
   if (!auth) {
@@ -61,6 +87,12 @@ export async function GET(req: NextRequest) {
   });
 }
 
+/**
+ * POST /api/updates - Perform update actions (Admin only)
+ * 
+ * @param req - Request with action ('check' or 'download')
+ * @returns Update check results or download info
+ */
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
   if (!auth) {

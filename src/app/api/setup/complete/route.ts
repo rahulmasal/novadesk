@@ -24,6 +24,13 @@ const BCRYPT_SALT_ROUNDS = 12;
 // Setup lock expiry - prevents race conditions
 const SETUP_LOCK_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * POST /api/setup/complete - Complete the initial setup wizard
+ * Creates admin user, stores org name, marks setup complete
+ * 
+ * @param req - JSON body with admin credentials and database URL
+ * @returns Success with created user info
+ */
 export async function POST(req: Request) {
   console.log(`[SETUP COMPLETE POST] Starting setup completion`);
 

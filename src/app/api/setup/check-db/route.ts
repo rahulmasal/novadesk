@@ -12,6 +12,12 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
+/**
+ * POST /api/setup/check-db - Test database connection with provided credentials
+ * 
+ * @param req - JSON body with host, port, user, pass, name
+ * @returns Connection status and URL if successful
+ */
 export async function POST(req: Request) {
   console.log(`[SETUP CHECK-DB POST] Testing database connection`);
 

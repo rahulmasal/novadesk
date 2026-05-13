@@ -17,6 +17,12 @@ export const dynamic = 'force-dynamic';
 
 const BCRYPT_SALT_ROUNDS = 12;
 
+/**
+ * Extracts and validates authenticated user from request header
+ * 
+ * @param req - Next.js request with Authorization header containing Bearer token
+ * @returns User object with role, userId, email or null if not authenticated
+ */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -39,6 +45,12 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
   }
 }
 
+/**
+ * GET /api/users - Fetch all users (Administrators and Agents only)
+ * 
+ * @param req - Next.js request with Authorization header
+ * @returns Array of user objects
+ */
 export async function GET(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -62,6 +74,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * POST /api/users - Create a new user (Administrators only)
+ * 
+ * @param req - Request containing user data in JSON body
+ * @returns Created user object
+ */
 export async function POST(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -120,6 +138,12 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * PATCH /api/users - Update an existing user (Administrators only)
+ * 
+ * @param req - Request containing user ID and fields to update
+ * @returns Updated user object
+ */
 export async function PATCH(req: NextRequest) {
   const auth = await getAuthUser(req);
 
@@ -172,6 +196,12 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+/**
+ * DELETE /api/users - Delete a user (Administrators only)
+ * 
+ * @param req - Request containing user ID in JSON body
+ * @returns Success confirmation
+ */
 export async function DELETE(req: NextRequest) {
   const auth = await getAuthUser(req);
 
