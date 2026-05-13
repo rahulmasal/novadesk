@@ -80,7 +80,15 @@ Configure notifications, appearance (light/dark theme), backup options, and adva
 
 Seamlessly integrate with your organization's Active Directory. Users can authenticate using their corporate LDAP credentials with auto-provisioning support. Toggle between Local and LDAP authentication on the login page when enabled.
 
-### 11. Mobile Ready (PWA)
+### 11. Software Updates
+
+Check for software updates directly from the admin Settings page. Configure an update server URL to enable automatic version checking and receive notifications about new releases.
+
+### 12. Backup & Restore
+
+Full system backup and restore with JSON export/import. Database-level SQL dump for PostgreSQL direct restore. Both automated scheduled backups and manual exports available.
+
+### 13. Mobile Ready (PWA)
 
 Use it like an app on your phone with offline support, push notifications, and installable Progressive Web App (PWA).
 
@@ -106,25 +114,34 @@ npm install
 Create a `.env` file with your database connection string:
 
 ```env
-# For Supabase Cloud
-DATABASE_URL=postgresql://postgres.[project-ref]:[password]@db.[project-ref].supabase.co:5432/postgres
-NEXT_PUBLIC_SUPABASE_URL=https://[project-ref].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# Database Connection (PostgreSQL)
+DATABASE_URL=postgresql://postgres:password@localhost:5432/novadesk
 
-# For Local PostgreSQL
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/novadesk
-
-# Cron Job Security (required for automated tasks)
+# Security - Generate with: openssl rand -hex 32
 CRON_SECRET=your-secure-random-string-here
 
-# LDAP / Active Directory Authentication (optional)
+# Application
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_NAME=NovaDesk
+
+# SMTP Email (optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+REPORT_RECIPIENT=admin@company.com
+
+# LDAP / Active Directory (optional)
+NEXT_PUBLIC_LDAP_ENABLED=false
 LDAP_ENABLED=false
 LDAP_URL=ldap://localhost:389
-LDAP_BASE_DN=dc=company,dc=com
 LDAP_BIND_DN=cn=admin,dc=company,dc=com
 LDAP_BIND_PASSWORD=your-password
-LDAP_USER_SEARCH_BASE=ou=users,dc=company,dc=com
-LDAP_USER_SEARCH_FILTER=(uid={{username}})
+LDAP_SEARCH_BASE=dc=company,dc=com
+LDAP_SEARCH_FILTER=(sAMAccountName={{username}})
+
+# Software Updates (optional)
+UPDATE_SERVER_URL=https://updates.example.com/version.json
 ```
 
 ### 3. Initialize Database
@@ -258,19 +275,94 @@ On first run, the **Setup Wizard** will guide you through creating the first adm
 
 | Category       | Technology                                        |
 | -------------- | ------------------------------------------------- |
-| **Frontend**   | Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
+| **Frontend**   | Next.js 16.2.4, React 19.2.4, TypeScript 5, Tailwind CSS v4 |
 | **Database**   | Prisma ORM 5.22.0, PostgreSQL 15+                 |
 | **State**      | Zustand 5 with localStorage persistence           |
-| **UI**         | Lucide Icons, Framer Motion, Recharts, @dnd-kit   |
+| **UI**         | Lucide Icons, Framer Motion 12, Recharts 3, @dnd-kit  |
 | **Backend**    | Next.js API Routes, Node-cron, Nodemailer         |
 | **Validation** | Zod 4.4.3                                         |
-| **Security**   | bcryptjs 3.0.3                                    |
+| **Security**   | bcryptjs 3.0.3, ldapjs 3.0.7                       |
 
 ---
 
 ## 📂 Project Structure
 
 ```
+novadesk/
+├── prisma/
+│   ├── schema.prisma       # Database schema
+│   └── migrations/         # Database migrations
+├── public/
+│   ├── manifest.json       # PWA manifest
+│   ├── logo.svg           # App logo
+│   └── icon.svg           # PWA icon
+├── scheduler.mjs          # Cron job scheduler for reports
+├── scripts/               # Utility scripts
+│   ├── seed-tickets.js    # Generate test data
+│   ├── db-backup.js       # Database backup
+│   └── db-restore.js       # Database restore
+├── src/
+│   ├── app/
+│   │   ├── api/           # API routes
+│   │   │   ├── auth/       # Login, password
+│   │   │   ├── tickets/    # Ticket CRUD
+│   │   │   ├── users/      # User management
+│   │   │   ├── backup/     # Backup/restore
+│   │   │   ├── updates/    # Software updates
+│   │   │   └── ...
+│   │   ├── layout.tsx     # Root layout
+│   │   └── page.tsx       # Main dashboard
+│   ├── components/        # React components
+│   ├── hooks/             # Custom hooks
+│   ├── contexts/          # React contexts
+│   └── lib/               # Utilities (prisma, auth, store)
+├── docker-compose.yml     # Docker production setup
+├── Dockerfile             # Multi-stage Docker build
+└── .env.example           # Environment template
+```
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    subgraph "Client"
+        UI[React Frontend]
+        PWA[PWA Service Worker]
+    end
+    
+    subgraph "Next.js Server"
+        API[API Routes]
+        Auth[Auth Middleware]
+        Store[Zustand State]
+    end
+    
+    subgraph "Database"
+        PG[(PostgreSQL)]
+        Prisma[Prisma ORM]
+    end
+    
+    subgraph "External Services"
+        LDAP[LDAP/AD]
+        SMTP[Email Service]
+        Supabase[Supabase Storage]
+    end
+    
+    UI --> API
+    PWA --> API
+    API --> Auth
+    API --> Prisma
+    Prisma --> PG
+    Auth --> LDAP
+    API --> SMTP
+    API --> Supabase
+    Store --> UI
+```
+
+---
+
+## 🧑‍💻 For Contributors
 novadesk/
 ├── prisma/
 │   ├── schema.prisma       # Database schema
@@ -297,12 +389,12 @@ novadesk/
 
 SLA due dates are automatically calculated based on priority:
 
-| Priority   | Response Time | Use Case                     |
-| ---------- | ------------- | ---------------------------- |
-| **URGENT** | 4 hours       | Critical system down         |
-| **HIGH**   | 8 hours       | Major functionality impaired |
-| **MEDIUM** | 24 hours      | Minor functionality impacted |
-| **LOW**    | 48 hours      | General inquiries            |
+| Priority   | Resolution Time | Use Case                     |
+| ---------- | --------------- | ---------------------------- |
+| **URGENT** | 2 hours         | Critical system down         |
+| **HIGH**   | 8 hours         | Major functionality impaired |
+| **MEDIUM** | 24 hours        | Minor functionality impacted |
+| **LOW**    | 72 hours        | General inquiries            |
 
 ---
 
