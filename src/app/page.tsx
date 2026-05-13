@@ -21,6 +21,7 @@ import { Plus } from "lucide-react";
 export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const {
     currentUserRole,
     currentView,
@@ -47,7 +48,11 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    checkAuth();
+    const initAuth = async () => {
+      await checkAuth();
+      setIsLoading(false);
+    };
+    initAuth();
   }, [checkAuth]);
 
   useEffect(() => {
@@ -188,6 +193,7 @@ export default function Dashboard() {
 
   if (needsSetup === null) return null;
   if (needsSetup) return <SetupWizard />;
+  if (isLoading) return null;
   if (!isAuthenticated) return <Login onLogin={() => {}} />;
 
   return (

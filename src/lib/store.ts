@@ -279,8 +279,8 @@ checkAuth: () => Promise<boolean>;
     */
    addActivity: (ticketId: string, message: string) => void;
 
-   /** Sets all users in the system */
-   setAllUsers: (users: User[]) => void;
+/** Sets all users in the system */
+  setAllUsers: (users: User[]) => void;
 }
 
 /**
@@ -313,11 +313,11 @@ export const useTicketStore = create<TicketStore>()(
       currentUserRole: "AGENT", // Default role for demo
       currentView: "Dashboard", // Start at dashboard
 
-tickets: [],
+      tickets: [],
 
-        activities: [],
+      activities: [],
 
-        allUsers: [],
+      allUsers: [],
 
       // ========================================
       // LOGIN ACTION
@@ -425,15 +425,27 @@ tickets: [],
        * @returns Promise<boolean> - true if valid, false otherwise
        */
       checkAuth: async () => {
-        const { authToken } = get();
-        if (!authToken) return false;
+        let token = get().authToken;
+        
+        if (!token) {
+          const stored = localStorage.getItem("ticket-storage-v2");
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              token = parsed.state?.authToken;
+            } catch {
+              token = null;
+            }
+          }
+        }
+        
+        if (!token) return false;
 
         try {
-          // Call API to verify token is still valid
           const res = await fetch("/api/auth/login", {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
           });
@@ -441,9 +453,9 @@ tickets: [],
           const data = await res.json();
 
           if (data.authenticated) {
-            // Token is valid - update state with user info
             set({
               currentUser: data.user,
+              authToken: token,
               isAuthenticated: true,
               currentUserRole: data.user.role,
             });
@@ -780,17 +792,17 @@ addActivity: (ticketId, message) => {
        // ========================================
        setAllUsers: (users) => set(() => ({ allUsers: users })),
      }),
-    // Persist configuration - state will be saved to localStorage
+// Persist configuration - state will be saved to localStorage
     {
       name: "ticket-storage-v2",
-partialize: (state) => ({
-         currentUser: state.currentUser,
-         isAuthenticated: state.isAuthenticated,
-         authToken: state.authToken,
-         currentUserRole: state.currentUserRole,
-         currentView: state.currentView,
-         activities: state.activities,
-       }),
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+        isAuthenticated: state.isAuthenticated,
+        authToken: state.authToken,
+        currentUserRole: state.currentUserRole,
+        currentView: state.currentView,
+        activities: state.activities,
+      }),
     },
   ),
 );

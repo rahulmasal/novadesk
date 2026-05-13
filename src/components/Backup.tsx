@@ -166,7 +166,7 @@ export function Backup() {
     }
   };
 
-if (!isAdmin) {
+  if (!isAdmin) {
     return (
       <div className="p-8 max-w-7xl mx-auto">
         <div className={`${isLightTheme ? "glass-card" : "glass-dark"} p-6 rounded-2xl text-center`}>
@@ -175,6 +175,12 @@ if (!isAdmin) {
       </div>
     );
   }
+
+  const backupHistory = [
+    { date: "2 hours ago", label: "System Export", status: "Success" },
+    { date: "1 day ago", label: "Database Backup", status: "Success" },
+    { date: "2 days ago", label: "System Export", status: "Success" },
+  ];
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -215,11 +221,11 @@ if (!isAdmin) {
                 {isBackingUp ? "Processing..." : "Generate & Download Backup"}
               </button>
 
-{backupStatus === "success" && (
-                 <p className={`mt-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${isLightTheme ? "text-emerald-600" : "text-emerald-400"}`}>
-                   ✓ Backup generated and downloaded successfully.
-                 </p>
-               )}
+              {backupStatus === "success" && (
+                <p className={`mt-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${isLightTheme ? "text-emerald-600" : "text-emerald-400"}`}>
+                  ✓ Backup generated and downloaded successfully.
+                </p>
+              )}
             </div>
           </div>
 
@@ -368,15 +374,11 @@ if (!isAdmin) {
           </div>
           
           <div className="space-y-4">
-            {[
-              { date: new Date(Date.now() - 2 * 60 * 60 * 1000), label: "System Export", status: "Success" },
-              { date: new Date(Date.now() - 26 * 60 * 60 * 1000), label: "Database Backup", status: "Success" },
-              { date: new Date(Date.now() - 50 * 60 * 60 * 1000), label: "System Export", status: "Success" },
-            ].map((item, i) => (
+            {backupHistory.map((item, i) => (
               <div key={i} className={`p-3 rounded-lg ${isLightTheme ? "bg-slate-50 border border-slate-200" : "bg-white/5 border border-white/5"}`}>
                 <p className={`text-sm font-medium ${isLightTheme ? "text-heading" : "text-white"}`}>{item.label}</p>
                 <div className="flex justify-between items-center mt-1">
-                  <span className={`text-[10px] ${isLightTheme ? "text-slate-400" : "text-neutral-500"}`}>{item.date.toLocaleDateString()} {item.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className={`text-[10px] ${isLightTheme ? "text-slate-400" : "text-neutral-500"}`}>{item.date}</span>
                   <span className={`text-[10px] ${isLightTheme ? "text-emerald-600" : "text-emerald-500"}`}>{item.status}</span>
                 </div>
               </div>

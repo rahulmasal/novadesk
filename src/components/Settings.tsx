@@ -291,7 +291,11 @@ return (
                 <p className={isLightTheme ? "text-slate-700" : "text-white"}>Email Notifications</p>
                 <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Receive updates via email</p>
               </div>
-              <label className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              <label className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                settings.notifications.email 
+                  ? "bg-blue-500" 
+                  : isLightTheme ? "bg-slate-300" : "bg-white/30"
+              }`}>
                 <input
                   type="checkbox"
                   checked={settings.notifications.email}
@@ -310,7 +314,11 @@ return (
                 <p className={isLightTheme ? "text-slate-700" : "text-white"}>Push Notifications</p>
                 <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Browser push notifications</p>
               </div>
-              <label className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              <label className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                settings.notifications.push 
+                  ? "bg-blue-500" 
+                  : isLightTheme ? "bg-slate-300" : "bg-white/30"
+              }`}>
                 <input
                   type="checkbox"
                   checked={settings.notifications.push}
@@ -329,7 +337,11 @@ return (
                 <p className={isLightTheme ? "text-slate-700" : "text-white"}>Ticket Assignment Alerts</p>
                 <p className={`text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-500"}`}>Notify when assigned to tickets</p>
               </div>
-              <label className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              <label className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                settings.notifications.ticketAssignment 
+                  ? "bg-blue-500" 
+                  : isLightTheme ? "bg-slate-300" : "bg-white/30"
+              }`}>
                 <input
                   type="checkbox"
                   checked={settings.notifications.ticketAssignment}
