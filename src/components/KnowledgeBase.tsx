@@ -1,3 +1,39 @@
+/**
+ * ============================================================================
+ * KNOWLEDGE BASE COMPONENT - Self-Service Article Browser
+ * ============================================================================
+ *
+ * This component provides a searchable knowledge base for self-service support.
+ * Users can browse articles organized by category and search for solutions.
+ *
+ * WHAT IT DOES:
+ * - Displays searchable list of help articles
+ * - Groups articles by category
+ * - Allows expansion of articles to read full content
+ * - Shows article metadata (views, tags, update time)
+ * - Sanitizes HTML content for safe display
+ *
+ * KEY FEATURES:
+ * - Full-text search across titles, content, and tags
+ * - Category filtering with toggle buttons
+ * - Expandable article cards
+ * - View count tracking
+ * - Tag display for related topics
+ *
+ * SANITIZATION:
+ * - All HTML in article content is sanitized
+ * - Prevents XSS attacks by escaping special characters
+ * - Uses custom sanitizeHtml function for safety
+ *
+ * BEGINNER NOTES:
+ * - Articles are fetched from /api/knowledge endpoint
+ * - Search is client-side filtering (not server-side)
+ * - Expanded state controlled by local state
+ * - dangerouslySetInnerHTML is used with sanitization
+ *
+ * @module /components/KnowledgeBase
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,6 +41,16 @@ import { Search, Book, ChevronRight, Clock, Eye, Tag } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
+/**
+ * Sanitizes HTML to prevent XSS attacks
+ * 
+ * WHAT IT DOES:
+ * - Escapes HTML special characters
+ * - Converts &, <, >, ", ' to safe entities
+ * 
+ * @param text - Raw text that may contain HTML
+ * @returns Sanitized text safe for display
+ */
 function sanitizeHtml(text: string): string {
   const htmlEntities: Record<string, string> = {
     "&": "\u0026amp;",
@@ -33,6 +79,15 @@ interface KnowledgeBaseProps {
   onClose?: () => void;
 }
 
+/**
+ * KnowledgeBase - Self-service help article browser modal
+ *
+ * @param onArticleClick - Optional callback when user clicks "View related tickets"
+ * @param onClose - Callback to close the modal
+ *
+ * @example
+ * <KnowledgeBase onClose={() => setShowKB(false)} />
+ */
 export function KnowledgeBase({ onArticleClick, onClose }: KnowledgeBaseProps) {
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,3 +1,47 @@
+/**
+ * ============================================================================
+ * SETUP WIZARD COMPONENT - Initial Application Configuration
+ * ============================================================================
+ *
+ * This component provides a multi-step wizard for first-time application setup.
+ * It guides users through database connection, organization naming, and
+ * admin account creation.
+ *
+ * WHAT IT DOES:
+ * Step 1 - Database: Connect to PostgreSQL database
+ * Step 2 - Organization: Set organization name
+ * Step 3 - Admin Account: Create initial admin user
+ * Step 4 - Complete: Show success message
+ *
+ * KEY FEATURES:
+ * - Step-by-step wizard interface with progress indicators
+ * - Database connection testing before proceeding
+ * - Password strength validation with real-time feedback
+ * - Form validation on each step
+ * - Visual step indicators showing progress
+ *
+ * WIZARD FLOW:
+ * 1. User enters database connection details
+ * 2. System tests connection before allowing next step
+ * 3. User names their organization
+ * 4. User creates admin account (with password requirements)
+ * 5. Setup is completed and user is redirected to login
+ *
+ * PASSWORD REQUIREMENTS:
+ * - Minimum 8 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ *
+ * BEGINNER NOTES:
+ * - Each step has its own render function for organization
+ * - Step navigation controlled by currentStep state
+ * - Validation runs before allowing progression
+ * - Final submission calls /api/setup/complete
+ *
+ * @module /components/SetupWizard
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -18,8 +62,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Wizard step type - represents each stage of setup
+ */
 type Step = "database" | "organization" | "admin" | "complete";
 
+/**
+ * Interface for all data collected during wizard
+ */
 interface SetupData {
   dbConnected: boolean;
   dbHost: string;
@@ -35,7 +85,10 @@ interface SetupData {
 }
 
 /**
- * SetupWizard - Multi-step initial configuration wizard for database setup and admin account creation
+ * SetupWizard - Multi-step initial configuration wizard
+ *
+ * @example
+ * <SetupWizard />
  */
 export function SetupWizard() {
   const router = useRouter();

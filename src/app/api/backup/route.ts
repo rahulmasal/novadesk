@@ -1,7 +1,29 @@
 /**
  * ============================================================================
- * BACKUP API ROUTE - Generate System Backup
+ * BACKUP API ROUTE - Generate System Backup (JSON Export)
  * ============================================================================
+ *
+ * This route handles generating system backup data for download.
+ * It exports all users, tickets, and configuration data in JSON format.
+ *
+ * HTTP METHODS:
+ * - GET: Generate and download JSON backup file
+ *
+ * ACCESS CONTROL:
+ * - Only administrators can access this endpoint
+ * - Requires valid session token in Authorization header
+ *
+ * WHAT GET RETURNS:
+ * - version: Backup format version
+ * - timestamp: When backup was created
+ * - data.users: All users with sensitive data (passwords)
+ * - data.tickets: All tickets with nested comments, auditLogs, attachments
+ * - data.config: System configuration settings
+ *
+ * SECURITY NOTES:
+ * - User passwords are included in backup (bcrypt hashed)
+ * - Downloaded file uses Content-Disposition for browser download
+ * - Session is validated before allowing backup
  *
  * @module /api/backup/route
  */

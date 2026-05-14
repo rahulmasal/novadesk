@@ -1,3 +1,38 @@
+/**
+ * ============================================================================
+ * REPORTS COMPONENT - Report Generation and CSV Export Interface
+ * ============================================================================
+ *
+ * This component provides a comprehensive reporting interface for administrators.
+ * It allows generating custom reports with date filters and exporting data to CSV.
+ *
+ * WHAT IT DOES:
+ * - Displays date range picker for filtering report data
+ * - Provides report type selection (All, By Status, By Priority, etc.)
+ * - Shows summary statistics (totals, breakdowns by category)
+ * - Allows column selection for customizing report output
+ * - Exports data to CSV format for spreadsheet analysis
+ *
+ * KEY FEATURES:
+ * - Date range filtering for reports
+ * - Report type filtering (All, Status, Priority, Category, Department)
+ * - Custom column selection (14 available columns)
+ * - Summary cards with key statistics
+ * - CSV export with customizable columns
+ *
+ * ACCESS CONTROL:
+ * - Only administrators can access this component
+ * - Returns error message for non-admin users
+ *
+ * BEGINNER NOTES:
+ * - Uses useTicketStore for auth token and role verification
+ * - Report data is fetched from /api/reports endpoint
+ * - CSV export creates a downloadable file in the browser
+ * - Selected columns determine what data appears in the export
+ *
+ * @module /components/Reports
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -13,6 +48,9 @@ import {
   Filter,
 } from "lucide-react";
 
+/**
+ * Interface for ticket data returned from report API
+ */
 interface ReportTicket {
   id: string;
   title: string;
@@ -38,6 +76,9 @@ interface ReportTicket {
   };
 }
 
+/**
+ * Interface for report data structure from API
+ */
 interface ReportData {
   tickets: ReportTicket[];
   summary: {
@@ -54,13 +95,22 @@ interface ReportData {
   };
 }
 
+/**
+ * Report type filter options
+ */
 type ReportType = "all" | "status" | "priority" | "category" | "department";
 
+/**
+ * Interface for available column options
+ */
 interface ColumnOption {
   id: string;
   label: string;
 }
 
+/**
+ * List of all available columns for report export
+ */
 const AVAILABLE_COLUMNS: ColumnOption[] = [
   { id: "id", label: "Ticket ID" },
   { id: "title", label: "Title" },
@@ -79,7 +129,10 @@ const AVAILABLE_COLUMNS: ColumnOption[] = [
 ];
 
 /**
- * Reports - Report generation interface with date range picker, export buttons (CSV/PDF), and results table
+ * Reports - Report generation interface with date range picker and export
+ *
+ * @example
+ * <Reports />
  */
 export function Reports() {
   const { authToken, currentUserRole } = useTicketStore();

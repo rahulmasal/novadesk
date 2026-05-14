@@ -3,8 +3,33 @@
  * REPORTS API ROUTE - Generate Reports for Administrators
  * ============================================================================
  *
- * This endpoint allows Administrators to generate reports with date range filters.
- * Reports include all ticket information with user details.
+ * This endpoint allows Administrators to generate custom reports with filtering
+ * options. Reports include ticket information, user details, and summary statistics.
+ *
+ * HTTP METHODS:
+ * - GET: Generate report with optional date range and type filters
+ *
+ * ACCESS CONTROL:
+ * - Only administrators can access this endpoint
+ * - Requires valid session token in Authorization header
+ *
+ * QUERY PARAMETERS:
+ * - from: Start date filter (ISO string, optional)
+ * - to: End date filter (ISO string, optional)
+ * - type: Report type filter (all, status, priority, category, department)
+ *
+ * RESPONSE FORMAT:
+ * - tickets: Array of ticket objects with user info
+ * - summary: Statistics breakdown by status, priority, category, department
+ * - generatedAt: Timestamp when report was generated
+ * - dateRange: Applied date filter
+ *
+ * REPORT TYPES:
+ * - all: All tickets within date range
+ * - status: Tickets with NEW status
+ * - priority: Tickets with URGENT or HIGH priority
+ * - category: Hardware category tickets
+ * - department: IT department tickets
  *
  * @module /api/reports/route
  */

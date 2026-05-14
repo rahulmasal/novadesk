@@ -1,3 +1,28 @@
+/**
+ * ============================================================================
+ * TICKET TABLE COMPONENT - Paginated Ticket List with Search and Bulk Actions
+ * ============================================================================
+ *
+ * This component displays all tickets in a searchable, sortable table format.
+ * Supports pagination, filtering, and bulk operations for administrators.
+ *
+ * WHAT IT DOES:
+ * - Displays tickets in a responsive table with columns for ID, title, status, etc.
+ * - Provides search functionality across multiple ticket fields
+ * - Supports pagination with configurable page sizes (10-1000 items)
+ * - Enables bulk status updates and bulk deletion (admin only)
+ * - Shows SLA progress bars indicating time remaining before breach
+ * - Clicking a ticket row opens the TicketDetail modal
+ *
+ * BEGINNER NOTES:
+ * - "use client" means this component runs in the browser (client-side rendering)
+ * - useState manages local state (search query, pagination, selected items)
+ * - useTicketStore accesses the global Zustand store for ticket data
+ * - The component is marked "use client" because it uses useState/useEffect
+ *
+ * @module /components/TicketTable
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,10 +33,27 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TicketDetail } from "./TicketDetail";
 
+/**
+ * Page size options for pagination
+ * Users can select how many tickets to display per page
+ */
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200, 500, 1000];
 
 /**
- * TicketTable - Searchable, paginated table of tickets with status/priority indicators and row selection
+ * TicketTable - Main component for displaying and managing tickets
+ *
+ * This component provides a comprehensive interface for viewing and managing
+ * support tickets. It includes search, pagination, and bulk operations.
+ *
+ * KEY FEATURES:
+ * - Real-time search across title, ID, username, hostname, serial, etc.
+ * - Configurable pagination with multiple page size options
+ * - Bulk selection with checkboxes for multi-ticket operations
+ * - SLA progress indicators showing time until ticket breach
+ * - Role-based access (admins can delete, agents can assign)
+ *
+ * @example
+ * <TicketTable />
  */
 export function TicketTable() {
   const { tickets, deleteTickets, updateTicketsStatus, currentUserRole } = useTicketStore();
@@ -224,7 +266,30 @@ export function TicketTable() {
 }
 
 /**
- * TicketRow - Renders a single ticket row with status, priority, and SLA progress
+ * TicketRow - Renders a single ticket row in the table
+ *
+ * WHAT IT DOES:
+ * - Displays ticket information in a table row format
+ * - Shows SLA progress bar that updates every second
+ * - Renders status badges with appropriate colors
+ * - Supports row selection via checkbox
+ *
+ * KEY FEATURES:
+ * - Real-time SLA countdown with progress bar visualization
+ * - Color-coded status badges (NEW, IN_PROGRESS, RESOLVED, etc.)
+ * - Priority indicators with visual styling for urgent tickets
+ * - Alert icon animation for URGENT priority tickets
+ *
+ * PROPS:
+ * - ticket: The ticket data to display
+ * - onClick: Callback when row is clicked (opens detail modal)
+ * - isSelected: Whether this row is selected for bulk operations
+ * - onSelectChange: Callback when checkbox state changes
+ *
+ * @param ticket - Ticket data object
+ * @param onClick - Function to call when row is clicked
+ * @param isSelected - Boolean indicating if row is selected
+ * @param onSelectChange - Function to call when selection changes
  */
 function TicketRow({
   ticket,

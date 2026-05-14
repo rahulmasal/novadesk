@@ -3,6 +3,17 @@
  * USERS API ROUTE - User Management for Administrators
  * ============================================================================
  *
+ * This file handles all user-related HTTP requests:
+ * - GET    : Retrieve all users (Agents and Admins)
+ * - POST   : Create a new user (Admins only)
+ * - PATCH  : Update user details (Admins only)
+ * - DELETE : Remove a user (Admins only)
+ *
+ * AUTHENTICATION:
+ * - All endpoints require valid session token
+ * - Most operations restricted to Administrators
+ * - Agents can view user list but not modify
+ *
  * @module /api/users/route
  */
 
@@ -15,13 +26,22 @@ import { logAuditEvent } from "@/lib/audit";
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Number of salt rounds for bcrypt password hashing
+ * Higher = more secure but slower (12 is industry standard)
+ */
 const BCRYPT_SALT_ROUNDS = 12;
 
 /**
- * Extracts and validates authenticated user from request header
+ * getAuthUser - Extracts and validates the authenticated user from request
  * 
- * @param req - Next.js request with Authorization header containing Bearer token
- * @returns User object with role, userId, email or null if not authenticated
+ * WHAT IT DOES:
+ * 1. Extracts Bearer token from Authorization header
+ * 2. Looks up session in database
+ * 3. Returns user info if valid, null if invalid/expired
+ * 
+ * @param req - Next.js request with Authorization header
+ * @returns User object with role, userId, email or null
  */
 async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
   const authHeader = req.headers.get("authorization");

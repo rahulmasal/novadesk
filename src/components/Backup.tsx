@@ -1,3 +1,44 @@
+/**
+ * ============================================================================
+ * BACKUP COMPONENT - Admin Backup Management Interface
+ * ============================================================================
+ *
+ * This component provides a comprehensive interface for managing system backups.
+ * Administrators can create both JSON exports and SQL database dumps, as well as
+ * restore from previously created backups.
+ *
+ * WHAT IT DOES:
+ * - Creates JSON system export (complete data snapshot)
+ * - Creates PostgreSQL SQL dump for full database backup
+ * - Restores system from JSON backup file
+ * - Restores database from SQL dump file
+ * - Displays backup strategy information
+ *
+ * KEY FEATURES:
+ * - Two backup formats: JSON (portable) and SQL (full database)
+ * - Drag-and-drop file upload for restore
+ * - Status indicators for backup/restore operations
+ * - Error messages with helpful troubleshooting
+ * - Backup history sidebar
+ *
+ * ACCESS CONTROL:
+ * - Only administrators can access this component
+ * - Returns error message for non-admin users
+ *
+ * SECURITY NOTES:
+ * - Restore operations require explicit user confirmation
+ * - Warning about data overwrite before restore
+ * - Only accepts .json and .sql file extensions
+ *
+ * BEGINNER NOTES:
+ * - JSON backup includes: users, tickets, config, comments, attachments
+ * - SQL dump is generated via pg_dump or Prisma fallback
+ * - Backup files are downloaded to user's computer
+ * - Restore sends file to API for processing
+ *
+ * @module /components/Backup
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -6,7 +47,10 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { Database, Download, ShieldCheck, History, AlertTriangle, Upload, HardDrive } from "lucide-react";
 
 /**
- * Backup - Admin backup management interface with create backup and restore from file
+ * Backup - Admin backup management interface
+ *
+ * @example
+ * <Backup />
  */
 export function Backup() {
   const { authToken, currentUserRole } = useTicketStore();

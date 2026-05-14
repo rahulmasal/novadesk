@@ -1,3 +1,32 @@
+/**
+ * ============================================================================
+ * ACTIVITY FEED COMPONENT - Timeline of Recent Ticket Activity
+ * ============================================================================
+ *
+ * This component displays a chronological feed of recent ticket activities
+ * and events in the system. It provides a visual timeline of what's happening.
+ *
+ * WHAT IT DOES:
+ * - Displays a timeline of recent ticket activities
+ * - Shows activity messages with relative timestamps
+ * - Visual timeline with connecting line and icons
+ * - Automatically updates when activities are added to store
+ *
+ * KEY FEATURES:
+ * - Visual timeline with vertical connecting line
+ * - Relative time display (e.g., "5 minutes ago")
+ * - Icon indicators for each activity
+ * - Empty state message when no activities exist
+ *
+ * BEGINNER NOTES:
+ * - Activities come from the global Zustand store
+ * - formatDistanceToNow from date-fns for relative times
+ * - parseISO converts ISO strings back to Date objects
+ * - Timeline line is a CSS pseudo-element, not a component
+ *
+ * @module /components/ActivityFeed
+ */
+
 "use client";
 
 import { useTicketStore } from "@/lib/store";
@@ -6,7 +35,10 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { Activity, MessageSquare } from "lucide-react";
 
 /**
- * ActivityFeed - Recent activity feed showing latest ticket comments, status changes, and system events
+ * ActivityFeed - Timeline component showing recent ticket activities
+ *
+ * @example
+ * <ActivityFeed />
  */
 export function ActivityFeed() {
    const activities = useTicketStore((state) => state.activities);

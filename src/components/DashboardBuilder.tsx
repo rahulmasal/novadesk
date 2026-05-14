@@ -1,3 +1,42 @@
+/**
+ * ============================================================================
+ * DASHBOARD BUILDER COMPONENT - Drag-and-Drop Widget Layout Customizer
+ * ============================================================================
+ *
+ * This component provides a drag-and-drop interface for customizing the
+ * dashboard layout. Users can reorder, add, and remove dashboard widgets.
+ *
+ * WHAT IT DOES:
+ * - Displays current dashboard layout with draggable widgets
+ * - Allows reordering widgets via drag-and-drop
+ * - Provides ability to add available widgets to layout
+ * - Enables removal of widgets from layout
+ * - Saves layout configuration to backend
+ * - Resets to default layout option
+ *
+ * KEY FEATURES:
+ * - Drag-and-drop reordering using @dnd-kit library
+ * - Widget visibility toggle (remove from view)
+ * - Available widgets panel for adding new widgets
+ * - Save/reset functionality with confirmation
+ * - Layout persisted to database via API
+ *
+ * HOW DRAG-AND-DROP WORKS:
+ * - DndContext wraps the sortable area
+ * - SortableContext provides the drop zone
+ * - useSortable hook on each widget enables dragging
+ * - DragOverlay shows preview while dragging
+ * - DragEndEvent provides the new order
+ *
+ * BEGINNER NOTES:
+ * - @dnd-kit is a modern drag-and-drop library for React
+ * - CSS.Transform.toString converts position to CSS transform
+ * - Layout is fetched from /api/dashboard on mount
+ * - Layout is saved via PUT /api/dashboard
+ *
+ * @module /components/DashboardBuilder
+ */
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -20,6 +59,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, X, Save, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Interface for a single widget in the dashboard
+ */
 interface Widget {
   id: string;
   type: string;
@@ -27,15 +69,24 @@ interface Widget {
   position: { x: number; y: number; w: number; h: number };
 }
 
+/**
+ * Interface for the complete dashboard layout configuration
+ */
 interface DashboardLayout {
   widgets: Widget[];
 }
 
+/**
+ * Props interface for the DashboardBuilder component
+ */
 interface DashboardBuilderProps {
   onSave?: (layout: DashboardLayout) => void;
   onClose?: () => void;
 }
 
+/**
+ * Configuration for available widget types
+ */
 const WIDGET_CONFIG: Record<string, { name: string; description: string; icon: string }> = {
   scorecards: { name: "Scorecards", description: "Key metrics overview", icon: "📊" },
   charts: { name: "Charts", description: "Visual analytics", icon: "📈" },
@@ -46,7 +97,22 @@ const WIDGET_CONFIG: Record<string, { name: string; description: string; icon: s
 };
 
 /**
- * SortableWidget - Draggable widget component for dashboard layout
+ * Default widget configuration - used for reset functionality
+ */
+const defaultWidgets = [
+  { id: "scorecards", type: "scorecards", visible: true, position: { x: 0, y: 0, w: 12, h: 2 } },
+  { id: "charts", type: "charts", visible: true, position: { x: 0, y: 2, w: 6, h: 4 } },
+  { id: "activity", type: "activity", visible: true, position: { x: 6, y: 2, w: 6, h: 4 } },
+  { id: "tickets", type: "tickets", visible: true, position: { x: 0, y: 6, w: 12, h: 4 } },
+  { id: "sla", type: "sla", visible: true, position: { x: 0, y: 10, w: 6, h: 3 } },
+  { id: "quick-actions", type: "quick-actions", visible: true, position: { x: 6, y: 10, w: 6, h: 3 } },
+];
+
+/**
+ * SortableWidget - Individual draggable widget component
+ *
+ * @param widget - Widget data
+ * @param onRemove - Callback to hide/remove this widget
  */
 function SortableWidget({ widget, onRemove }: { widget: Widget; onRemove: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id });
@@ -71,15 +137,6 @@ function SortableWidget({ widget, onRemove }: { widget: Widget; onRemove: () => 
     </div>
   );
 }
-
-const defaultWidgets = [
-  { id: "scorecards", type: "scorecards", visible: true, position: { x: 0, y: 0, w: 12, h: 2 } },
-  { id: "charts", type: "charts", visible: true, position: { x: 0, y: 2, w: 6, h: 4 } },
-  { id: "activity", type: "activity", visible: true, position: { x: 6, y: 2, w: 6, h: 4 } },
-  { id: "tickets", type: "tickets", visible: true, position: { x: 0, y: 6, w: 12, h: 4 } },
-  { id: "sla", type: "sla", visible: true, position: { x: 0, y: 10, w: 6, h: 3 } },
-  { id: "quick-actions", type: "quick-actions", visible: true, position: { x: 6, y: 10, w: 6, h: 3 } },
-];
 
 /**
  * DashboardBuilder - Drag-and-drop dashboard layout builder with sortable widget grid

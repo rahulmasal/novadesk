@@ -1,3 +1,37 @@
+/**
+ * ============================================================================
+ * SETTINGS COMPONENT - Application Configuration Interface
+ * ============================================================================
+ *
+ * This component provides a comprehensive settings interface for all users.
+ * It allows users to update their profile, change passwords, and manage preferences.
+ * Administrators have access to additional settings like backup configuration.
+ *
+ * WHAT IT DOES:
+ * - Profile Management: Update hostname, laptop serial, department
+ * - Password Change: Secure password update with validation
+ * - Notifications: Toggle email, push, and ticket assignment alerts
+ * - Appearance: Theme selection (dark/light/system) and compact view toggle
+ * - Regional: Timezone and language settings
+ * - Backup (Admin): Configure backup schedule and retention
+ * - Updates (Admin): Check for software updates and view release notes
+ *
+ * KEY FEATURES:
+ * - Role-based access (admin-only sections are hidden for regular users)
+ * - Real-time settings updates via SettingsContext
+ * - Password validation with strength requirements
+ * - Theme-aware UI for all settings sections
+ * - Update checker with changelog display
+ *
+ * BEGINNER NOTES:
+ * - Uses SettingsContext for persistent settings management
+ * - Settings are stored in database (not localStorage)
+ * - SettingsContext automatically syncs with backend
+ * - Toast notifications for user feedback
+ *
+ * @module /components/Settings
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -18,6 +52,9 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
+/**
+ * Available timezone options for date/time display
+ */
 const TIMEZONES = [
   "UTC",
   "America/New_York",
@@ -32,6 +69,9 @@ const TIMEZONES = [
   "Asia/Kolkata",
 ];
 
+/**
+ * Available language options for internationalization
+ */
 const LANGUAGES = [
   { code: "en", name: "English" },
   { code: "es", name: "Español" },
@@ -41,6 +81,12 @@ const LANGUAGES = [
   { code: "zh", name: "中文" },
 ];
 
+/**
+ * Settings - Comprehensive settings interface for profile and system configuration
+ *
+ * @example
+ * <Settings />
+ */
 export function Settings() {
   const { settings, updateSettings } = useSettings();
   const { currentUser, currentUserRole, authToken } = useTicketStore();

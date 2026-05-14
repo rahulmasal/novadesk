@@ -1,3 +1,46 @@
+/**
+ * ============================================================================
+ * MAIN DASHBOARD PAGE - Application Entry Point
+ * ============================================================================
+ *
+ * This is the main page component that serves as the application shell.
+ * It handles authentication, setup wizard, navigation, and view rendering.
+ *
+ * WHAT IT DOES:
+ * - Checks if application needs initial setup (SetupWizard)
+ * - Validates authentication state on mount
+ * - Loads users and tickets when user is authenticated
+ * - Renders appropriate view based on navigation state
+ * - Provides New Ticket button for ticket creation
+ *
+ * AUTHENTICATION FLOW:
+ * 1. Check if setup is needed (needsSetup state)
+ * 2. If not authenticated, show Login component
+ * 3. If authenticated, load data and show Dashboard
+ * 4. checkAuth() validates existing session token
+ *
+ * VIEW ROUTING:
+ * - Dashboard: KPI cards, charts, ticket table, activity feed
+ * - Tickets: Full ticket table with search and pagination
+ * - Customers: UserManagement component (agents/admins)
+ * - Reports: Report generation interface (admin only)
+ * - Backup: Backup management interface (admin only)
+ * - Settings: Application settings (all users)
+ *
+ * ROLE-BASED UI:
+ * - END_USER: Dashboard with "My Tickets" view
+ * - AGENT: Dashboard with charts and all tickets view
+ * - ADMINISTRATOR: Full access including Reports and Backup
+ *
+ * BEGINNER NOTES:
+ * - "use client" required for React hooks and client-side rendering
+ * - useTicketStore provides global state (auth, tickets, etc.)
+ * - useSettings provides theme and user preferences
+ * - Sidebar component handles navigation
+ *
+ * @module /app/page
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,6 +61,19 @@ import { useTicketStore } from "@/lib/store";
 import { useSettings } from "@/contexts/SettingsContext";
 import { Plus } from "lucide-react";
 
+/**
+ * Dashboard - Main application component
+ *
+ * This component acts as the application shell, managing:
+ * - Authentication state
+ * - Setup wizard display
+ * - View navigation
+ * - Data loading
+ *
+ * @example
+ * // This is the root page, rendered at /
+ * export default function Dashboard() { ... }
+ */
 export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
