@@ -58,11 +58,6 @@ Rules:
 - Settings cards use proper padding (p-6) and gap (space-y-6) for spacing
 - ThemeLoader component handles loading theme from DB before rendering
 - Background now properly shows light gray (#f8fafc) instead of black in light mode
-
-## Next Steps
-- (none)
-
-## Key Decisions
 - Added `flex-shrink-0` class to prevent buttons from shrinking in flex containers when window width is large
 - Database backup uses `pg_dump` when available, falls back to Prisma JSON export for portability
 - Ticket search now searches across 6 fields for comprehensive results
@@ -70,6 +65,15 @@ Rules:
 - Default selected columns include: ID, Title, Status, Priority, Category, Department, Created At
 - SQL restore parser now properly handles multi-row INSERT statements with correct value parsing
 - UserManagement page size selection matches TicketTable format (10/25/50/100/200/500/All)
+- Settings now store to DB only (no localStorage). Loads from `/api/settings` on mount
+- Theme changes apply via `html.dark`/`html.light` class toggling with CSS variable overrides
+- Push notification permission triggers via browser Notification API when toggle is enabled
+- Ticket assignment creates DB notification when `assignedTo` differs from current assignment
+- Digital clock displayed in sidebar below NovaDesk logo with gradient styling
+- Progress modal shows deletion progress for bulk user operations
+- LDAP authentication supports both LDAP and Active Directory servers
+- LDAP users are auto-created in local DB when `LDAP_AUTO_CREATE=true`
+- Settings component uses `glass-light` utility class for light theme with white backgrounds and dark text
 
 ## Critical Context
 - Settings now store to DB only (no localStorage). Loads from `/api/settings` on mount
