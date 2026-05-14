@@ -1,8 +1,43 @@
+/**
+ * ============================================================================
+ * DIGITAL CLOCK COMPONENT - Real-Time Clock Display
+ * ============================================================================
+ *
+ * This component displays the current time and date in a digital format.
+ * It updates every second and respects the user's timezone settings.
+ *
+ * WHAT IT DOES:
+ * - Displays current time in HH:MM:SS format
+ * - Displays current date in a compact format
+ * - Updates every second automatically
+ * - Uses timezone from user settings
+ *
+ * KEY FEATURES:
+ * - Real-time updates via setInterval
+ * - Timezone-aware using Intl.DateTimeFormat
+ * - Theme-aware styling (gradient effects)
+ * - Clean, minimal design
+ *
+ * BEGINNER NOTES:
+ * - setInterval runs callback every 1000ms (1 second)
+ * - clearInterval in useEffect cleanup prevents memory leaks
+ * - toLocaleTimeString with timeZone option converts time
+ * - The component is purely presentational (no data fetching)
+ *
+ * @module /components/DigitalClock
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
 
+/**
+ * DigitalClock - Real-time clock display component
+ *
+ * @example
+ * <DigitalClock />
+ */
 export function DigitalClock() {
   const { settings } = useSettings();
   const [time, setTime] = useState("");

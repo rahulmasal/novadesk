@@ -2,6 +2,44 @@
  * ============================================================================
  * SIDEBAR COMPONENT - Navigation Sidebar with Role-Based Access
  * ============================================================================
+ *
+ * This component renders the main navigation sidebar for the application.
+ * It provides navigation links based on user role and displays user info.
+ *
+ * WHAT IT DOES:
+ * - Displays main navigation menu with icons and labels
+ * - Shows current user info (name, role, avatar)
+ * - Provides quick access to Help Center and System Status
+ * - Shows digital clock below the logo
+ * - Handles logout functionality
+ *
+ * NAVIGATION ITEMS:
+ * - Dashboard: Available to all users
+ * - All Tickets: Agents and Administrators only
+ * - Customers (UserManagement): Agents and Administrators only
+ * - Reports: Administrators only
+ * - Backup: Administrators only
+ * - Settings: Available to all users
+ *
+ * KEY FEATURES:
+ * - Role-based menu filtering (agentOnly, adminOnly flags)
+ * - Active view highlighting
+ * - Theme-aware styling
+ * - User info card with avatar
+ * - Modal dialogs for Help and System Status
+ *
+ * ROLE-BASED ACCESS:
+ * - END_USER: Dashboard, Settings only
+ * - AGENT: Dashboard, Tickets, Customers, Settings
+ * - ADMINISTRATOR: All sections including Reports and Backup
+ *
+ * BEGINNER NOTES:
+ * - setView changes the current view in Zustand store
+ * - Role-based filtering uses the links array with flags
+ * - getRoleIcon returns appropriate icon for user role
+ * - logout calls the store's logout action
+ *
+ * @module /components/Sidebar
  */
 
 "use client";
@@ -27,6 +65,12 @@ import {
 import { cn } from "@/lib/utils";
 import { DigitalClock } from "@/components/DigitalClock";
 
+/**
+ * Sidebar - Main navigation sidebar component
+ *
+ * @example
+ * <Sidebar />
+ */
 export function Sidebar() {
    const { currentUserRole, currentView, setView, currentUser, logout } =
      useTicketStore();

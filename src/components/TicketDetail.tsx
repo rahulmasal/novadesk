@@ -1,7 +1,33 @@
 /**
  * ============================================================================
- * TICKET DETAIL COMPONENT - Modal View for Ticket Details
+ * TICKET DETAIL COMPONENT - Draggable Modal View for Ticket Details
  * ============================================================================
+ *
+ * This component displays detailed information about a ticket in a draggable,
+ * resizable modal window. It allows agents/admins to manage ticket status,
+ * assign tickets, add comments, and view activity history.
+ *
+ * WHAT IT DOES:
+ * - Shows complete ticket information (description, metadata, attachments)
+ * - Allows drag-and-drop positioning of the modal window
+ * - Supports resizing via drag handle at bottom-right corner
+ * - Provides quick action buttons for status changes and assignment
+ * - Displays activity/comment thread for ticket history
+ * - Shows file attachments with image preview
+ *
+ * FEATURES:
+ * - Drag to reposition the modal window
+ * - Resize via corner handle
+ * - Status dropdown for quick status changes
+ * - Agent assignment dropdown (admin only)
+ * - Activity feed showing comments and status changes
+ * - File attachment display and download
+ *
+ * ACCESS CONTROL:
+ * - Delete button: Administrators only
+ * - Assign button: Administrators only
+ * - Status changes: Agents and Administrators
+ * - Comments: All authenticated users
  *
  * @module /components/TicketDetail
  */

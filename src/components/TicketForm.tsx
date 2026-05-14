@@ -1,3 +1,34 @@
+/**
+ * ============================================================================
+ * TICKET FORM COMPONENT - Modal Form for Creating New Tickets
+ * ============================================================================
+ *
+ * This component provides a comprehensive form for creating new support tickets.
+ * It supports advanced user selection for agents/admins and file attachments.
+ *
+ * WHAT IT DOES:
+ * - Displays a modal form for ticket submission
+ * - Collects ticket details: title, description, category, priority
+ * - Shows device information (hostname, serial) for the selected user
+ * - Supports file attachments for the ticket
+ * - Allows agents/admins to create tickets on behalf of other users
+ *
+ * KEY FEATURES:
+ * - User search dropdown for agents to select ticket owner
+ * - Auto-fills device info when user is selected
+ * - File attachment upload (images)
+ * - Client-side validation before submission
+ * - Priority and category selection dropdowns
+ *
+ * BEGINNER NOTES:
+ * - useState manages form input state for each field
+ * - useEffect auto-populates user/device info when currentUser changes
+ * - The form validates input before sending to API
+ * - File uploads use FormData (multipart/form-data encoding)
+ *
+ * @module /components/TicketForm
+ */
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -9,6 +40,9 @@ import { Send, X, Loader2, Upload } from "lucide-react";
  * TicketForm - Modal form for creating new tickets with priority, category, and advanced user fields
  *
  * @param onClose - Callback to close the form modal
+ *
+ * @example
+ * <TicketForm onClose={() => setShowForm(false)} />
  */
 export function TicketForm({ onClose }: { onClose: () => void }) {
    const addTicket = useTicketStore((state) => state.addTicket);

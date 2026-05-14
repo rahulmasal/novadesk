@@ -1,9 +1,48 @@
+/**
+ * ============================================================================
+ * SCORECARDS COMPONENT - Dashboard KPI Metric Cards
+ * ============================================================================
+ *
+ * This component displays key performance indicators (KPIs) for the dashboard.
+ * Each card shows a metric with an icon and visual styling.
+ *
+ * WHAT IT DOES:
+ * - Calculates and displays 4 key metrics from ticket data:
+ *   1. Total Tickets - count of all tickets in the system
+ *   2. Open Tickets - tickets that are not RESOLVED or CLOSED
+ *   3. SLA Violated - tickets past their due date (excluding resolved/closed)
+ *   4. Avg Resolution - average time to resolve tickets in hours
+ *
+ * KEY FEATURES:
+ * - Real-time metric calculation from Zustand store
+ * - Visual indicators (urgent glow effect) for critical metrics
+ * - Theme-aware styling for both light and dark modes
+ * - Hover animation for interactive feedback
+ *
+ * BEGINNER NOTES:
+ * - Uses useTicketStore to access ticket data from global state
+ * - Filters tickets to calculate metrics (open, overdue, etc.)
+ * - Date comparisons use new Date() for current time
+ * - Average calculation: sum(resolution times) / count
+ *
+ * @module /components/Scorecards
+ */
+
 import { useTicketStore } from "@/lib/store";
 import { useSettings } from "@/contexts/SettingsContext";
 import { TicketIcon, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 /**
- * Scorecards - KPI scorecards displaying total tickets, open tickets, overdue count, and avg resolution time
+ * Scorecards - Dashboard KPI scorecards component
+ *
+ * Displays key metrics:
+ * - Total Tickets: All tickets in system
+ * - Open Tickets: Active, unresolved tickets
+ * - SLA Violated: Overdue tickets past their deadline
+ * - Avg Resolution: Average time to close tickets (in hours)
+ *
+ * @example
+ * <Scorecards />
  */
 export function Scorecards() {
   const tickets = useTicketStore((state) => state.tickets);

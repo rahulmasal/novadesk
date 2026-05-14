@@ -1,3 +1,42 @@
+/**
+ * ============================================================================
+ * USER MANAGEMENT COMPONENT - Admin Interface for User CRUD Operations
+ * ============================================================================
+ *
+ * This component provides a comprehensive interface for managing users in the system.
+ * Administrators can create, edit, delete, and import users in bulk.
+ *
+ * WHAT IT DOES:
+ * - Displays all users in a searchable, paginated table
+ * - Allows creating new users via a modal form
+ * - Enables inline editing of user properties
+ * - Supports bulk import of users via CSV
+ * - Provides bulk delete functionality with progress modal
+ * - Allows column selection for the user table
+ *
+ * KEY FEATURES:
+ * - Search by name, email, or department
+ * - Pagination with configurable page sizes
+ * - Bulk selection via checkboxes
+ * - Inline editing without modal
+ * - CSV import with sample data option
+ * - Progress modal for bulk operations
+ * - Column visibility toggle
+ *
+ * ACCESS CONTROL:
+ * - Both Administrators and Agents can VIEW user list
+ * - Only Administrators can CREATE, EDIT, DELETE, IMPORT
+ * - Users cannot delete their own account
+ *
+ * BEGINNER NOTES:
+ * - Uses useEffect to fetch users on component mount
+ * - Inline editing is implemented with conditional rendering
+ * - CSV import sends data to /api/users/import endpoint
+ * - Bulk operations show a progress modal with status
+ *
+ * @module /components/UserManagement
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,6 +44,9 @@ import { useTicketStore, Role } from "@/lib/store";
 import { useSettings } from "@/contexts/SettingsContext";
 import { UserPlus, Upload, Trash2, Edit2, X, Check, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
+/**
+ * Interface representing a user in the system
+ */
 interface UserData {
   id: string;
   email: string;
@@ -17,7 +59,10 @@ interface UserData {
 }
 
 /**
- * UserManagement - Admin user management with search, pagination, inline editing, and CSV import
+ * UserManagement - Full-featured user management interface
+ *
+ * @example
+ * <UserManagement />
  */
 export function UserManagement() {
   const { authToken, currentUserRole, currentUser } = useTicketStore();

@@ -1,3 +1,31 @@
+/**
+ * ============================================================================
+ * CHARTS COMPONENT - Dashboard Visualizations Using Recharts
+ * ============================================================================
+ *
+ * This component renders interactive charts for the dashboard using the Recharts
+ * library. It displays ticket volume trends and category distribution.
+ *
+ * WHAT IT DOES:
+ * - Line Chart: Shows ticket volume over time (grouped by creation date)
+ * - Doughnut/Pie Chart: Shows distribution of tickets by category
+ *
+ * KEY FEATURES:
+ * - Responsive charts that adjust to container size
+ * - Theme-aware styling (colors adapt to light/dark mode)
+ * - Data aggregation from Zustand ticket store
+ * - Custom tooltips with formatted information
+ * - Total ticket count displayed in center of doughnut chart
+ *
+ * BEGINNER NOTES:
+ * - Uses Recharts library for SVG-based charts
+ * - ResponsiveContainer makes charts resize with parent
+ * - Data is aggregated from raw ticket array using reduce()
+ * - parseISO and format from date-fns for date handling
+ *
+ * @module /components/Charts
+ */
+
 "use client";
 
 import { useTicketStore } from "@/lib/store";
@@ -17,7 +45,14 @@ import {
 } from "recharts";
 
 /**
- * Charts - Dashboard charts showing ticket volume trends (line chart) and priority distribution (pie chart)
+ * Charts - Dashboard visualization component
+ *
+ * Renders two charts:
+ * 1. Line Chart: Ticket volume trends over time
+ * 2. Doughnut Chart: Category distribution
+ *
+ * @example
+ * <Charts />
  */
 export function Charts() {
   const tickets = useTicketStore((state) => state.tickets);

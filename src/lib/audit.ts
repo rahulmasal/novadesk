@@ -1,7 +1,29 @@
 /**
  * ============================================================================
- * AUDIT LOGGING SERVICE - Track All Ticket Changes
+ * AUDIT LOGGING SERVICE - Track All System Changes and Events
  * ============================================================================
+ *
+ * This module provides functions to create and retrieve audit log entries.
+ * Audit logs track important events like ticket changes, user actions, and logins.
+ *
+ * WHAT IT TRACKS:
+ * - Ticket operations (created, updated, deleted, status changes)
+ * - Assignment changes
+ * - Comment and attachment operations
+ * - SLA warnings and breaches
+ * - Authentication events (login, logout, password changes)
+ * - User management operations
+ *
+ * WHY USE AUDIT LOGS?
+ * - Compliance: Many regulations require activity tracking
+ * - Debugging: Reconstruct what happened when something goes wrong
+ * - Security: Detect suspicious patterns or unauthorized access
+ * - Accountability: Know who did what and when
+ *
+ * BEGINNER NOTES:
+ * - Audit logs are append-only (never delete old entries)
+ * - Include relevant context in the "details" field
+ * - logAuditEvent() is fire-and-forget (catches its own errors)
  *
  * @module /lib/audit
  */

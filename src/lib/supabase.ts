@@ -3,6 +3,29 @@
  * SUPABASE CLIENT - Database and Storage Access
  * ============================================================================
  *
+ * This module provides Supabase client instances for database operations and
+ * file storage. Supabase is used for real-time subscriptions and file attachments.
+ *
+ * WHAT SUPABASE PROVIDES:
+ * - Real-time subscriptions (live updates when tickets change)
+ * - File storage (ticket attachments)
+ * - Serverless authentication (if configured)
+ *
+ * CLIENT TYPES:
+ * - supabase: Client-side client with anon key (limited permissions)
+ * - supabaseAdmin: Server-side client with service role key (full permissions)
+ *
+ * BEGINNER NOTES:
+ * - Supabase is an open-source Firebase alternative
+ * - The anon key is safe to expose to browsers
+ * - The service role key should NEVER be sent to the browser
+ * - File storage uses buckets to organize uploads
+ *
+ * ENVIRONMENT VARIABLES:
+ * - NEXT_PUBLIC_SUPABASE_URL: Your Supabase project URL
+ * - NEXT_PUBLIC_SUPABASE_ANON_KEY: Anonymous API key (browser-safe)
+ * - SUPABASE_SERVICE_ROLE_KEY: Service role key (server-only!)
+ *
  * @module /lib/supabase
  */
 

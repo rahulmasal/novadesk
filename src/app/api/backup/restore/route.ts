@@ -1,7 +1,35 @@
 /**
  * ============================================================================
- * BACKUP RESTORE API ROUTE - Restore System from Backup
+ * BACKUP RESTORE API ROUTE - Restore System from JSON Backup
  * ============================================================================
+ *
+ * This route handles restoring system data from a previously created JSON backup.
+ * It clears existing data and replaces it with the backup contents.
+ *
+ * HTTP METHODS:
+ * - POST: Restore system from backup data
+ *
+ * ACCESS CONTROL:
+ * - Only administrators can restore backups
+ * - Requires valid session token
+ *
+ * WHAT IT RESTORES:
+ * - users: All user accounts (with hashed passwords)
+ * - tickets: All tickets with full details
+ * - comments: Ticket comments (nested under tickets)
+ * - auditLogs: Audit trail entries (nested under tickets)
+ * - attachments: File attachments (nested under tickets)
+ * - config: System configuration settings
+ *
+ * SECURITY NOTES:
+ * - Existing data is DELETED before restore
+ * - User gets "P@ss@4321" default password if not in backup
+ * - Transaction ensures atomicity of restore
+ *
+ * DATA INTEGRITY:
+ * - Dates are converted from ISO strings to Date objects
+ * - Null values handled appropriately for nullable fields
+ * - Foreign key relationships maintained
  *
  * @module /api/backup/restore/route
  */

@@ -1,7 +1,31 @@
 /**
  * ============================================================================
- * DATABASE BACKUP API ROUTE - Generate PostgreSQL SQL Dump
+ * DATABASE BACKUP API ROUTE - PostgreSQL SQL Dump Operations
  * ============================================================================
+ *
+ * This route handles PostgreSQL-specific backup and restore operations.
+ * Unlike the JSON backup route, this creates a raw SQL dump file.
+ *
+ * HTTP METHODS:
+ * - GET: Generate PostgreSQL SQL dump for download
+ * - POST: Restore database from SQL dump file
+ *
+ * ACCESS CONTROL:
+ * - Only administrators can access these endpoints
+ * - Requires valid session token
+ *
+ * BACKUP METHODS:
+ * 1. Primary: pg_dump - Native PostgreSQL tool, most reliable
+ * 2. Fallback: Prisma-based - Generates INSERT statements programmatically
+ *
+ * RESTORE METHODS:
+ * 1. Primary: psql - Native PostgreSQL tool, most reliable
+ * 2. Fallback: Prisma-based - Parses and executes SQL manually
+ *
+ * ADVANTAGES OF SQL DUMPS:
+ * - Full database including indexes, constraints, relationships
+ * - Can be restored to any PostgreSQL-compatible system
+ * - Includes schema definitions (not just data)
  *
  * @module /api/backup/database/route
  */
