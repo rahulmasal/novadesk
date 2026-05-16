@@ -125,9 +125,31 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
  * @param children - All child components that need access to settings
  */
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  // State to hold current settings
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSettingsRef = useRef<Settings | null>(null);
+
+  // Flush pending settings on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      const pending = pendingSettingsRef.current;
+      if (pending) {
+        const token = sessionStorage.getItem("token");
+        if (token) {
+          navigator.sendBeacon("/api/settings", new Blob([
+            JSON.stringify({ settings: pending })
+          ], { type: "application/json" }));
+        }
+        pendingSettingsRef.current = null;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   /**
    * Load settings from database on component mount
@@ -277,7 +299,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
     }
+    pendingSettingsRef.current = newSettings;
     saveTimerRef.current = setTimeout(async () => {
+      pendingSettingsRef.current = null;
       const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
       if (!token) return;
       try {
@@ -289,7 +313,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           },
           body: JSON.stringify({ settings: newSettings }),
         });
-        // Refresh tickets when SLA settings change
         if (res.ok && typeof window !== "undefined") {
           useTicketStore.getState().refreshTickets();
         }
