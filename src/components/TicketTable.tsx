@@ -28,7 +28,7 @@
 import { useState, useEffect } from "react";
 import { useTicketStore, Ticket } from "@/lib/store";
 import { useSettings } from "@/contexts/SettingsContext";
-import { Search, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, AlertCircle, Download } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TicketDetail } from "./TicketDetail";
@@ -66,6 +66,30 @@ export function TicketTable() {
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
   const [progressTotal, setProgressTotal] = useState(0);
+
+  // Export filtered tickets to CSV
+  const exportToCSV = () => {
+    const headers = ["ID", "Title", "Status", "Priority", "Category", "Department", "Username", "Created At", "Due Date"];
+    const rows = filtered.map((t) => [
+      t.id,
+      `"${t.title.replace(/"/g, '""')}"`,
+      t.status,
+      t.priority,
+      t.category,
+      t.department,
+      t.username,
+      t.createdAt,
+      t.dueDate,
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tickets-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const isLightTheme = settings.appearance.theme === "light";
 
@@ -147,6 +171,16 @@ export function TicketTable() {
                 </button>
               </div>
             )}
+            <button
+              onClick={exportToCSV}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                isLightTheme
+                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  : "bg-white/5 hover:bg-white/10 text-neutral-300"
+              }`}
+            >
+              <Download className="w-3 h-3" /> Export CSV
+            </button>
             <select
               value={itemsPerPage}
               onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(1); }}

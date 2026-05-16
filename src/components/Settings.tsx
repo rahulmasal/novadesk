@@ -555,6 +555,17 @@ return (
                   </div>
                 </div>
               </div>
+              <div>
+                <label className={`block text-sm font-medium ${isLightTheme ? "text-slate-700" : "text-neutral-300"} mb-2`}>Auto-Close Resolved Tickets (days)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={settings.advanced.autoCloseDays}
+                  onChange={(e) => updateSettings("advanced", "autoCloseDays", parseInt(e.target.value) || 7)}
+                  className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                />
+                <p className={`text-xs mt-1 ${isLightTheme ? "text-slate-400" : "text-neutral-500"}`}>Resolved tickets auto-close after this many days of inactivity</p>
+              </div>
             </div>
           </div>
         )}

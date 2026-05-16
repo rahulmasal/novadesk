@@ -137,6 +137,64 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
  * 
  * @returns Object indicating if report was sent successfully
  */
+/**
+ * Auto-close resolved tickets after configured days of inactivity
+ */
+async function runAutoClose(): Promise<{ closed: number; errors: string[] }> {
+  const result = { closed: 0, errors: [] as string[] };
+
+  try {
+    // Load auto-close days from settings (default: 7 days)
+    let autoCloseDays = 7;
+    try {
+      const config = await prisma.systemConfig.findUnique({ where: { key: "user-settings" } });
+      if (config) {
+        const settings = JSON.parse(config.value);
+        if (typeof settings.advanced?.autoCloseDays === "number") {
+          autoCloseDays = settings.advanced.autoCloseDays;
+        }
+      }
+    } catch { /* use default */ }
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - autoCloseDays);
+
+    // Find resolved tickets that haven't been updated in X days
+    const staleTickets = await prisma.ticket.findMany({
+      where: {
+        status: "RESOLVED",
+        updatedAt: { lt: cutoffDate },
+      },
+    });
+
+    for (const ticket of staleTickets) {
+      try {
+        await prisma.ticket.update({
+          where: { id: ticket.id },
+          data: { status: "CLOSED" },
+        });
+
+        await logAuditEvent({
+          ticketId: ticket.id,
+          userId: "system",
+          action: "STATUS_CHANGED",
+          details: `Auto-closed after ${autoCloseDays} days of inactivity`,
+        });
+
+        result.closed++;
+      } catch (error) {
+        result.errors.push(`Failed to auto-close ${ticket.id}: ${error}`);
+      }
+    }
+
+    logger.info(`[AUTO CLOSE] Closed ${result.closed} tickets`);
+  } catch (error) {
+    result.errors.push(String(error));
+  }
+
+  return result;
+}
+
 async function runDailyReport(): Promise<{ sent: boolean; error?: string }> {
   try {
     const today = new Date();
@@ -209,6 +267,11 @@ export async function GET(req: NextRequest) {
     const results: Record<string, unknown> = {};
     const slaResult = await runSlaEscalation();
     results.slaEscalation = slaResult;
+
+    if (action === "all" || action === "autoclose") {
+      const autoCloseResult = await runAutoClose();
+      results.autoClose = autoCloseResult;
+    }
 
     if (action === "all" || action === "report") {
       const reportResult = await runDailyReport();

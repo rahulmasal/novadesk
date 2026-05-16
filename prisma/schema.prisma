@@ -56,14 +56,15 @@ model Ticket {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  ticketId  String
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  content    String
+  ticketId   String
+  authorId   String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  author     User     @relation(fields: [authorId], references: [id])
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
   @@map("comments")
@@ -205,6 +206,17 @@ enum Status {
   PENDING_VENDOR
   RESOLVED
   CLOSED
+}
+
+model CannedResponse {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("canned_responses")
 }
 
 enum NotificationType {

@@ -158,6 +158,7 @@ export const createCommentSchema = z.object({
     .string()
     .min(1, "Comment cannot be empty")
     .max(2000, "Comment must be less than 2000 characters"),
+  isInternal: z.boolean().optional().default(false),
 });
 
 export const updateCommentSchema = z.object({

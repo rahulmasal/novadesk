@@ -72,6 +72,7 @@ export interface Settings {
     slaResponseMinutes: number; // SLA response time - minutes component
     slaResolutionHours: number; // SLA resolution time - hours component
     slaResolutionMinutes: number; // SLA resolution time - minutes component
+    autoCloseDays: number;    // Days after which resolved tickets auto-close
   };
   /** Email / SMTP configuration (admin only) */
   email: {
@@ -110,6 +111,7 @@ const defaultSettings: Settings = {
     slaResponseMinutes: 30,
     slaResolutionHours: 4,
     slaResolutionMinutes: 0,
+    autoCloseDays: 7,
   },
   email: {
     emailEnabled: false,

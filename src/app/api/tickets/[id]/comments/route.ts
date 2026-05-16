@@ -35,8 +35,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
 
+    // End users cannot see internal notes
+    const where = auth.role === "END_USER"
+      ? { ticketId, isInternal: false }
+      : { ticketId };
+
     const comments = await prisma.comment.findMany({
-      where: { ticketId },
+      where,
       include: { author: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: "asc" },
     });
@@ -66,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const { content } = validationResult.data;
+    const { content, isInternal } = validationResult.data;
 
     const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
 
@@ -78,9 +83,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // End users cannot create internal notes
+    const internal = auth.role !== "END_USER" && isInternal === true;
 
     const comment = await prisma.comment.create({
-      data: { content, ticketId, authorId: auth.userId },
+      data: { content, ticketId, authorId: auth.userId, isInternal: internal },
       include: { author: { select: { id: true, name: true, email: true } } },
     });
 
