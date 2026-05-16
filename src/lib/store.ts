@@ -279,6 +279,9 @@ checkAuth: () => Promise<boolean>;
     */
    addActivity: (ticketId: string, message: string) => void;
 
+   /** Deletes an activity by ID */
+   deleteActivity: (activityId: string) => void;
+
 /** Sets all users in the system */
   setAllUsers: (users: User[]) => void;
 }
@@ -791,6 +794,13 @@ addActivity: (ticketId, message) => {
            ],
          }));
        },
+
+       deleteActivity: (activityId) => {
+         set((state) => ({
+           activities: state.activities.filter((a) => a.id !== activityId),
+         }));
+       },
+
        // ========================================
        // SET ALL USERS ACTION
        // ========================================

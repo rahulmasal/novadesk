@@ -52,7 +52,7 @@ const STATUS_OPTIONS: { value: StatusType; label: string; color: string }[] = [
 ];
 
 export function TicketDetail({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
-   const { tickets, activities, currentUserRole, currentUser, updateTicketStatus, addActivity, deleteTicket, allUsers, authToken } = useTicketStore();
+   const { tickets, activities, currentUserRole, currentUser, updateTicketStatus, addActivity, deleteActivity, deleteTicket, allUsers, authToken } = useTicketStore();
    const { settings } = useSettings();
    const isLightTheme = settings.appearance.theme === "light";
     const [comment, setComment] = useState("");
@@ -385,9 +385,18 @@ return (
                         <span className={`text-[10px] font-medium ${isLightTheme ? "text-slate-600" : "text-neutral-300"}`}>
                           {activity.message.split(' ')[0]}
                         </span>
-                        <span className={`text-[9px] ${isLightTheme ? "text-gray-400" : "text-neutral-500"}`}>
-                          {formatDistanceToNow(parseISO(activity.timestamp))} ago
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className={`text-[9px] ${isLightTheme ? "text-gray-400" : "text-neutral-500"}`}>
+                            {formatDistanceToNow(parseISO(activity.timestamp))} ago
+                          </span>
+                          <button
+                            onClick={() => deleteActivity(activity.id)}
+                            className={`p-0.5 rounded hover:bg-red-500/20 transition-colors ${isLightTheme ? "text-gray-400 hover:text-red-600" : "text-neutral-500 hover:text-red-400"}`}
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
                       <p className={`text-xs ${isLightTheme ? "text-slate-700" : "text-neutral-300"}`}>
                         {activity.message.includes("commented:") ? activity.message.split("commented:")[1].trim() : activity.message}
