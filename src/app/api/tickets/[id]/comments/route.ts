@@ -12,6 +12,7 @@ import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 import { createCommentSchema, updateCommentSchema } from "@/lib/schemas";
+import logger from "@/lib/logger";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await validateAuth(req);
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(comments.map(formatComment));
   } catch (error) {
-    console.error(`[COMMENTS GET] Error:`, error);
+    logger.error(`[COMMENTS GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch comments" }, { status: 500 });
   }
 }
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return NextResponse.json(formatComment(comment), { status: 201 });
   } catch (error) {
-    console.error(`[COMMENTS POST] Error:`, error);
+    logger.error(`[COMMENTS POST] Error:`, error);
     return NextResponse.json({ error: "Failed to create comment" }, { status: 500 });
   }
 }
@@ -148,7 +149,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json(formatComment(updatedComment));
   } catch (error) {
-    console.error(`[COMMENTS PATCH] Error:`, error);
+    logger.error(`[COMMENTS PATCH] Error:`, error);
     return NextResponse.json({ error: "Failed to update comment" }, { status: 500 });
   }
 }
@@ -196,7 +197,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error(`[COMMENTS DELETE] Error:`, error);
+    logger.error(`[COMMENTS DELETE] Error:`, error);
     return NextResponse.json({ error: "Failed to delete comment" }, { status: 500 });
   }
 }

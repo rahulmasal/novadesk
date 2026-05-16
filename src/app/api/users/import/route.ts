@@ -20,6 +20,7 @@ import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -178,7 +179,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`[USERS IMPORT POST] Error:`, error);
+    logger.error(`[USERS IMPORT POST] Error:`, error);
     return NextResponse.json(
       { error: "Failed to parse CSV: " + errorMessage },
       { status: 400 },

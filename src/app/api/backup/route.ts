@@ -31,6 +31,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(`[BACKUP GET] Error:`, error);
+    logger.error(`[BACKUP GET] Error:`, error);
     return NextResponse.json({ error: "Failed to generate backup" }, { status: 500 });
   }
 }

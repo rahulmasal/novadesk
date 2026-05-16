@@ -11,6 +11,7 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { createKnowledgeArticleSchema, updateKnowledgeArticleSchema } from "@/lib/schemas";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
       total, limit, offset,
     });
   } catch (error) {
-    console.error(`[KNOWLEDGE GET] Error:`, error);
+    logger.error(`[KNOWLEDGE GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch articles" }, { status: 500 });
   }
 }
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(formatArticle(article), { status: 201 });
   } catch (error) {
-    console.error(`[KNOWLEDGE POST] Error:`, error);
+    logger.error(`[KNOWLEDGE POST] Error:`, error);
     return NextResponse.json({ error: "Failed to create article" }, { status: 500 });
   }
 }
@@ -143,7 +144,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json(formatArticle(article));
   } catch (error) {
-    console.error(`[KNOWLEDGE PATCH] Error:`, error);
+    logger.error(`[KNOWLEDGE PATCH] Error:`, error);
     return NextResponse.json({ error: "Failed to update article" }, { status: 500 });
   }
 }
@@ -175,7 +176,7 @@ export async function DELETE(req: NextRequest) {
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error(`[KNOWLEDGE DELETE] Error:`, error);
+    logger.error(`[KNOWLEDGE DELETE] Error:`, error);
     return NextResponse.json({ error: "Failed to delete article" }, { status: 500 });
   }
 }

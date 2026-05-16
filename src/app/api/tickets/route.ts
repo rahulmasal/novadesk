@@ -17,6 +17,7 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
+import logger from "@/lib/logger";
 import {
   createTicketSchema,
   updateTicketSchema,
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(tickets.map(formatTicket));
   } catch (error) {
-    console.error("Error fetching tickets:", error);
+    logger.error("Error fetching tickets:", error);
     return NextResponse.json({ error: "Failed to fetch tickets" }, { status: 500 });
   }
 }
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
 
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0]?.message || "Validation failed";
-      console.error("[POST TICKET] Validation failed:", JSON.stringify(validationResult.error.issues));
+      logger.error("[POST TICKET] Validation failed:", JSON.stringify(validationResult.error.issues));
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
@@ -210,7 +211,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(formatTicket(ticket), { status: 201 });
   } catch (error) {
-    console.error("Error creating ticket:", error);
+    logger.error("Error creating ticket:", error);
     return NextResponse.json({ error: "Failed to create ticket" }, { status: 500 });
   }
 }
@@ -291,7 +292,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json(formatTicket(updatedTicket));
   } catch (error) {
-    console.error("Error updating ticket:", error);
+    logger.error("Error updating ticket:", error);
     return NextResponse.json({ error: "Failed to update ticket" }, { status: 500 });
   }
 }
@@ -311,12 +312,12 @@ export async function DELETE(req: NextRequest) {
   const auth = await validateAuth(req);
 
   if (!auth) {
-    console.error("[DELETE TICKET] No auth - returning 401");
+    logger.error("[DELETE TICKET] No auth - returning 401");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   if (auth.role !== "ADMINISTRATOR") {
-    console.error("[DELETE TICKET] Forbidden - role mismatch - got:", auth.role, "expected: ADMINISTRATOR");
+    logger.error("[DELETE TICKET] Forbidden - role mismatch - got:", auth.role, "expected: ADMINISTRATOR");
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -325,13 +326,13 @@ export async function DELETE(req: NextRequest) {
     const { id } = body;
 
     if (!id) {
-      console.error("[DELETE TICKET] Missing ID");
+      logger.error("[DELETE TICKET] Missing ID");
       return NextResponse.json({ error: "Ticket ID is required" }, { status: 400 });
     }
 
     const ticket = await prisma.ticket.findUnique({ where: { id } });
     if (!ticket) {
-      console.error("[DELETE TICKET] Not found - id:", id);
+      logger.error("[DELETE TICKET] Not found - id:", id);
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
@@ -352,13 +353,13 @@ await prisma.$transaction(async (tx) => {
     const verify = await prisma.ticket.findUnique({ where: { id } });
 
     if (verify !== null) {
-      console.error("[DELETE TICKET] FATAL: Ticket still exists after delete!");
+      logger.error("[DELETE TICKET] FATAL: Ticket still exists after delete!");
       return NextResponse.json({ error: "Delete verification failed" }, { status: 500 });
     }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("[DELETE TICKET] Error:", error);
+    logger.error("[DELETE TICKET] Error:", error);
     return NextResponse.json({ error: "Failed to delete ticket" }, { status: 500 });
   }
 }

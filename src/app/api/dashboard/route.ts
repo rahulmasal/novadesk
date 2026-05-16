@@ -11,6 +11,7 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { updateDashboardLayoutSchema } from "@/lib/schemas";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
       updatedAt: layout.updatedAt.toISOString(),
     });
   } catch (error) {
-    console.error(`[DASHBOARD GET] Error:`, error);
+    logger.error(`[DASHBOARD GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch dashboard layout" }, { status: 500 });
   }
 }
@@ -100,7 +101,7 @@ export async function PUT(req: NextRequest) {
       updatedAt: updatedLayout.updatedAt.toISOString(),
     });
   } catch (error) {
-    console.error(`[DASHBOARD PUT] Error:`, error);
+    logger.error(`[DASHBOARD PUT] Error:`, error);
     return NextResponse.json({ error: "Failed to update dashboard layout" }, { status: 500 });
   }
 }

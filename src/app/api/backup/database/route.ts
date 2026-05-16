@@ -37,6 +37,7 @@ import fs from "fs";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -82,7 +83,7 @@ export async function GET(req: NextRequest) {
       return await generatePrismaSql(outputPath);
     }
   } catch (error) {
-    console.error(`[DB BACKUP GET] Error:`, error);
+    logger.error(`[DB BACKUP GET] Error:`, error);
     return NextResponse.json({ error: "Failed to generate database backup" }, { status: 500 });
   }
 }
@@ -134,7 +135,7 @@ async function generateSqlDump(
 
     child.on("close", (code) => {
       if (code !== 0) {
-        console.error(`[DB BACKUP GET] pg_dump failed:`, stderr);
+        logger.error(`[DB BACKUP GET] pg_dump failed:`, stderr);
         resolve(NextResponse.json({ error: "Failed to generate SQL dump" }, { status: 500 }));
         return;
       }
@@ -287,7 +288,7 @@ export async function POST(req: NextRequest) {
       return restoreViaPrisma(sql.split("\n"));
     }
   } catch (error) {
-    console.error(`[DB RESTORE POST] Error:`, error);
+    logger.error(`[DB RESTORE POST] Error:`, error);
     return NextResponse.json({ error: "Failed to restore database" }, { status: 500 });
   }
 }
@@ -336,7 +337,7 @@ async function restoreViaPsql(
       if (code === 0) {
         resolve(NextResponse.json({ message: "Database restored successfully" }));
       } else {
-        console.error(`[DB RESTORE POST] psql failed:`, stderr);
+        logger.error(`[DB RESTORE POST] psql failed:`, stderr);
         resolve(NextResponse.json({ error: `Failed to restore database: ${stderr || "Unknown psql error"}` }, { status: 500 }));
       }
     });
@@ -466,7 +467,7 @@ async function restoreViaPrisma(lines: string[]) {
     return NextResponse.json({ message: "Database restored successfully" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[DB RESTORE POST] Prisma restore failed:", message);
+    logger.error("[DB RESTORE POST] Prisma restore failed:", message);
     return NextResponse.json({ error: `Failed to restore database: ${message}` }, { status: 500 });
   }
 }

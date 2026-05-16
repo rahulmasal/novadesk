@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import logger from "@/lib/logger";
 
 interface UpdateInfo {
   version: string;
@@ -39,7 +40,7 @@ async function fetchRemoteVersion(): Promise<UpdateInfo | null> {
       return await res.json();
     }
   } catch (error) {
-    console.error("[UPDATES] Failed to fetch remote version:", error);
+    logger.error("[UPDATES] Failed to fetch remote version:", error);
   }
   return null;
 }
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("[UPDATES] Error:", error);
+    logger.error("[UPDATES] Error:", error);
     return NextResponse.json({ error: "Failed to process update request" }, { status: 500 });
   }
 }

@@ -11,6 +11,7 @@
 
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import logger from "@/lib/logger";
 
 /**
  * POST /api/setup/check-db - Test database connection with provided credentials
@@ -54,12 +55,12 @@ export async function POST(req: Request) {
         url: databaseUrl, // Return the URL so it can be used in the final step
       });
     } catch (dbError) {
-      console.error(`[SETUP CHECK-DB POST] Database test failed:`, dbError);
+      logger.error(`[SETUP CHECK-DB POST] Database test failed:`, dbError);
       await prisma.$disconnect();
       throw dbError;
     }
   } catch (error) {
-    console.error(`[SETUP CHECK-DB POST] Error:`, error);
+    logger.error(`[SETUP CHECK-DB POST] Error:`, error);
 
     const errorMessage =
       error instanceof Error ? error.message : "Failed to connect to database";

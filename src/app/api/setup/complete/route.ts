@@ -17,6 +17,7 @@ import { PrismaClient } from "@prisma/client";
 import { setupWizardSchema } from "@/lib/schemas";
 import fs from "fs/promises";
 import path from "path";
+import logger from "@/lib/logger";
 
 // bcrypt salt rounds (higher = more secure but slower)
 const BCRYPT_SALT_ROUNDS = 12;
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
       // Update process.env for the current process
       process.env.DATABASE_URL = databaseUrl;
     } catch (fsError) {
-      console.error("Failed to write to .env file:", fsError);
+      logger.error("Failed to write to .env file:", fsError);
       // Continue anyway, as we can still complete the setup in the current process
     }
 
@@ -197,7 +198,7 @@ export async function POST(req: Request) {
       throw dbError;
     }
   } catch (error) {
-    console.error("Setup complete error:", error);
+    logger.error("Setup complete error:", error);
     
     const errorMessage = error instanceof Error 
       ? error.message 

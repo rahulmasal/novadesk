@@ -11,6 +11,7 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { getAuditLogs, exportAuditLogs } from "@/lib/audit";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
       newValue: log.newValue, details: log.details, createdAt: log.createdAt.toISOString(),
     })));
   } catch (error) {
-    console.error(`[AUDIT GET] Error:`, error);
+    logger.error(`[AUDIT GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch audit logs" }, { status: 500 });
   }
 }

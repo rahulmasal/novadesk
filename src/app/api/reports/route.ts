@@ -38,6 +38,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -148,7 +149,7 @@ export async function GET(req: NextRequest) {
     reportType,
   });
   } catch (error) {
-    console.error(`[REPORTS GET] Error:`, error);
+    logger.error(`[REPORTS GET] Error:`, error);
     return NextResponse.json({ error: "Failed to generate report" }, { status: 500 });
   }
 }

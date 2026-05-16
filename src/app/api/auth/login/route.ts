@@ -42,6 +42,7 @@ import prisma from "@/lib/prisma";
 import { loginSchema } from "@/lib/schemas";
 import { logAuditEvent } from "@/lib/audit";
 import { authenticateWithLdap, LdapUser } from "@/lib/ldap-auth";
+import logger from "@/lib/logger";
 
 /**
  * Session expiry time in milliseconds = 24 hours
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
           userId: (ldapResult.user as LdapUser).id,
           action: "LOGIN",
           details: `User ${ldapUsername} logged in via LDAP`,
-        }).catch((err) => console.error("Audit log failed:", err));
+        }).catch((err) => logger.error("Audit log failed:", err));
 
         return NextResponse.json({
           user: ldapResult.user,
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       action: "LOGIN",
       details: `User ${user.email} logged in`,
-    }).catch((err) => console.error("Audit log failed:", err));
+    }).catch((err) => logger.error("Audit log failed:", err));
 
     // Return user data and session token
     return NextResponse.json({
@@ -160,7 +161,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     // Catch any unexpected errors and return generic error message
-    console.error(`[AUTH POST] Error:`, error);
+    logger.error(`[AUTH POST] Error:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -203,7 +204,7 @@ export async function GET(req: NextRequest) {
       user: safeUser,
     });
   } catch (error) {
-    console.error(`[AUTH GET] Error:`, error);
+    logger.error(`[AUTH GET] Error:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -228,7 +229,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`[AUTH DELETE] Error:`, error);
+    logger.error(`[AUTH DELETE] Error:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

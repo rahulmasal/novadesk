@@ -13,6 +13,7 @@ import { logAuditEvent } from "@/lib/audit";
 import { supabaseAdmin, STORAGE_BUCKETS, getAttachmentUrl, getLocalAttachmentUrl, isSupabaseConfigured } from "@/lib/supabase";
 import { writeFile, mkdir, unlink } from "fs/promises";
 import { join, dirname } from "path";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
         .upload(uniqueFilename, buffer, { contentType: file.type, upsert: false });
 
       if (uploadError) {
-        console.error("Storage upload error:", uploadError);
+        logger.error("Storage upload error:", uploadError);
         return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
       }
       fileUrl = getAttachmentUrl(uniqueFilename);
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
         fileUrl = getLocalAttachmentUrl(uniqueFilename);
       } catch (writeErr: unknown) {
         const errMsg = writeErr instanceof Error ? writeErr.message : String(writeErr);
-        console.error("[ATTACHMENTS] Local file write error:", writeErr);
+        logger.error("[ATTACHMENTS] Local file write error:", writeErr);
         return NextResponse.json({ error: `Failed to save file locally: ${errMsg}` }, { status: 500 });
       }
     }
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
       createdAt: attachment.createdAt.toISOString(),
     }, { status: 201 });
   } catch (error) {
-    console.error(`[ATTACHMENTS POST] Error:`, error);
+    logger.error(`[ATTACHMENTS POST] Error:`, error);
     return NextResponse.json({ error: "Failed to create attachment" }, { status: 500 });
   }
 }
@@ -176,7 +177,7 @@ export async function GET(req: NextRequest) {
       id: a.id, filename: a.filename, url: a.url, mimeType: a.mimeType, size: a.size, createdAt: a.createdAt.toISOString(),
     })));
   } catch (error) {
-    console.error(`[ATTACHMENTS GET] Error:`, error);
+    logger.error(`[ATTACHMENTS GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch attachments" }, { status: 500 });
   }
 }
@@ -230,7 +231,7 @@ export async function DELETE(req: NextRequest) {
       try {
         await unlink(filePath);
       } catch (err) {
-        console.error("Failed to delete local file:", err);
+        logger.error("Failed to delete local file:", err);
       }
     }
 
@@ -246,7 +247,7 @@ export async function DELETE(req: NextRequest) {
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error(`[ATTACHMENTS DELETE] Error:`, error);
+    logger.error(`[ATTACHMENTS DELETE] Error:`, error);
     return NextResponse.json({ error: "Failed to delete attachment" }, { status: 500 });
   }
 }

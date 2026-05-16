@@ -29,6 +29,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to save settings:", error);
+    logger.error("Failed to save settings:", error);
     return NextResponse.json({ error: "Failed to save settings" }, { status: 500 });
   }
 }
@@ -119,7 +120,7 @@ export async function GET() {
 
     return NextResponse.json({ settings: null });
   } catch (error) {
-    console.error("Failed to get settings:", error);
+    logger.error("Failed to get settings:", error);
     return NextResponse.json({ error: "Failed to get settings" }, { status: 500 });
   }
 }

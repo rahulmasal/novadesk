@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
+import logger from "@/lib/logger";
 
 const SLA_WARNING_THRESHOLD = 0.8;
 const SLA_BREACH_THRESHOLD = 1.0;
@@ -187,7 +188,7 @@ export async function GET(req: NextRequest) {
       success: true, action, results, timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error(`[CRON GET] Error:`, error);
+    logger.error(`[CRON GET] Error:`, error);
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }

@@ -10,6 +10,7 @@
  */
 
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 /**
  * GET /api/setup/status - Check if initial setup is completed
@@ -65,7 +66,7 @@ export async function GET() {
       });
     }
   } catch (error) {
-    console.error("Setup status check error:", error);
+    logger.error("Setup status check error:", error);
     return NextResponse.json(
       { needsSetup: true, error: "Failed to check setup status" },
       { status: 500 }

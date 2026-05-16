@@ -24,6 +24,7 @@ import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { createUserSchema, updateUserSchema } from "@/lib/schemas";
 import { logAuditEvent } from "@/lib/audit";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json(users);
   } catch (error) {
-    console.error(`[USERS GET] Error:`, error);
+    logger.error(`[USERS GET] Error:`, error);
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
 }
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
-    console.error(`[USERS POST] Error:`, error);
+    logger.error(`[USERS POST] Error:`, error);
     return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
   }
 }
@@ -172,7 +173,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error(`[USERS PATCH] Error:`, error);
+    logger.error(`[USERS PATCH] Error:`, error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }
@@ -217,7 +218,7 @@ export async function DELETE(req: NextRequest) {
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error(`[USERS DELETE] Error:`, error);
+    logger.error(`[USERS DELETE] Error:`, error);
     return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }
 }

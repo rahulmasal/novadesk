@@ -13,6 +13,7 @@ import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { changePasswordSchema, adminResetPasswordSchema } from "@/lib/schemas";
 import { logAuditEvent } from "@/lib/audit";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: "Password changed successfully" });
   } catch (error) {
-    console.error("Error changing password:", error);
+    logger.error("Error changing password:", error);
     return NextResponse.json({ error: "Failed to change password" }, { status: 500 });
   }
 }
