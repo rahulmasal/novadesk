@@ -252,7 +252,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
    */
   const saveSettingsToDb = async () => {
     try {
-      const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+      const token = useTicketStore.getState().authToken;
       if (!token) return;
       await fetch("/api/settings", {
         method: "POST",
@@ -272,7 +272,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
    * Called automatically whenever settings are updated
    */
   const saveToDb = useCallback(async (newSettings: Settings) => {
-    const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+    const token = useTicketStore.getState().authToken;
     if (!token) return;
     try {
       const res = await fetch("/api/settings", {
@@ -283,7 +283,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify({ settings: newSettings }),
       });
-      if (res.ok && typeof window !== "undefined") {
+      if (res.ok) {
         useTicketStore.getState().refreshTickets();
       }
     } catch (error) {
