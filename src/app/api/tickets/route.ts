@@ -17,6 +17,7 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
+import { notify } from "@/lib/notify";
 import logger from "@/lib/logger";
 import {
   createTicketSchema,
@@ -209,6 +210,16 @@ export async function POST(req: NextRequest) {
       details: `Ticket created: ${ticket.title}`,
     });
 
+    // Notify assigned agent
+    if (assignedToId) {
+      notify({
+        userId: assignedToId,
+        type: "TICKET_ASSIGNED",
+        subject: `Ticket Assigned: ${ticket.title}`,
+        body: `You have been assigned ticket #${ticket.id.substring(0, 8)}: ${ticket.title}`,
+      });
+    }
+
     return NextResponse.json(formatTicket(ticket), { status: 201 });
   } catch (error) {
     logger.error("Error creating ticket:", error);
@@ -273,13 +284,22 @@ export async function PATCH(req: NextRequest) {
 
     // Create notification when ticket is assigned
     if (assignedTo && assignedTo !== ticket.assignedTo) {
-      await prisma.notification.create({
-        data: {
-          userId: assignedTo,
-          type: "TICKET_ASSIGNED",
-          subject: `Ticket Assigned: ${updatedTicket.title}`,
-          body: `You have been assigned ticket #${updatedTicket.id.substring(0, 8)}`,
-        },
+      notify({
+        userId: assignedTo,
+        type: "TICKET_ASSIGNED",
+        subject: `Ticket Assigned: ${updatedTicket.title}`,
+        body: `You have been assigned ticket #${updatedTicket.id.substring(0, 8)}: ${updatedTicket.title}`,
+      });
+    }
+
+    // Notify assigned user on status change
+    if (restUpdates.status && restUpdates.status !== ticket.status) {
+      const notifyUserId = updatedTicket.assignedTo || updatedTicket.createdById;
+      notify({
+        userId: notifyUserId,
+        type: "TICKET_UPDATED",
+        subject: `Ticket Updated: ${updatedTicket.title}`,
+        body: `Ticket #${updatedTicket.id.substring(0, 8)} status changed to ${restUpdates.status}`,
       });
     }
 

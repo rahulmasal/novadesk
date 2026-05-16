@@ -10,6 +10,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
+import { notify } from "@/lib/notify";
+import { sendReportEmail } from "@/lib/email";
 import logger from "@/lib/logger";
 
 const SLA_WARNING_THRESHOLD = 0.8;
@@ -86,6 +88,14 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
               action: "SLA_WARNING",
               details: `SLA warning: ${Math.round(progressPercent * 100)}% of time elapsed`,
             });
+
+            const warnUserId = ticket.assignedTo || ticket.createdById;
+            notify({
+              userId: warnUserId,
+              type: "SLA_WARNING",
+              subject: `SLA Warning: Ticket #${ticket.id.substring(0, 8)}`,
+              body: `Ticket "${ticket.title}" is at ${Math.round(progressPercent * 100)}% of its SLA time.`,
+            });
           } else if (breachLevel === "BREACHED") {
             await prisma.slaEscalation.upsert({
               where: { ticketId: ticket.id },
@@ -102,13 +112,11 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
             });
 
             const notifyUserId = ticket.assignedTo || ticket.createdById;
-            await prisma.notification.create({
-              data: {
-                userId: notifyUserId,
-                type: "SLA_BREACH",
-                subject: `SLA Breach: Ticket #${ticket.id.substring(0, 8)}`,
-                body: `Ticket "${ticket.title}" has breached its SLA. Created by: ${ticket.createdBy.name}`,
-              },
+            notify({
+              userId: notifyUserId,
+              type: "SLA_BREACH",
+              subject: `SLA Breach: Ticket #${ticket.id.substring(0, 8)}`,
+              body: `Ticket "${ticket.title}" has breached its SLA. Created by: ${ticket.createdBy.name}`,
             });
           }
         }
@@ -135,17 +143,42 @@ async function runDailyReport(): Promise<{ sent: boolean; error?: string }> {
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-    const [created, resolved] = await Promise.all([
+    const [created, resolved, openTickets, breachedTickets] = await Promise.all([
       prisma.ticket.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } }),
       prisma.ticket.count({ where: { status: "RESOLVED", updatedAt: { gte: startOfDay, lte: endOfDay } } }),
+      prisma.ticket.count({ where: { status: { notIn: ["RESOLVED", "CLOSED"] } } }),
+      prisma.slaEscalation.count({ where: { breachLevel: "BREACHED" } }),
     ]);
 
-    const openTickets = await prisma.ticket.count({ where: { status: { notIn: ["RESOLVED", "CLOSED"] } } });
-    const breachedTickets = await prisma.slaEscalation.count({ where: { breachLevel: "BREACHED" } });
+    logger.info(`[DAILY REPORT] Created: ${created}, Resolved: ${resolved}, Open: ${openTickets}, Breached: ${breachedTickets}`);
 
+    // Fetch all tickets for the CSV report
+    const tickets = await prisma.ticket.findMany({
+      where: { status: { notIn: ["RESOLVED", "CLOSED"] } },
+      include: {
+        createdBy: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const reportTickets = tickets.map((t) => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      status: t.status,
+      priority: t.priority,
+      category: t.category,
+      department: t.department,
+      createdAt: t.createdAt.toISOString(),
+      dueDate: t.dueDate.toISOString(),
+      username: t.username,
+    }));
+
+    await sendReportEmail(reportTickets as never[]);
 
     return { sent: true };
   } catch (error) {
+    logger.error("[DAILY REPORT] Failed:", error);
     return { sent: false, error: String(error) };
   }
 }

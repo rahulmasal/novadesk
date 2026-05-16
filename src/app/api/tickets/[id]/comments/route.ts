@@ -11,6 +11,7 @@ import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { validateAuth } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
+import { notify } from "@/lib/notify";
 import { createCommentSchema, updateCommentSchema } from "@/lib/schemas";
 import logger from "@/lib/logger";
 
@@ -90,6 +91,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       details: `Comment added: ${content.substring(0, 100)}...`,
     });
 
+    // Notify ticket owner/assignee about new comment
+    const notifyUserId = ticket.assignedTo || ticket.createdById;
+    if (notifyUserId !== auth.userId) {
+      notify({
+        userId: notifyUserId,
+        type: "COMMENT_ADDED",
+        subject: `New Comment: ${ticket.title}`,
+        body: `${auth.email} commented: ${content.substring(0, 200)}`,
+      });
+    }
 
     return NextResponse.json(formatComment(comment), { status: 201 });
   } catch (error) {
