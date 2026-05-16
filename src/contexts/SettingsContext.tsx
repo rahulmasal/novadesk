@@ -232,29 +232,44 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
    * Subscribe to browser push notifications
    */
   const subscribePush = async () => {
-    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      console.warn("Push notifications not supported in this browser");
+      return;
+    }
 
     try {
       const permission = await Notification.requestPermission();
-      if (permission !== "granted") return;
+      if (permission !== "granted") {
+        console.warn("Notification permission denied");
+        return;
+      }
 
+      // Wait for service worker to be ready
       const registration = await navigator.serviceWorker.ready;
 
-      // Get VAPID public key
-      const vapidRes = await fetch("/api/notifications/vapid");
-      const { publicKey } = await vapidRes.json();
+      // Check if already subscribed
+      let subscription = await registration.pushManager.getSubscription();
 
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
+      if (!subscription) {
+        // Get VAPID public key
+        const vapidRes = await fetch("/api/notifications/vapid");
+        const { publicKey } = await vapidRes.json();
 
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+      }
+
+      // Save subscription to server
       const token = useTicketStore.getState().authToken;
-      await fetch("/api/notifications/push", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(subscription),
-      });
+      if (token) {
+        await fetch("/api/notifications/push", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(subscription),
+        });
+      }
     } catch (error) {
       console.error("Push subscription failed:", error);
     }
