@@ -229,6 +229,72 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.appearance.theme, settings.appearance.compactView, applyTheme, applyCompactView]);
 
   /**
+   * Subscribe to browser push notifications
+   */
+  const subscribePush = async () => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
+      const registration = await navigator.serviceWorker.ready;
+
+      // Get VAPID public key
+      const vapidRes = await fetch("/api/notifications/vapid");
+      const { publicKey } = await vapidRes.json();
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+
+      const token = useTicketStore.getState().authToken;
+      await fetch("/api/notifications/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(subscription),
+      });
+    } catch (error) {
+      console.error("Push subscription failed:", error);
+    }
+  };
+
+  /**
+   * Unsubscribe from browser push notifications
+   */
+  const unsubscribePush = async () => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+      }
+
+      const token = useTicketStore.getState().authToken;
+      await fetch("/api/notifications/push", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (error) {
+      console.error("Push unsubscribe failed:", error);
+    }
+  };
+
+  function urlBase64ToUint8Array(base64String: string) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  /**
    * Update a specific setting and auto-save to database
    *
    * @param section - Which section to update (notifications, appearance, backup, advanced)
@@ -260,8 +326,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (section === "notifications" && key === "push" && value === true) {
-        requestNotificationPermission();
+      if (section === "notifications" && key === "push") {
+        if (value === true) {
+          subscribePush();
+        } else {
+          unsubscribePush();
+        }
       }
 
       saveToDb(newSettings);
