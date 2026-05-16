@@ -71,6 +71,16 @@ export interface Settings {
     slaResponseHours: number; // Service Level Agreement - response time target
     slaResolutionHours: number; // Service Level Agreement - resolution target
   };
+  /** Email / SMTP configuration (admin only) */
+  email: {
+    emailEnabled: boolean;      // Master toggle for email notifications
+    smtpHost: string;           // SMTP server address
+    smtpPort: number;           // SMTP port (587 for TLS, 465 for SSL)
+    smtpUser: string;           // SMTP username/email
+    smtpPass: string;           // SMTP password
+    fromAddress: string;        // Sender email address
+    reportRecipient: string;    // Where to send daily reports
+  };
 }
 
 /**
@@ -96,6 +106,15 @@ const defaultSettings: Settings = {
     language: "en",
     slaResponseHours: 4,
     slaResolutionHours: 24,
+  },
+  email: {
+    emailEnabled: false,
+    smtpHost: "",
+    smtpPort: 587,
+    smtpUser: "",
+    smtpPass: "",
+    fromAddress: "",
+    reportRecipient: "",
   },
 };
 
@@ -144,6 +163,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             appearance: { ...defaultSettings.appearance, ...data.settings.appearance },
             backup: { ...defaultSettings.backup, ...data.settings.backup },
             advanced: { ...defaultSettings.advanced, ...data.settings.advanced },
+            email: { ...defaultSettings.email, ...data.settings.email },
           });
         }
       } catch (error) {

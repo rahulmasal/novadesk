@@ -30,12 +30,45 @@
 // nodemailer is a popular library for sending emails in Node.js
 // Install it with: npm install nodemailer
 import nodemailer from "nodemailer";
+import prisma from "@/lib/prisma";
 
 // Import the Ticket type for type safety
 import type { Ticket } from "@/lib/store";
 
 // Import the CSV conversion utility
 import { ticketsToCSV } from "@/lib/csv";
+
+/**
+ * Loads SMTP configuration from database settings, falls back to env vars
+ */
+async function getSmtpConfig() {
+  try {
+    const config = await prisma.systemConfig.findUnique({ where: { key: "user-settings" } });
+    if (config) {
+      const settings = JSON.parse(config.value);
+      if (settings.email?.emailEnabled && settings.email?.smtpHost) {
+        return {
+          host: settings.email.smtpHost,
+          port: Number(settings.email.smtpPort) || 587,
+          user: settings.email.smtpUser,
+          pass: settings.email.smtpPass,
+          fromAddress: settings.email.fromAddress,
+          recipient: settings.email.reportRecipient,
+        };
+      }
+    }
+  } catch { /* fall through to env vars */ }
+
+  // Fallback to environment variables
+  return {
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT || 587),
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    fromAddress: undefined,
+    recipient: process.env.REPORT_RECIPIENT,
+  };
+}
 
 /**
  * Sends a ticket report email with CSV attachment
@@ -60,19 +93,18 @@ import { ticketsToCSV } from "@/lib/csv";
  * // User receives email with tickets_report.csv attached
  */
 export async function sendReportEmail(tickets: Ticket[]) {
-  // Step 1: Read SMTP configuration from environment variables
-  // These should be set in your .env.local file
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT || 587); // Default to 587 (TLS)
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const recipient = process.env.REPORT_RECIPIENT;
+  // Step 1: Read SMTP configuration from DB settings, fallback to env vars
+  const smtpConfig = await getSmtpConfig();
+  const host = smtpConfig.host;
+  const port = smtpConfig.port;
+  const user = smtpConfig.user;
+  const pass = smtpConfig.pass;
+  const recipient = smtpConfig.recipient;
 
   // Step 2: Validate configuration
-  // If any required config is missing, we can't send email
   if (!host || !user || !pass || !recipient) {
     console.warn("SMTP configuration missing – email not sent");
-    return; // Early return - no point continuing without config
+    return;
   }
 
   // Step 3: Create SMTP transporter
@@ -91,7 +123,7 @@ export async function sendReportEmail(tickets: Ticket[]) {
   // Step 5: Send the email
   // sendMail() connects to SMTP server, authenticates, and sends
   const info = await transporter.sendMail({
-    from: `"IT Ticket System" <${user}>`, // Sender name and email
+    from: smtpConfig.fromAddress || `"NovaDesk" <${user}>`,
     to: recipient, // Recipient email
     subject: "IT Ticket System – Daily Report", // Email subject line
     text: "Please find the attached ticket report in CSV format.", // Plain text body

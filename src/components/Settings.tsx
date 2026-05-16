@@ -48,6 +48,7 @@ import {
   Download,
   RefreshCw,
   Clock,
+  Mail,
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
@@ -101,6 +102,7 @@ export function Settings() {
     confirmPassword: "",
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [profileForm, setProfileForm] = useState({
     hostname: currentUser?.hostname || "",
     laptopSerial: currentUser?.laptopSerial || "",
@@ -525,6 +527,126 @@ return (
                   <p className={`text-xs mt-1 ${isLightTheme ? "text-slate-400" : "text-neutral-500"}`}>SLA breach at 100% of this value</p>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mail Server Settings (Admin only) */}
+        {isAdmin && (
+          <div className={`rounded-2xl p-6 ${isLightTheme ? "bg-white border border-slate-200 shadow-md" : "glass-dark"}`}>
+            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isLightTheme ? "text-slate-800" : "text-white"}`}>
+              <Mail className={`w-5 h-5 ${isLightTheme ? "text-blue-600" : "text-blue-400"}`} />
+              Mail Server (SMTP)
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`font-medium ${isLightTheme ? "text-slate-800" : "text-white"}`}>Enable Email Notifications</p>
+                  <p className={`text-sm ${isLightTheme ? "text-slate-500" : "text-neutral-400"}`}>Send email notifications and reports via SMTP</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.email.emailEnabled}
+                    onChange={(e) => updateSettings("email", "emailEnabled", e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className={`w-11 h-6 rounded-full peer ${settings.email.emailEnabled ? "bg-blue-600" : isLightTheme ? "bg-gray-300" : "bg-neutral-600"} after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${settings.email.emailEnabled ? "after:translate-x-5" : "after:translate-x-0"}`} />
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>SMTP Host</label>
+                  <input
+                    type="text"
+                    value={settings.email.smtpHost}
+                    onChange={(e) => updateSettings("email", "smtpHost", e.target.value)}
+                    placeholder="smtp.gmail.com"
+                    className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>SMTP Port</label>
+                  <input
+                    type="number"
+                    value={settings.email.smtpPort}
+                    onChange={(e) => updateSettings("email", "smtpPort", parseInt(e.target.value) || 587)}
+                    className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>SMTP User</label>
+                  <input
+                    type="text"
+                    value={settings.email.smtpUser}
+                    onChange={(e) => updateSettings("email", "smtpUser", e.target.value)}
+                    placeholder="your@email.com"
+                    className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>SMTP Password</label>
+                  <input
+                    type="password"
+                    value={settings.email.smtpPass}
+                    onChange={(e) => updateSettings("email", "smtpPass", e.target.value)}
+                    placeholder="App password"
+                    className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>From Address</label>
+                  <input
+                    type="email"
+                    value={settings.email.fromAddress}
+                    onChange={(e) => updateSettings("email", "fromAddress", e.target.value)}
+                    placeholder="NovaDesk <noreply@company.com>"
+                    className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Report Recipient</label>
+                  <input
+                    type="email"
+                    value={settings.email.reportRecipient}
+                    onChange={(e) => updateSettings("email", "reportRecipient", e.target.value)}
+                    placeholder="admin@company.com"
+                    className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                  />
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  setSaving(true);
+                  try {
+                    const token = useTicketStore.getState().authToken;
+                    const res = await fetch("/api/settings/test-email", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                      body: JSON.stringify(settings.email),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      alert(`Success: ${data.message}`);
+                    } else {
+                      alert(`Error: ${data.error}`);
+                    }
+                  } catch (e) {
+                    alert(`Error: ${e}`);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm ${isLightTheme ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-400"} transition-colors disabled:opacity-50`}
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                Send Test Email
+              </button>
             </div>
           </div>
         )}
