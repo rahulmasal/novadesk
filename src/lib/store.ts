@@ -667,26 +667,29 @@ refreshTickets: async () => {
       // DELETE TICKETS ACTION (Bulk)
       // ========================================
       /**
-       * deleteTickets - Bulk deletes multiple tickets via API
+       * deleteTickets - Bulk deletes multiple tickets via API (single batch request)
        * @param ids - Array of ticket IDs to delete
-       * @param onProgress - Callback fired after each delete with (completed, total)
+       * @param onProgress - Callback fired with progress (completed, total)
        */
       deleteTickets: async (ids, onProgress?: (completed: number, total: number) => void) => {
         const { authToken } = get();
-        for (let i = 0; i < ids.length; i++) {
-          try {
-            await fetch("/api/tickets", {
-              method: "DELETE",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${authToken}`,
-              },
-              body: JSON.stringify({ id: ids[i] }),
-            });
-          } catch (error) {
-            console.error("[STORE deleteTickets] Failed for", ids[i], error);
+        // Send all IDs in a single request for maximum speed
+        try {
+          if (onProgress) onProgress(0, ids.length);
+          const res = await fetch("/api/tickets", {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ ids }),
+          });
+          if (!res.ok) {
+            console.error("[STORE deleteTickets] Batch delete failed:", res.status);
           }
-          if (onProgress) onProgress(i + 1, ids.length);
+          if (onProgress) onProgress(ids.length, ids.length);
+        } catch (error) {
+          console.error("[STORE deleteTickets] Batch delete error:", error);
         }
         set((state) => ({
           tickets: state.tickets.filter((t) => !ids.includes(t.id)),

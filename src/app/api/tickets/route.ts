@@ -323,39 +323,45 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id } = body;
+    const { id, ids } = body;
 
+    // Batch delete: accepts array of IDs
+    if (Array.isArray(ids) && ids.length > 0) {
+      await prisma.$transaction(async (tx) => {
+        await tx.auditLog.createMany({
+          data: ids.map((ticketId: string) => ({
+            ticketId,
+            userId: auth.userId,
+            action: "TICKET_DELETED",
+            details: `Ticket ${ticketId} deleted (batch)`,
+          })),
+        });
+        await tx.ticket.deleteMany({ where: { id: { in: ids } } });
+      });
+      return NextResponse.json({ deleted: ids.length });
+    }
+
+    // Single delete
     if (!id) {
-      logger.error("[DELETE TICKET] Missing ID");
       return NextResponse.json({ error: "Ticket ID is required" }, { status: 400 });
     }
 
     const ticket = await prisma.ticket.findUnique({ where: { id } });
     if (!ticket) {
-      logger.error("[DELETE TICKET] Not found - id:", id);
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-
-await prisma.$transaction(async (tx) => {
-       await tx.auditLog.create({
-         data: {
-           ticketId: id,
-           userId: auth.userId,
-           action: "TICKET_DELETED",
-           details: `Ticket ${ticket.id} deleted`,
-         },
-       });
-
-       await tx.ticket.delete({ where: { id } });
-     });
-
-    const verify = await prisma.ticket.findUnique({ where: { id } });
-
-    if (verify !== null) {
-      logger.error("[DELETE TICKET] FATAL: Ticket still exists after delete!");
-      return NextResponse.json({ error: "Delete verification failed" }, { status: 500 });
-    }
+    await prisma.$transaction(async (tx) => {
+      await tx.auditLog.create({
+        data: {
+          ticketId: id,
+          userId: auth.userId,
+          action: "TICKET_DELETED",
+          details: `Ticket ${ticket.id} deleted`,
+        },
+      });
+      await tx.ticket.delete({ where: { id } });
+    });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
