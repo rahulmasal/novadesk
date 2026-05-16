@@ -260,8 +260,8 @@ checkAuth: () => Promise<boolean>;
    /** Refreshes tickets from API to ensure state is synced */
    refreshTickets: () => Promise<void>;
 
-   /** Bulk deletes multiple tickets by IDs */
-   deleteTickets: (ids: string[]) => Promise<void>;
+   /** Bulk deletes multiple tickets by IDs with optional progress callback */
+   deleteTickets: (ids: string[], onProgress?: (completed: number, total: number) => void) => Promise<void>;
 
    /** Bulk updates status for multiple tickets */
    updateTicketsStatus: (ids: string[], status: Status) => Promise<void>;
@@ -669,10 +669,11 @@ refreshTickets: async () => {
       /**
        * deleteTickets - Bulk deletes multiple tickets via API
        * @param ids - Array of ticket IDs to delete
+       * @param onProgress - Callback fired after each delete with (completed, total)
        */
-      deleteTickets: async (ids) => {
+      deleteTickets: async (ids, onProgress?: (completed: number, total: number) => void) => {
         const { authToken } = get();
-        for (const id of ids) {
+        for (let i = 0; i < ids.length; i++) {
           try {
             await fetch("/api/tickets", {
               method: "DELETE",
@@ -680,11 +681,12 @@ refreshTickets: async () => {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${authToken}`,
               },
-              body: JSON.stringify({ id }),
+              body: JSON.stringify({ id: ids[i] }),
             });
           } catch (error) {
-            console.error("[STORE deleteTickets] Failed for", id, error);
+            console.error("[STORE deleteTickets] Failed for", ids[i], error);
           }
+          if (onProgress) onProgress(i + 1, ids.length);
         }
         set((state) => ({
           tickets: state.tickets.filter((t) => !ids.includes(t.id)),

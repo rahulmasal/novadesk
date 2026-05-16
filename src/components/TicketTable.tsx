@@ -63,6 +63,9 @@ export function TicketTable() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set());
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [progressStep, setProgressStep] = useState(0);
+  const [progressTotal, setProgressTotal] = useState(0);
 
   const isLightTheme = settings.appearance.theme === "light";
 
@@ -87,7 +90,12 @@ export function TicketTable() {
 
   const handleBulkDelete = async () => {
     if (!confirm(`Delete ${selectedTickets.size} ticket(s)? This cannot be undone.`)) return;
-    await deleteTickets(Array.from(selectedTickets));
+    const ids = Array.from(selectedTickets);
+    setProgressTotal(ids.length);
+    setProgressStep(0);
+    setShowProgressModal(true);
+    await deleteTickets(ids, (completed) => setProgressStep(completed));
+    setShowProgressModal(false);
     setSelectedTickets(new Set());
   };
 
@@ -260,6 +268,24 @@ export function TicketTable() {
 
       {selectedTicketId && (
         <TicketDetail ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} />
+      )}
+
+      {/* Bulk Delete Progress Modal */}
+      {showProgressModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+          <div className={`rounded-xl p-6 w-80 ${isLightTheme ? "bg-white" : "bg-neutral-900 border border-white/10"}`}>
+            <h3 className={`text-lg font-semibold mb-4 ${isLightTheme ? "text-gray-800" : "text-white"}`}>Deleting Tickets</h3>
+            <p className={`text-sm mb-3 ${isLightTheme ? "text-gray-600" : "text-neutral-400"}`}>
+              Processing {progressStep} of {progressTotal}
+            </p>
+            <div className={`h-2 w-full rounded-full overflow-hidden ${isLightTheme ? "bg-gray-200" : "bg-white/10"}`}>
+              <div
+                className="h-full bg-red-500 rounded-full transition-all duration-300"
+                style={{ width: `${(progressStep / progressTotal) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
