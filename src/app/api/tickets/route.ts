@@ -130,7 +130,21 @@ export async function POST(req: NextRequest) {
     if (data.dueDate) {
       dueDate = new Date(data.dueDate);
     } else {
-      const hours = data.priority === "URGENT" ? 2 : data.priority === "HIGH" ? 8 : data.priority === "LOW" ? 72 : 24;
+      // Load SLA settings from database, fallback to priority-based defaults
+      let slaResolutionHours = 24;
+      try {
+        const config = await prisma.systemConfig.findUnique({ where: { key: "user-settings" } });
+        if (config) {
+          const settings = JSON.parse(config.value);
+          if (typeof settings.advanced?.slaResolutionHours === "number") {
+            slaResolutionHours = settings.advanced.slaResolutionHours;
+          }
+        }
+      } catch { /* use default */ }
+
+      // Scale resolution time by priority: URGENT=25%, HIGH=50%, MEDIUM=100%, LOW=200%
+      const multiplier = data.priority === "URGENT" ? 0.25 : data.priority === "HIGH" ? 0.5 : data.priority === "LOW" ? 2 : 1;
+      const hours = Math.max(1, Math.round(slaResolutionHours * multiplier));
       dueDate = new Date(Date.now() + hours * 60 * 60 * 1000);
     }
 

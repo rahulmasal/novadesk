@@ -17,13 +17,36 @@ const SLA_BREACH_THRESHOLD = 1.0;
 /**
  * Processes SLA escalation for all open tickets
  * Checks ticket progress against due date and creates warnings/breach records
- * 
+ * Uses SLA thresholds from settings (default: warning at 80%, breach at 100%)
+ *
  * @returns Object with warnings count, breached count, and any errors encountered
  */
 async function runSlaEscalation(): Promise<{ warnings: number; breached: number; errors: string[] }> {
   const result = { warnings: 0, breached: 0, errors: [] as string[] };
 
   try {
+    // Load SLA settings from database
+    let slaWarningThreshold = SLA_WARNING_THRESHOLD;
+    let slaBreachThreshold = SLA_BREACH_THRESHOLD;
+    try {
+      const config = await prisma.systemConfig.findUnique({ where: { key: "user-settings" } });
+      if (config) {
+        const settings = JSON.parse(config.value);
+        const responseHours = settings.advanced?.slaResponseHours;
+        const resolutionHours = settings.advanced?.slaResolutionHours;
+        if (typeof responseHours === "number" && responseHours > 0) {
+          // Warning at 80% of response time target
+          slaWarningThreshold = 0.8;
+        }
+        if (typeof resolutionHours === "number" && resolutionHours > 0) {
+          // Breach at 100% of resolution time target
+          slaBreachThreshold = 1.0;
+        }
+      }
+    } catch {
+      // Use defaults if settings can't be loaded
+    }
+
     const tickets = await prisma.ticket.findMany({
       where: { status: { notIn: ["RESOLVED", "CLOSED"] } },
       include: {
@@ -43,8 +66,8 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
         const progressPercent = elapsed / totalDuration;
 
         let breachLevel: "NONE" | "WARNING" | "BREACHED";
-        if (progressPercent >= SLA_BREACH_THRESHOLD) breachLevel = "BREACHED";
-        else if (progressPercent >= SLA_WARNING_THRESHOLD) breachLevel = "WARNING";
+        if (progressPercent >= slaBreachThreshold) breachLevel = "BREACHED";
+        else if (progressPercent >= slaWarningThreshold) breachLevel = "WARNING";
         else breachLevel = "NONE";
 
         const currentLevel = ticket.slaEscalation?.breachLevel || "NONE";
