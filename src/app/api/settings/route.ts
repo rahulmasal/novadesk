@@ -68,16 +68,18 @@ export async function POST(req: NextRequest) {
     });
 
     // Recalculate due dates for open tickets if SLA settings changed
-    const slaResolutionHours = settings.advanced?.slaResolutionHours;
-    if (typeof slaResolutionHours === "number" && slaResolutionHours > 0) {
+    const slaResH = settings.advanced?.slaResolutionHours ?? 0;
+    const slaResM = settings.advanced?.slaResolutionMinutes ?? 0;
+    const slaResolutionMinutes = slaResH * 60 + slaResM;
+    if (slaResolutionMinutes > 0) {
       const openTickets = await prisma.ticket.findMany({
         where: { status: { notIn: ["RESOLVED", "CLOSED"] } },
       });
 
       for (const ticket of openTickets) {
         const multiplier = ticket.priority === "URGENT" ? 0.25 : ticket.priority === "HIGH" ? 0.5 : ticket.priority === "LOW" ? 2 : 1;
-        const hours = Math.max(1, Math.round(slaResolutionHours * multiplier));
-        const newDueDate = new Date(ticket.createdAt.getTime() + hours * 60 * 60 * 1000);
+        const minutes = Math.max(1, Math.round(slaResolutionMinutes * multiplier));
+        const newDueDate = new Date(ticket.createdAt.getTime() + minutes * 60 * 1000);
         await prisma.ticket.update({
           where: { id: ticket.id },
           data: { dueDate: newDueDate },

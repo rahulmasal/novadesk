@@ -503,28 +503,56 @@ return (
               Set response and resolution time targets for tickets. These values determine when SLA warnings and breaches are triggered.
             </p>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Response Time (hours)</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={settings.advanced.slaResponseHours}
-                    onChange={(e) => updateSettings("advanced", "slaResponseHours", parseInt(e.target.value) || 1)}
-                    className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
-                  />
-                  <p className={`text-xs mt-1 ${isLightTheme ? "text-slate-400" : "text-neutral-500"}`}>SLA warning at 80% of this value</p>
+              <div>
+                <label className={`block text-sm font-medium ${isLightTheme ? "text-slate-700" : "text-neutral-300"} mb-2`}>Response Time (SLA Warning at 80%)</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={`block text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-400"} mb-1`}>Hours</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={settings.advanced.slaResponseHours}
+                      onChange={(e) => updateSettings("advanced", "slaResponseHours", parseInt(e.target.value) || 0)}
+                      className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-400"} mb-1`}>Minutes</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={settings.advanced.slaResponseMinutes}
+                      onChange={(e) => updateSettings("advanced", "slaResponseMinutes", Math.min(59, parseInt(e.target.value) || 0))}
+                      className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className={`block text-sm ${isLightTheme ? "text-slate-600" : "text-neutral-400"} mb-2`}>Resolution Time (hours)</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={settings.advanced.slaResolutionHours}
-                    onChange={(e) => updateSettings("advanced", "slaResolutionHours", parseInt(e.target.value) || 1)}
-                    className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
-                  />
-                  <p className={`text-xs mt-1 ${isLightTheme ? "text-slate-400" : "text-neutral-500"}`}>SLA breach at 100% of this value</p>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium ${isLightTheme ? "text-slate-700" : "text-neutral-300"} mb-2`}>Resolution Time (SLA Breach at 100%)</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={`block text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-400"} mb-1`}>Hours</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={settings.advanced.slaResolutionHours}
+                      onChange={(e) => updateSettings("advanced", "slaResolutionHours", parseInt(e.target.value) || 0)}
+                      className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs ${isLightTheme ? "text-slate-500" : "text-neutral-400"} mb-1`}>Minutes</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={settings.advanced.slaResolutionMinutes}
+                      onChange={(e) => updateSettings("advanced", "slaResolutionMinutes", Math.min(59, parseInt(e.target.value) || 0))}
+                      className={`w-full rounded-lg px-4 py-2.5 ${isLightTheme ? "bg-slate-50 border border-slate-300 text-slate-800" : "bg-black/40 border border-white/10 text-white"}`}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

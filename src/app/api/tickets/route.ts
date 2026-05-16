@@ -132,21 +132,21 @@ export async function POST(req: NextRequest) {
       dueDate = new Date(data.dueDate);
     } else {
       // Load SLA settings from database, fallback to priority-based defaults
-      let slaResolutionHours = 24;
+      let slaResolutionMinutes = 24 * 60; // default 24 hours
       try {
         const config = await prisma.systemConfig.findUnique({ where: { key: "user-settings" } });
         if (config) {
           const settings = JSON.parse(config.value);
-          if (typeof settings.advanced?.slaResolutionHours === "number") {
-            slaResolutionHours = settings.advanced.slaResolutionHours;
-          }
+          const h = typeof settings.advanced?.slaResolutionHours === "number" ? settings.advanced.slaResolutionHours : 24;
+          const m = typeof settings.advanced?.slaResolutionMinutes === "number" ? settings.advanced.slaResolutionMinutes : 0;
+          slaResolutionMinutes = h * 60 + m;
         }
       } catch { /* use default */ }
 
       // Scale resolution time by priority: URGENT=25%, HIGH=50%, MEDIUM=100%, LOW=200%
       const multiplier = data.priority === "URGENT" ? 0.25 : data.priority === "HIGH" ? 0.5 : data.priority === "LOW" ? 2 : 1;
-      const hours = Math.max(1, Math.round(slaResolutionHours * multiplier));
-      dueDate = new Date(Date.now() + hours * 60 * 60 * 1000);
+      const minutes = Math.max(1, Math.round(slaResolutionMinutes * multiplier));
+      dueDate = new Date(Date.now() + minutes * 60 * 1000);
     }
 
     /* ========================================

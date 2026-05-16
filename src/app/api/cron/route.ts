@@ -33,14 +33,12 @@ async function runSlaEscalation(): Promise<{ warnings: number; breached: number;
       const config = await prisma.systemConfig.findUnique({ where: { key: "user-settings" } });
       if (config) {
         const settings = JSON.parse(config.value);
-        const responseHours = settings.advanced?.slaResponseHours;
-        const resolutionHours = settings.advanced?.slaResolutionHours;
-        if (typeof responseHours === "number" && responseHours > 0) {
-          // Warning at 80% of response time target
+        const responseMinutes = (settings.advanced?.slaResponseHours ?? 0) * 60 + (settings.advanced?.slaResponseMinutes ?? 0);
+        const resolutionMinutes = (settings.advanced?.slaResolutionHours ?? 0) * 60 + (settings.advanced?.slaResolutionMinutes ?? 0);
+        if (responseMinutes > 0) {
           slaWarningThreshold = 0.8;
         }
-        if (typeof resolutionHours === "number" && resolutionHours > 0) {
-          // Breach at 100% of resolution time target
+        if (resolutionMinutes > 0) {
           slaBreachThreshold = 1.0;
         }
       }

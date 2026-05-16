@@ -68,8 +68,10 @@ export interface Settings {
   advanced: {
     timezone: string;          // User's timezone for displaying dates
     language: string;         // UI language code (e.g., "en")
-    slaResponseHours: number; // Service Level Agreement - response time target
-    slaResolutionHours: number; // Service Level Agreement - resolution target
+    slaResponseHours: number; // SLA response time - hours component
+    slaResponseMinutes: number; // SLA response time - minutes component
+    slaResolutionHours: number; // SLA resolution time - hours component
+    slaResolutionMinutes: number; // SLA resolution time - minutes component
   };
   /** Email / SMTP configuration (admin only) */
   email: {
@@ -104,8 +106,10 @@ const defaultSettings: Settings = {
   advanced: {
     timezone: "UTC",
     language: "en",
-    slaResponseHours: 4,
-    slaResolutionHours: 24,
+    slaResponseHours: 0,
+    slaResponseMinutes: 30,
+    slaResolutionHours: 4,
+    slaResolutionMinutes: 0,
   },
   email: {
     emailEnabled: false,
