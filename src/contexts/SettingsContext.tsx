@@ -249,9 +249,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
    */
   const saveSettingsToDb = async () => {
     try {
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+      if (!token) return;
       await fetch("/api/settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ settings }),
       });
     } catch (error) {
@@ -268,10 +273,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       clearTimeout(saveTimerRef.current);
     }
     saveTimerRef.current = setTimeout(async () => {
+      // Skip save if not authenticated (no token in sessionStorage)
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+      if (!token) return;
       try {
         await fetch("/api/settings", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ settings: newSettings }),
         });
       } catch (error) {
