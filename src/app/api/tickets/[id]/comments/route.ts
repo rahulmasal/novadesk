@@ -9,36 +9,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 import { createCommentSchema, updateCommentSchema } from "@/lib/schemas";
 
-/**
- * Extracts and validates authenticated user from request header
- */
-async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) return null;
-
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      return null;
-    }
-
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
-  }
-}
-
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   const { id: ticketId } = await params;
 
   if (!auth) {
@@ -56,7 +32,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    console.log(`[COMMENTS GET] Fetching comments for ticket`, { ticketId, user: auth.email });
 
     const comments = await prisma.comment.findMany({
       where: { ticketId },
@@ -64,7 +39,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       orderBy: { createdAt: "asc" },
     });
 
-    console.log(`[COMMENTS GET] Returning ${comments.length} comments`);
 
     return NextResponse.json(comments.map(formatComment));
   } catch (error) {
@@ -74,7 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   const { id: ticketId } = await params;
 
   if (!auth) {
@@ -102,7 +76,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    console.log(`[COMMENTS POST] Creating comment for ticket`, { ticketId, user: auth.email });
 
     const comment = await prisma.comment.create({
       data: { content, ticketId, authorId: auth.userId },
@@ -116,7 +89,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       details: `Comment added: ${content.substring(0, 100)}...`,
     });
 
-    console.log(`[COMMENTS POST] Comment created`, { commentId: comment.id });
 
     return NextResponse.json(formatComment(comment), { status: 201 });
   } catch (error) {
@@ -126,7 +98,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   const { id: ticketId } = await params;
 
   if (!auth) {
@@ -158,7 +130,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    console.log(`[COMMENTS PATCH] Updating comment`, { commentId: id, ticketId, user: auth.email });
 
     const updatedComment = await prisma.comment.update({
       where: { id },
@@ -174,7 +145,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       newValue: content,
     });
 
-    console.log(`[COMMENTS PATCH] Comment updated`, { commentId: updatedComment.id });
 
     return NextResponse.json(formatComment(updatedComment));
   } catch (error) {
@@ -184,7 +154,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   const { id: ticketId } = await params;
 
   if (!auth) {
@@ -213,7 +183,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    console.log(`[COMMENTS DELETE] Deleting comment`, { commentId: id, ticketId, user: auth.email });
 
     await prisma.comment.delete({ where: { id } });
 
@@ -224,7 +193,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       details: "Comment deleted",
     });
 
-    console.log(`[COMMENTS DELETE] Comment deleted`, { commentId: id });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

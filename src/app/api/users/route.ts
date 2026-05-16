@@ -21,6 +21,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 import { createUserSchema, updateUserSchema } from "@/lib/schemas";
 import { logAuditEvent } from "@/lib/audit";
 
@@ -33,60 +34,24 @@ export const dynamic = 'force-dynamic';
 const BCRYPT_SALT_ROUNDS = 12;
 
 /**
- * getAuthUser - Extracts and validates the authenticated user from request
- * 
- * WHAT IT DOES:
- * 1. Extracts Bearer token from Authorization header
- * 2. Looks up session in database
- * 3. Returns user info if valid, null if invalid/expired
- * 
- * @param req - Next.js request with Authorization header
- * @returns User object with role, userId, email or null
- */
-async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) return null;
-
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      return null;
-    }
-
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
-  }
-}
-
-/**
  * GET /api/users - Fetch all users (Administrators and Agents only)
  * 
  * @param req - Next.js request with Authorization header
  * @returns Array of user objects
  */
 export async function GET(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || (auth.role !== "ADMINISTRATOR" && auth.role !== "AGENT")) {
-    console.log(`[USERS GET] Forbidden - role: ${auth?.role}, user: ${auth?.email}`);
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  console.log(`[USERS GET] Fetching users`, { role: auth.role, user: auth.email });
 
   try {
     const users = await prisma.user.findMany({
       select: { id: true, email: true, name: true, role: true, department: true, hostname: true, laptopSerial: true, createdAt: true, updatedAt: true },
       orderBy: { createdAt: "desc" },
     });
-    console.log(`[USERS GET] Returning ${users.length} users`);
     return NextResponse.json(users);
   } catch (error) {
     console.error(`[USERS GET] Error:`, error);
@@ -101,13 +66,12 @@ export async function GET(req: NextRequest) {
  * @returns Created user object
  */
 export async function POST(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  console.log(`[USERS POST] Creating user`, { adminUser: auth.email });
 
   try {
     const body = await req.json();
@@ -149,7 +113,6 @@ export async function POST(req: NextRequest) {
       details: `User ${user.email} created by ${auth.email}`,
     }).catch(() => {});
 
-    console.log(`[USERS POST] User created`, { userId: user.id, email: user.email, role: user.role });
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
@@ -165,13 +128,12 @@ export async function POST(req: NextRequest) {
  * @returns Updated user object
  */
 export async function PATCH(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  console.log(`[USERS PATCH] Updating user`, { adminUser: auth.email });
 
   try {
     const body = await req.json();
@@ -207,7 +169,6 @@ export async function PATCH(req: NextRequest) {
       details: `User ${user.email} updated by ${auth.email}`,
     }).catch(() => {});
 
-    console.log(`[USERS PATCH] User updated`, { userId: id, updatedBy: auth.userId });
 
     return NextResponse.json(user);
   } catch (error) {
@@ -223,13 +184,12 @@ export async function PATCH(req: NextRequest) {
  * @returns Success confirmation
  */
 export async function DELETE(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  console.log(`[USERS DELETE] Deleting user`, { adminUser: auth.email });
 
   try {
     const body = await req.json();
@@ -254,7 +214,6 @@ export async function DELETE(req: NextRequest) {
       }).catch(() => {});
     }
 
-    console.log(`[USERS DELETE] User deleted`, { userId: id, deletedBy: auth.userId });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

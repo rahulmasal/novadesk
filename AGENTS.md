@@ -45,6 +45,16 @@ Rules:
 - ThemeLoader component loads theme from DB before initial render
 - All settings cards now use proper white backgrounds with borders and shadows in light mode
 - Settings page uses proper padding with space-y-6 between sections
+- Fixed critical security vulnerabilities in backup/restore and backup/database routes (added auth)
+- Fixed path traversal vulnerability in file serving route
+- Removed hardcoded passwords from code (restore route, scheduler) - now uses env vars
+- Centralized auth logic across all API routes (replaced 10+ copy-pasted getAuthUser functions with lib/auth.ts)
+- Fixed Prisma version mismatch (@prisma/adapter-pg aligned to 5.22.0)
+- Removed unused dependencies (pouchdb, pouchdb-find, @types/pouchdb)
+- Removed dead code (SessionManager component, useRealtime hooks, static data files)
+- Removed console.log statements from all API routes for production readiness
+- Added debounced settings saves to prevent API flooding
+- Fixed report type filtering enum casing (Hardware → HARDWARE)
 
 ### In Progress
 - (none)

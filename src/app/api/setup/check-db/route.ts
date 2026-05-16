@@ -19,7 +19,6 @@ import { PrismaClient } from "@prisma/client";
  * @returns Connection status and URL if successful
  */
 export async function POST(req: Request) {
-  console.log(`[SETUP CHECK-DB POST] Testing database connection`);
 
   try {
     const { host, port, user, pass, name } = await req.json();
@@ -48,11 +47,6 @@ export async function POST(req: Request) {
       // Attempt a simple query to test connection
       await prisma.$queryRaw`SELECT 1`;
       await prisma.$disconnect();
-
-      console.log(`[SETUP CHECK-DB POST] Database connection successful`, {
-        host,
-        database: name,
-      });
 
       return NextResponse.json({
         connected: true,
@@ -83,9 +77,7 @@ export async function POST(req: Request) {
 
 // Keep GET for compatibility or status check if needed
 export async function GET() {
-  console.log(`[SETUP CHECK-DB GET] Checking database URL configuration`);
   const databaseUrl = process.env.DATABASE_URL;
-  console.log(`[SETUP CHECK-DB GET] Database URL configured: ${!!databaseUrl}`);
   return NextResponse.json({
     configured: !!databaseUrl,
     hasEnv: !!process.env.DATABASE_URL,

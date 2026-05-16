@@ -1,7 +1,11 @@
 import cron from 'node-cron';
 
 const API_URL = 'http://localhost:3000/api/cron';
-const CRON_SECRET = process.env.CRON_SECRET || 'secret123';
+const CRON_SECRET = process.env.CRON_SECRET;
+if (!CRON_SECRET) {
+  console.error('CRON_SECRET environment variable is required');
+  process.exit(1);
+}
 
 async function triggerReport(scheduleType) {
   try {

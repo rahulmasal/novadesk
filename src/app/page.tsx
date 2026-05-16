@@ -56,7 +56,6 @@ import { Reports } from "@/components/Reports";
 import { Backup } from "@/components/Backup";
 import { SetupWizard } from "@/components/SetupWizard";
 import { Settings } from "@/components/Settings";
-import { SessionManager } from "@/components/SessionManager";
 import { useTicketStore } from "@/lib/store";
 import { useSettings } from "@/contexts/SettingsContext";
 import { Plus } from "lucide-react";
@@ -260,7 +259,6 @@ export default function Dashboard() {
           <div className="absolute top-0 left-0 w-full h-full bg-neutral-950/80 -z-0 backdrop-blur-3xl" />
         </>
       )}
-      <SessionManager />
       <Sidebar />
       <main className={`flex-1 overflow-y-auto overflow-x-hidden focus:outline-none z-10 ${isLightTheme ? "bg-slate-50" : ""}`}>
         {renderContent()}

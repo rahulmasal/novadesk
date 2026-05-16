@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 import { supabaseAdmin, STORAGE_BUCKETS, getAttachmentUrl, getLocalAttachmentUrl, isSupabaseConfigured } from "@/lib/supabase";
 import { writeFile, mkdir, unlink } from "fs/promises";
@@ -22,47 +23,18 @@ const ALLOWED_MIME_TYPES = [
 ];
 
 /**
- * Extracts and validates authenticated user from request header
- * 
- * @param req - Next.js request with Authorization header containing Bearer token
- * @returns User object with role, userId, email or null if not authenticated
- */
-async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) return null;
-
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      return null;
-    }
-
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
-  }
-}
-
-/**
  * POST /api/attachments - Upload a file attachment to a ticket
  * 
  * @param req - FormData containing file and ticketId
  * @returns Created attachment object
  */
 export async function POST(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log(`[ATTACHMENTS POST] Uploading attachment`, { user: auth.email });
 
   try {
     const formData = await req.formData();
@@ -147,7 +119,6 @@ export async function POST(req: NextRequest) {
       details: `File uploaded: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`,
     });
 
-    console.log(`[ATTACHMENTS POST] Attachment uploaded`, { attachmentId: attachment.id, filename: file.name, ticketId });
 
     return NextResponse.json({
       id: attachment.id,
@@ -170,7 +141,7 @@ export async function POST(req: NextRequest) {
  * @returns Array of attachment objects
  */
 export async function GET(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -183,7 +154,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Ticket ID is required" }, { status: 400 });
   }
 
-  console.log(`[ATTACHMENTS GET] Fetching attachments`, { ticketId, user: auth.email });
 
   try {
     const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
@@ -201,7 +171,6 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    console.log(`[ATTACHMENTS GET] Returning ${attachments.length} attachments`);
 
     return NextResponse.json(attachments.map((a: { id: string; filename: string; url: string; mimeType: string; size: number; createdAt: Date }) => ({
       id: a.id, filename: a.filename, url: a.url, mimeType: a.mimeType, size: a.size, createdAt: a.createdAt.toISOString(),
@@ -219,13 +188,12 @@ export async function GET(req: NextRequest) {
  * @returns Success confirmation
  */
 export async function DELETE(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log(`[ATTACHMENTS DELETE] Deleting attachment`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -275,7 +243,6 @@ export async function DELETE(req: NextRequest) {
       oldValue: attachment.filename,
     });
 
-    console.log(`[ATTACHMENTS DELETE] Attachment deleted`, { attachmentId: id });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

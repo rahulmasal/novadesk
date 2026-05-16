@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Forbidden - Admin only", { status: 403 });
   }
 
-  console.log(`[USERS IMPORT POST] Starting bulk user import`, { adminUser: auth?.email });
 
   try {
     const { csv } = await req.json();
@@ -167,7 +166,6 @@ export async function POST(req: NextRequest) {
       results.imported++;
     }
 
-    console.log(`[USERS IMPORT POST] Import completed`, { total: dataRows.length, imported: results.imported, skipped: results.skipped });
 
     return NextResponse.json({
       success: true,

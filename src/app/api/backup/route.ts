@@ -30,33 +30,22 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/backup - Generate system backup (JSON export)
- * 
+ *
  * @returns JSON file with users, tickets, and config data
  */
 export async function GET(req: NextRequest) {
-  console.log(`[BACKUP GET] Generating system backup`);
+  const auth = await requireAdmin(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
-    const authHeader = req.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-    if (!session || session.expiresAt < new Date()) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (session.user.role !== "ADMINISTRATOR") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
     
     // Fetch all data from major tables
     const users = await prisma.user.findMany({
@@ -93,8 +82,6 @@ export async function GET(req: NextRequest) {
         config,
       }
     };
-
-    console.log(`[BACKUP GET] Backup generated`, { userCount: users.length, ticketCount: tickets.length, configCount: config.length });
 
     return new NextResponse(JSON.stringify(backupData, null, 2), {
       headers: {

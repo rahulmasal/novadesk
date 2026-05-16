@@ -30,24 +30,27 @@
  * @module /api/backup/database/route
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 /**
  * GET /api/backup/database - Generate PostgreSQL database backup
  * Uses pg_dump if available, falls back to Prisma JSON export
- * 
+ *
  * @returns SQL dump file for download
  */
-export async function GET() {
-  console.log(`[DB BACKUP GET] Generating PostgreSQL SQL dump`);
+export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const dbUrl = process.env.DATABASE_URL;
@@ -137,8 +140,7 @@ async function generateSqlDump(
       }
 
       const sql = fs.readFileSync(outputPath, "utf8");
-      console.log(`[DB BACKUP GET] SQL dump generated, size: ${sql.length} bytes`);
-      
+
       resolve(new NextResponse(sql, {
         headers: {
           "Content-Type": "application/sql",
@@ -240,8 +242,11 @@ function generateInserts(table: string, rows: BackupRow[]): string {
  * @param req - FormData containing SQL file
  * @returns Success message or error
  */
-export async function POST(req: Request) {
-  console.log(`[DB RESTORE POST] Starting database restore`);
+export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
@@ -329,7 +334,6 @@ async function restoreViaPsql(
 
     child.on("close", (code) => {
       if (code === 0) {
-        console.log(`[DB RESTORE POST] Database restored successfully`);
         resolve(NextResponse.json({ message: "Database restored successfully" }));
       } else {
         console.error(`[DB RESTORE POST] psql failed:`, stderr);
@@ -459,7 +463,6 @@ async function restoreViaPrisma(lines: string[]) {
         create: { key: d.key as string, value: d.value as string },
       });
     }
-    console.log(`[DB RESTORE POST] Restored ${statements.users.length} users, ${statements.tickets.length} tickets`);
     return NextResponse.json({ message: "Database restored successfully" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
 
     const { email, password, provider } = validationResult.data;
 
-    console.log(`[AUTH POST] Login attempt`, { email, provider });
 
     // Step 2: Check if LDAP authentication should be used
     // LDAP is used if explicitly requested OR if LDAP_ENABLED env var is set
@@ -89,7 +88,6 @@ export async function POST(req: NextRequest) {
 
       // If LDAP login successful, return user with session token
       if (ldapResult.success && ldapResult.user) {
-        console.log(`[AUTH POST] LDAP login successful`, { email: ldapUsername });
 
         // Log the successful LDAP login for audit trail
         logAuditEvent({
@@ -147,7 +145,6 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _pw, ...safeUser } = user;
 
-    console.log(`[AUTH POST] Login successful`, { userId: user.id, email: user.email });
 
     // Step 8: Log the login event for audit trail
     logAuditEvent({

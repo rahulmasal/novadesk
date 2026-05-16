@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 import { changePasswordSchema, adminResetPasswordSchema } from "@/lib/schemas";
 import { logAuditEvent } from "@/lib/audit";
 
@@ -18,32 +19,13 @@ export const dynamic = 'force-dynamic';
 const BCRYPT_SALT_ROUNDS = 12;
 
 /**
- * Extracts and validates authenticated user from request header
- */
-async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-  if (!token) return null;
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-    if (!session || session.expiresAt < new Date()) return null;
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
-  }
-}
-
-/**
  * POST /api/auth/password - Change own password or admin reset another user's password
  * 
  * @param req - Request with oldPassword/newPassword (self) or userId/newPassword (admin)
  * @returns Success message
  */
 export async function POST(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

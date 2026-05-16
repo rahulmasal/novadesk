@@ -27,30 +27,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 
-const prisma = new PrismaClient();
-
-// Force dynamic rendering - no static generation for this API
 export const dynamic = 'force-dynamic';
-
-async function getAuthUser(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-  if (!token) return null;
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-    if (!session || session.expiresAt < new Date()) {
-      return null;
-    }
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
-  }
-}
 
 /**
  * POST /api/settings - Save settings to database
@@ -68,7 +48,7 @@ async function getAuthUser(req: NextRequest) {
  * }
  */
 export async function POST(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -109,7 +89,7 @@ export async function POST(req: NextRequest) {
  * }
  */
 export async function GET(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

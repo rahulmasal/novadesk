@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 import {
   createTicketSchema,
@@ -39,7 +40,7 @@ export const dynamic = 'force-dynamic';
  * @returns Array of formatted tickets
  */
 export async function GET(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   const { searchParams } = new URL(req.url);
 
   const paginationResult = paginationSchema.safeParse({
@@ -72,7 +73,6 @@ export async function GET(req: NextRequest) {
       skip: offset,
     });
 
-    console.log(`[GET TICKETS] Returning ${tickets.length} tickets for role ${auth?.role} user ${auth?.email} (ids: ${tickets.map(t => t.id).join(",")})`);
 
     return NextResponse.json(tickets.map(formatTicket));
   } catch (error) {
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
  * - Ensures fair distribution of workload
  */
 export async function POST(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -116,7 +116,6 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    console.log("[POST TICKET] Body:", JSON.stringify(body));
     const validationResult = createTicketSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -220,7 +219,7 @@ export async function POST(req: NextRequest) {
  * @returns Updated ticket
  */
 export async function PATCH(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || (auth.role !== "AGENT" && auth.role !== "ADMINISTRATOR")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -295,9 +294,7 @@ export async function PATCH(req: NextRequest) {
  * @returns Success message
  */
 export async function DELETE(req: NextRequest) {
-  console.log("[DELETE TICKET] Request received");
-  const auth = await getAuthUser(req);
-  console.log("[DELETE TICKET] Auth result:", JSON.stringify({ hasAuth: !!auth, role: auth?.role, userId: auth?.userId, email: auth?.email }));
+  const auth = await validateAuth(req);
 
   if (!auth) {
     console.error("[DELETE TICKET] No auth - returning 401");
@@ -312,7 +309,6 @@ export async function DELETE(req: NextRequest) {
   try {
     const body = await req.json();
     const { id } = body;
-    console.log("[DELETE TICKET] Request body:", body);
 
     if (!id) {
       console.error("[DELETE TICKET] Missing ID");
@@ -325,7 +321,6 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    console.log("[DELETE TICKET] Deleting:", { id, title: ticket.title, user: auth.email });
 
 await prisma.$transaction(async (tx) => {
        await tx.auditLog.create({
@@ -341,7 +336,6 @@ await prisma.$transaction(async (tx) => {
      });
 
     const verify = await prisma.ticket.findUnique({ where: { id } });
-    console.log("[DELETE TICKET] Verification - still exists:", verify !== null);
 
     if (verify !== null) {
       console.error("[DELETE TICKET] FATAL: Ticket still exists after delete!");
@@ -352,40 +346,6 @@ await prisma.$transaction(async (tx) => {
   } catch (error) {
     console.error("[DELETE TICKET] Error:", error);
     return NextResponse.json({ error: "Failed to delete ticket" }, { status: 500 });
-  }
-}
-
-/**
- * getAuthUser - Extracts and validates the authenticated user from request
- * 
- * WHAT IT DOES:
- * 1. Extracts Bearer token from Authorization header
- * 2. Looks up session in database
- * 3. Returns user info if valid, null if invalid/expired
- * 
- * @param req - Next.js request with Authorization header
- * @returns User object with role, userId, email or null
- */
-async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) return null;
-
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    // Check if session exists and hasn't expired
-    if (!session || session.expiresAt < new Date()) {
-      return null;
-    }
-
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
   }
 }
 

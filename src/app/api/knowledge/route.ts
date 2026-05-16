@@ -9,37 +9,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 import { createKnowledgeArticleSchema, updateKnowledgeArticleSchema } from "@/lib/schemas";
 
 export const dynamic = 'force-dynamic';
-
-/**
- * Extracts and validates authenticated user from request header
- * 
- * @param req - Next.js request with Authorization header containing Bearer token
- * @returns User object with role, userId, email or null if not authenticated
- */
-async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) return null;
-
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      return null;
-    }
-
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
-  }
-}
 
 /**
  * GET /api/knowledge - Fetch knowledge base articles
@@ -48,10 +21,9 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
  * @returns Array of articles with total count
  */
 export async function GET(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
   const { searchParams } = new URL(req.url);
 
-  console.log(`[KNOWLEDGE GET] Fetching articles`, { query: searchParams.get("query"), category: searchParams.get("category"), user: auth?.email });
 
   try {
     const query = searchParams.get("query") || "";
@@ -83,7 +55,6 @@ export async function GET(req: NextRequest) {
       prisma.knowledgeBaseArticle.count({ where }),
     ]);
 
-    console.log(`[KNOWLEDGE GET] Returning ${articles.length} of ${total} articles`);
 
     return NextResponse.json({
       articles: articles.map(formatArticle),
@@ -102,13 +73,12 @@ export async function GET(req: NextRequest) {
  * @returns Created article
  */
 export async function POST(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  console.log(`[KNOWLEDGE POST] Creating article`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -132,7 +102,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(`[KNOWLEDGE POST] Article created`, { articleId: article.id, title: article.title });
 
     return NextResponse.json(formatArticle(article), { status: 201 });
   } catch (error) {
@@ -148,13 +117,12 @@ export async function POST(req: NextRequest) {
  * @returns Updated article
  */
 export async function PATCH(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  console.log(`[KNOWLEDGE PATCH] Updating article`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -172,7 +140,6 @@ export async function PATCH(req: NextRequest) {
       data: updates,
     });
 
-    console.log(`[KNOWLEDGE PATCH] Article updated`, { articleId: id });
 
     return NextResponse.json(formatArticle(article));
   } catch (error) {
@@ -188,13 +155,12 @@ export async function PATCH(req: NextRequest) {
  * @returns Success confirmation
  */
 export async function DELETE(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || auth.role !== "ADMINISTRATOR") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  console.log(`[KNOWLEDGE DELETE] Deleting article`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -206,7 +172,6 @@ export async function DELETE(req: NextRequest) {
 
     await prisma.knowledgeBaseArticle.delete({ where: { id } });
 
-    console.log(`[KNOWLEDGE DELETE] Article deleted`, { articleId: id });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

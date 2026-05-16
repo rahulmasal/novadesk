@@ -25,7 +25,7 @@
 
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from "react";
 
 /**
  * Requests browser notification permission when push notifications are enabled
@@ -126,6 +126,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: ReactNode }) {
   // State to hold current settings
   const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Load settings from database on component mount
@@ -236,7 +237,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         requestNotificationPermission();
       }
 
-      saveToDb(newSettings).catch((err) => console.error("Auto-save failed:", err));
+      saveToDb(newSettings);
 
       return newSettings;
     });
@@ -259,20 +260,25 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Internal function to save settings to database
+   * Internal function to save settings to database (debounced)
    * Called automatically whenever settings are updated
    */
-  const saveToDb = async (newSettings: Settings) => {
-    try {
-      await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings: newSettings }),
-      });
-    } catch (error) {
-      console.error("Failed to save settings to DB:", error);
+  const saveToDb = useCallback((newSettings: Settings) => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
     }
-  };
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ settings: newSettings }),
+        });
+      } catch (error) {
+        console.error("Failed to save settings to DB:", error);
+      }
+    }, 500);
+  }, []);
 
   // Provide settings to all child components
   return (

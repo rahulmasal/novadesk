@@ -34,35 +34,38 @@
  * @module /api/backup/restore/route
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/backup/restore - Restore system from JSON backup
- * 
+ *
  * @param req - JSON body with backup data
  * @returns Success message
  */
-export async function POST(req: Request) {
-  console.log(`[BACKUP RESTORE POST] Starting data restore`);
+export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const body = await req.json();
     const { data } = body;
 
     if (!data || !data.users || !data.tickets) {
-      console.log(`[BACKUP RESTORE POST] Invalid backup format`);
-      return NextResponse.json({ 
-        error: "Invalid backup format. Ensure the file is a valid NovaDesk JSON backup with users and tickets data." 
+      return NextResponse.json({
+        error: "Invalid backup format. Ensure the file is a valid NovaDesk JSON backup with users and tickets data."
       }, { status: 400 });
     }
 
     // Hash the default password once before the transaction
     // so we don't block the DB connection with slow bcrypt calls
-    const defaultPassword = await bcrypt.hash("P@ss@4321", 12);
+    const defaultPassword = await bcrypt.hash(process.env.DEFAULT_RESTORE_PASSWORD || "changeme", 12);
 
     // Clear existing data (caution!)
     // In a real app, you might want to merge or use a different strategy
@@ -172,11 +175,8 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log(`[BACKUP RESTORE POST] Data restored successfully`);
-
     return NextResponse.json({ message: "Data restored successfully" });
   } catch (error) {
-    console.error(`[BACKUP RESTORE POST] Error:`, error);
     return NextResponse.json({ error: "Failed to restore data: " + (error as Error).message }, { status: 500 });
   }
 }

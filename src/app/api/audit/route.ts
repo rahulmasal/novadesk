@@ -9,37 +9,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 import { getAuditLogs, exportAuditLogs } from "@/lib/audit";
 
 export const dynamic = 'force-dynamic';
-
-/**
- * Extracts and validates authenticated user from request header
- * 
- * @param req - Next.js request with Authorization header containing Bearer token
- * @returns User object with role, userId, email or null if not authenticated
- */
-async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) return null;
-
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      return null;
-    }
-
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
-  }
-}
 
 /**
  * GET /api/audit - Fetch audit logs (Admin only, supports CSV export)
@@ -48,17 +21,15 @@ async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: st
  * @returns JSON array of audit logs or CSV file download
  */
 export async function GET(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth || auth.role !== "ADMINISTRATOR") {
-    console.log(`[AUDIT GET] Forbidden - role: ${auth?.role}, user: ${auth?.email}`);
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
   const format = searchParams.get("format") || "json";
 
-  console.log(`[AUDIT GET] Fetching audit logs`, { format, user: auth.email });
 
   try {
     const ticketId = searchParams.get("ticketId") || undefined;
@@ -75,7 +46,6 @@ export async function GET(req: NextRequest) {
         endDate: endDate ? new Date(endDate) : undefined,
       });
 
-      console.log(`[AUDIT GET] Audit logs exported as CSV`);
 
       return new NextResponse(csv, {
         headers: {
@@ -92,7 +62,6 @@ export async function GET(req: NextRequest) {
       limit, offset,
     });
 
-    console.log(`[AUDIT GET] Returning ${logs.length} audit logs`);
 
     return NextResponse.json(logs.map((log: { id: string; ticketId: string | null; ticket: { id: string; title: string } | null; userId: string; user: { id: string; name: string; email: string }; action: string; oldValue: string | null; newValue: string | null; details: string | null; createdAt: Date }) => ({
       id: log.id, ticketId: log.ticketId, ticket: log.ticket, userId: log.userId,

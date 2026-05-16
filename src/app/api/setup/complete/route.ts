@@ -32,7 +32,6 @@ const SETUP_LOCK_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
  * @returns Success with created user info
  */
 export async function POST(req: Request) {
-  console.log(`[SETUP COMPLETE POST] Starting setup completion`);
 
   try {
     const body = await req.json();
@@ -173,7 +172,6 @@ export async function POST(req: Request) {
 
         await prisma.$disconnect();
 
-        console.log(`[SETUP COMPLETE POST] Setup completed`, { adminId: adminUser.id, organizationName });
 
         return NextResponse.json({
           success: true,

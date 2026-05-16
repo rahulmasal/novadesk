@@ -51,7 +51,6 @@ export const dynamic = 'force-dynamic';
  * Returns all tickets with user information within the date range
  */
 export async function GET(req: NextRequest) {
-  console.log(`[REPORTS GET] Generating report`);
 
   const auth = await requireAdmin(req);
 
@@ -83,7 +82,7 @@ export async function GET(req: NextRequest) {
       whereClause.priority = { in: ["URGENT", "HIGH"] };
       break;
     case "category":
-      whereClause.category = "Hardware";
+      whereClause.category = "HARDWARE";
       break;
     case "department":
       whereClause.department = "IT";
@@ -137,7 +136,6 @@ export async function GET(req: NextRequest) {
       (summary.byDepartment[ticket.department] || 0) + 1;
   });
 
-  console.log(`[REPORTS GET] Report generated`, { totalTickets: tickets.length, dateRange: { from: fromDate || "all", to: toDate || "all" }, type: reportType });
 
   return NextResponse.json({
     tickets,

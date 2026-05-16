@@ -9,37 +9,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { validateAuth } from "@/lib/auth";
 import { updateDashboardLayoutSchema } from "@/lib/schemas";
 
 export const dynamic = 'force-dynamic';
-
-/**
- * Extracts and validates authenticated user from request header
- * 
- * @param req - Next.js request with Authorization header containing Bearer token
- * @returns User object with role, userId, email or null if not authenticated
- */
-async function getAuthUser(req: NextRequest): Promise<{ role: string; userId: string; email: string } | null> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token) return null;
-
-  try {
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      return null;
-    }
-
-    return { role: session.user.role, userId: session.userId, email: session.user.email };
-  } catch {
-    return null;
-  }
-}
 
 const defaultLayout = {
   widgets: [
@@ -59,13 +32,12 @@ const defaultLayout = {
  * @returns Dashboard layout configuration
  */
 export async function GET(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log(`[DASHBOARD GET] Fetching dashboard layout`, { user: auth.email });
 
   try {
     let layout = await prisma.dashboardLayout.findUnique({
@@ -78,7 +50,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    console.log(`[DASHBOARD GET] Layout fetched`, { userId: auth.userId });
 
     return NextResponse.json({
       id: layout.id,
@@ -98,13 +69,12 @@ export async function GET(req: NextRequest) {
  * @returns Updated dashboard layout
  */
 export async function PUT(req: NextRequest) {
-  const auth = await getAuthUser(req);
+  const auth = await validateAuth(req);
 
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log(`[DASHBOARD PUT] Updating dashboard layout`, { user: auth.email });
 
   try {
     const body = await req.json();
@@ -123,7 +93,6 @@ export async function PUT(req: NextRequest) {
       create: { userId: auth.userId, layout },
     });
 
-    console.log(`[DASHBOARD PUT] Layout updated`, { userId: auth.userId });
 
     return NextResponse.json({
       id: updatedLayout.id,
