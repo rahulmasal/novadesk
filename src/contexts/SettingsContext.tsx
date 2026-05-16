@@ -289,18 +289,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           },
           body: JSON.stringify({ settings: newSettings }),
         });
-        // Refresh tickets when SLA settings change (due dates may have been recalculated)
+        // Refresh tickets when SLA settings change
         if (res.ok && typeof window !== "undefined") {
-          const prev = settings;
-          if (newSettings.advanced.slaResolutionHours !== prev.advanced.slaResolutionHours) {
-            useTicketStore.getState().refreshTickets();
-          }
+          useTicketStore.getState().refreshTickets();
         }
       } catch (error) {
         console.error("Failed to save settings to DB:", error);
       }
     }, 500);
-  }, [settings]);
+  }, []);
 
   // Provide settings to all child components
   return (
