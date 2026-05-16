@@ -26,6 +26,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from "react";
+import { useTicketStore } from "@/lib/store";
 
 /**
  * Requests browser notification permission when push notifications are enabled
@@ -277,11 +278,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       clearTimeout(saveTimerRef.current);
     }
     saveTimerRef.current = setTimeout(async () => {
-      // Skip save if not authenticated (no token in sessionStorage)
       const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
       if (!token) return;
       try {
-        await fetch("/api/settings", {
+        const res = await fetch("/api/settings", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -289,11 +289,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           },
           body: JSON.stringify({ settings: newSettings }),
         });
+        // Refresh tickets when SLA settings change (due dates may have been recalculated)
+        if (res.ok && typeof window !== "undefined") {
+          const prev = settings;
+          if (newSettings.advanced.slaResolutionHours !== prev.advanced.slaResolutionHours) {
+            useTicketStore.getState().refreshTickets();
+          }
+        }
       } catch (error) {
         console.error("Failed to save settings to DB:", error);
       }
     }, 500);
-  }, []);
+  }, [settings]);
 
   // Provide settings to all child components
   return (
