@@ -25,7 +25,7 @@
 
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { useTicketStore } from "@/lib/store";
 
 /**
@@ -126,30 +126,6 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
  */
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingSettingsRef = useRef<Settings | null>(null);
-
-  // Flush pending settings on page unload
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = null;
-      }
-      const pending = pendingSettingsRef.current;
-      if (pending) {
-        const token = sessionStorage.getItem("token");
-        if (token) {
-          navigator.sendBeacon("/api/settings", new Blob([
-            JSON.stringify({ settings: pending })
-          ], { type: "application/json" }));
-        }
-        pendingSettingsRef.current = null;
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
 
   /**
    * Load settings from database on component mount
@@ -295,31 +271,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
    * Internal function to save settings to database (debounced)
    * Called automatically whenever settings are updated
    */
-  const saveToDb = useCallback((newSettings: Settings) => {
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current);
-    }
-    pendingSettingsRef.current = newSettings;
-    saveTimerRef.current = setTimeout(async () => {
-      pendingSettingsRef.current = null;
-      const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
-      if (!token) return;
-      try {
-        const res = await fetch("/api/settings", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ settings: newSettings }),
-        });
-        if (res.ok && typeof window !== "undefined") {
-          useTicketStore.getState().refreshTickets();
-        }
-      } catch (error) {
-        console.error("Failed to save settings to DB:", error);
+  const saveToDb = useCallback(async (newSettings: Settings) => {
+    const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+    if (!token) return;
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ settings: newSettings }),
+      });
+      if (res.ok && typeof window !== "undefined") {
+        useTicketStore.getState().refreshTickets();
       }
-    }, 500);
+    } catch (error) {
+      console.error("Failed to save settings to DB:", error);
+    }
   }, []);
 
   // Provide settings to all child components
