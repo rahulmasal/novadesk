@@ -135,20 +135,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        // Call the settings API to fetch stored settings
         const response = await fetch("/api/settings");
         const data = await response.json();
 
-        // If settings exist in DB, use them; otherwise use defaults
         if (data.settings) {
-          setSettings(data.settings);
+          // Deep merge with defaults so new fields (like SLA) always exist
+          setSettings({
+            notifications: { ...defaultSettings.notifications, ...data.settings.notifications },
+            appearance: { ...defaultSettings.appearance, ...data.settings.appearance },
+            backup: { ...defaultSettings.backup, ...data.settings.backup },
+            advanced: { ...defaultSettings.advanced, ...data.settings.advanced },
+          });
         }
       } catch (error) {
         console.error("Failed to load settings:", error);
       }
     };
     loadSettings();
-  }, []); // Empty dependency array = run once on mount
+  }, []);
 
   /**
    * Apply theme by adding/removing CSS classes on the HTML element
